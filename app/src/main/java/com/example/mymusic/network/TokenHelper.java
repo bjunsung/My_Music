@@ -38,7 +38,7 @@ public class TokenHelper {
         client.newCall(request).enqueue(new Callback() {
             public void onFailure(Call call, IOException e) {
                 android.util.Log.e("TokenHelper", "Connection failed: " + e.getMessage());
-                callback.onFailure("연결 실패: " + e.getMessage());
+                callback.onFailure("Connection error: " + e.getMessage());
             }
 
             public void onResponse(Call call, Response response) throws IOException {

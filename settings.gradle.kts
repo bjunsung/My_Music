@@ -16,6 +16,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        flatDir {
+            dirs("libs") // AAR 경로를 여기에 명시
+        }
     }
 }
 

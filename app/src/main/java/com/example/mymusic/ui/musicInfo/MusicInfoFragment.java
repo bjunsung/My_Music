@@ -1,24 +1,26 @@
 package com.example.mymusic.ui.musicInfo;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.mymusic.R;
-import com.example.mymusic.model.SongItem;
+import com.example.mymusic.model.Track;
 
 public class MusicInfoFragment extends Fragment {
-    private static final String ARG_SONG = "song";
-
-    public static MusicInfoFragment newInstance(SongItem song) {
+    private static final String ARG_TRACK = "track";
+    public static MusicInfoFragment newInstance(Track track, String accessToken) {
         MusicInfoFragment fragment = new MusicInfoFragment();
         Bundle args = new Bundle();
-        args.putSerializable(ARG_SONG, song);  // SongItem implements Serializable
+        args.putSerializable(ARG_TRACK, track);  // TrackItem implements Serializable
         fragment.setArguments(args);
         return fragment;
     }
@@ -32,9 +34,32 @@ public class MusicInfoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        Track track = getArguments().getParcelable("track");
+        if (track != null) {
+            ImageView artworkImage = view.findViewById(R.id.artworkImage);
+            TextView trackTitle = view.findViewById(R.id.trackTitle);
+            TextView artistName = view.findViewById(R.id.artistName);
+            TextView albumName = view.findViewById(R.id.albumName);
+            TextView releaseDate = view.findViewById(R.id.releaseDate);
+            TextView durationMs = view.findViewById(R.id.durationMs);
 
-        SongItem song = (SongItem) getArguments().getSerializable("song");
-
-        // 예: TextView에 song 데이터 표시
+            // 이미지 표시: Picasso 등 사용
+            if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
+                com.squareup.picasso.Picasso.get().load(track.artworkUrl).into(artworkImage);
+            }
+            trackTitle.setText(track.trackName);
+            artistName.setText("아티스트: " + track.artistName);
+            albumName.setText("앨범: " + track.albumName);
+            releaseDate.setText("발매일: " + track.releaseDate);
+            int durationSec = (int) Double.parseDouble(track.durationMs)/1000;
+            durationMs.setText("재생시간: "+ durationSec/60 + "분" + durationSec%60 + "초");
+            Log.d("TraceId - artist ID", track.artistId);
+            Log.d("TraceId - album ID", track.albumId);
+            Log.d("TraceId - track ID", track.trackId);
+        }
+        else {
+            Log.e("MusicInfoFragment", "track is null!");
+        }
     }
+
 }

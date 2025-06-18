@@ -36,7 +36,11 @@
     <fragment
         android:id="@+id/musicInfoFragment"
         android:name="com.example.mymusic.ui.musicInfo.MusicInfoFragment"
-        android:label=" music_info"
-        tools:layout="@layout/fragment_music_info" />
+        android:label="Music Information"
+        tools:layout="@layout/fragment_music_info">
+         <argument
+             android:name="song"
+             app:argType="com.example.mymusic.model.Track" />
+    </fragment>
 
 </navigation>

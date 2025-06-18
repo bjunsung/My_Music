@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+
 android {
     namespace = "com.example.mymusic"
     compileSdk = 35
@@ -14,6 +15,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders.put("redirectSchemeName", "com.example.mymusic")
+        manifestPlaceholders.put("redirectHostName", "callback")
     }
 
     buildTypes {
@@ -34,7 +37,9 @@ android {
     }
 }
 
+
 dependencies {
+    implementation(files("libs/auth-release.aar"))
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.squareup.picasso:picasso:2.71828")
@@ -49,3 +54,4 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
+

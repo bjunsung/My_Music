@@ -6,21 +6,26 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.model.SongAdapter;
-import com.example.mymusic.model.SongItem;
+import com.example.mymusic.model.SearchViewModel;
+import com.example.mymusic.model.TrackAdapter;
+import com.example.mymusic.model.Track;
 import com.example.mymusic.network.TokenHelper;
 
 import org.json.JSONArray;
@@ -41,6 +46,17 @@ public class SearchFragment extends Fragment {
     private String accessToken = null;
     private EditText searchEditText;
     private RecyclerView recyclerView;
+    private boolean searchLocked = false;
+    private String finalKeyword = null;
+    private SearchViewModel viewModel;
+
+
+    //ViewModel 연결
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(SearchViewModel.class);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,10 +67,14 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         searchEditText = view.findViewById(R.id.searchEditText);
         recyclerView = view.findViewById(R.id.resultRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        if(!viewModel.searchResults.isEmpty()){
+            TrackAdapter adapter = new TrackAdapter(viewModel.searchResults, getContext(), accessToken, track -> showDetails(track));
+            recyclerView.setAdapter(adapter);
+        }
 
         getTokenAndEnableSearch();
     }
@@ -67,6 +87,28 @@ public class SearchFragment extends Fragment {
 
                 // 메인 스레드에서 리스너 설정
                 requireActivity().runOnUiThread(() -> {
+
+                    //search button click event
+                    ImageButton searchButton = requireView().findViewById(R.id.searchButton);
+                    searchButton.setOnClickListener(v -> {
+                        lockAndSearchKeyword();  // 아이콘 눌렀을 때 검색 실행
+                    });
+
+                    //deleteKeyWord button click event
+                    ImageButton deletekeywordButton = requireView().findViewById(R.id.deleteKeywordButton);
+                    deletekeywordButton.setOnClickListener(v ->{
+                       searchEditText.setText("");
+                    });
+
+                    //search(enter in keyboard) click event
+                    searchEditText.setOnEditorActionListener((v, actionId, event) -> {
+                        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                            lockAndSearchKeyword();
+                            return true;
+                        }
+                        return false;
+                    });
+
                     searchEditText.addTextChangedListener(new TextWatcher() {
                         private Handler searchHandler = new Handler();
                         private Runnable searchRunnable;
@@ -74,13 +116,17 @@ public class SearchFragment extends Fragment {
 
                         @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
+                        //text 수정 event
                         @Override
                         public void onTextChanged(CharSequence s, int start, int before, int count) {
+                            if(searchLocked && !s.toString().equals(finalKeyword))
+                                searchLocked = false;
+
                             if (searchRunnable != null) searchHandler.removeCallbacks(searchRunnable);
 
                             searchRunnable = () -> {
-                                if (accessToken != null && s.length() >= 2) {
-                                    searchSongs(s.toString(), accessToken);
+                                if (accessToken != null && !searchLocked && s.length() >= 1) {
+                                    searchTracks(s.toString(), accessToken);
                                 }
                             };
                             searchHandler.postDelayed(searchRunnable, SEARCH_DELAY);
@@ -96,18 +142,29 @@ public class SearchFragment extends Fragment {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() -> {
                     new AlertDialog.Builder(requireContext())
-                            .setTitle("토큰 오류")
+                            .setTitle("token error")
                             .setMessage(error)
-                            .setPositiveButton("닫기", null)
+                            .setPositiveButton("exit", null)
                             .show();
                 });
             }
         });
     }
 
-    private void searchSongs(String keyword, String accessToken) {
-        if (keyword.trim().isEmpty()) return;
+    private void lockAndSearchKeyword(){
+        //hide keyboard
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(searchEditText.getWindowToken(), 0);
 
+        finalKeyword = searchEditText.getText().toString();
+        if(finalKeyword.length() >= 1 && accessToken != null) {
+            searchTracks(finalKeyword, accessToken);
+            searchLocked = true;
+        }
+    }
+
+    private void searchTracks(String keyword, String accessToken) {
+        if (keyword.trim().isEmpty()) return;
         new Thread(() -> {
             try {
                 String encodedKeyword = URLEncoder.encode(keyword, "UTF-8");
@@ -128,35 +185,44 @@ public class SearchFragment extends Fragment {
                 JSONObject json = new JSONObject(response.toString());
                 JSONArray items = json.getJSONObject("tracks").getJSONArray("items");
 
-                List<SongItem> songs = new ArrayList<>();
+                List<Track> tracks = new ArrayList<>();
                 for (int i = 0; i < items.length(); i++) {
                     JSONObject obj = items.getJSONObject(i);
                     JSONObject album = obj.getJSONObject("album");
                     JSONArray images = album.getJSONArray("images");
-
+                    JSONArray artist = obj.getJSONObject("album").getJSONArray("artists");
                     String imageUrl = images.length() > 0 ? images.getJSONObject(0).getString("url") : "";
 
-                    songs.add(new SongItem(
+                    tracks.add(new Track(
+                            obj.getString("id"),
+                            album.getString("id"),
+                            artist.getJSONObject(0).getString("id"),
                             obj.getString("name"),
+                            album.optString("name", "정보없음"),
                             obj.getJSONArray("artists").getJSONObject(0).getString("name"),
                             imageUrl,
-                            album.optString("name", "정보없음"),
                             album.optString("release_date", ""),
-                            obj.optString("preview_url", "")
+                            obj.getString("duration_ms")
                     ));
                 }
 
+                //searchTracks()결과를 ViewModel 에 저장
+                viewModel.searchResults.clear();
+                viewModel.searchResults.addAll(tracks);
+
                 requireActivity().runOnUiThread(() -> {
-                    SongAdapter adapter = new SongAdapter(songs, getContext(), song -> showDetails(song));
+                    TrackAdapter adapter = new TrackAdapter(tracks, getContext(), accessToken, track -> showDetails(track));
                     RecyclerView recyclerView = requireView().findViewById(R.id.resultRecyclerView);
                     recyclerView.setAdapter(adapter);
                 });
 
             } catch (Exception e) {
+                Log.d("exception occurred searching track", "accessToken: " + accessToken);
+                Log.d("exception occurred searching track", "url: " + e.getMessage());
                 e.printStackTrace();
                 requireActivity().runOnUiThread(() ->
                         new AlertDialog.Builder(getContext())
-                                .setTitle("검색 오류")
+                                .setTitle("error")
                                 .setMessage("노래 검색 중 오류 발생:\n" + e.getMessage())
                                 .setPositiveButton("닫기", null)
                                 .show()
@@ -165,11 +231,12 @@ public class SearchFragment extends Fragment {
         }).start();
     }
 
-    private void showDetails(SongItem song) {
+    private void showDetails(Track track) {
         new AlertDialog.Builder(getContext())
-                .setMessage("title: " + song.trackName + "\nartist: " + song.artistName +
-                        "\nalbun: " + song.albumName +
-                        "\n발매일: " + song.releaseDate.substring(0, 10))
+                .setMessage("제목:\t\t\t" + track.trackName +
+                        "\n아티스트:\t" + track.artistName +
+                        "\n앨범:\t\t\t" + track.albumName +
+                        "\n발매일:\t\t" + track.releaseDate.substring(0, 10))
                 .setPositiveButton("닫기", null)
                 .show();
     }
