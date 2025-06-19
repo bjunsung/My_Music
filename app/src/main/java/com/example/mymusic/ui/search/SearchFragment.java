@@ -14,6 +14,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,6 +24,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.data.local.Token;
+import com.example.mymusic.data.repository.TokenRepository;
 import com.example.mymusic.model.SearchViewModel;
 import com.example.mymusic.model.TrackAdapter;
 import com.example.mymusic.model.Track;
@@ -49,6 +52,7 @@ public class SearchFragment extends Fragment {
     private boolean searchLocked = false;
     private String finalKeyword = null;
     private SearchViewModel viewModel;
+    private TokenRepository tokenRepository;
 
 
     //ViewModel 연결
@@ -56,6 +60,7 @@ public class SearchFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(this).get(SearchViewModel.class);
+        tokenRepository = new TokenRepository(requireContext().getApplicationContext());
     }
 
     @Override
@@ -80,76 +85,47 @@ public class SearchFragment extends Fragment {
     }
 
     private void getTokenAndEnableSearch() {
-        TokenHelper.getAccessToken(new TokenHelper.TokenCallback() {
-            @Override
-            public void onSuccess(String token) {
-                accessToken = token;
+        new Thread(() -> {
+            Token token = tokenRepository.getAccessTokenSync();
 
-                // 메인 스레드에서 리스너 설정
+            if (token != null && token.getAccessToken() != null) {
+                accessToken = token.getAccessToken();
                 requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "load token in db: " + accessToken, Toast.LENGTH_SHORT).show();
+                });
 
-                    //search button click event
-                    ImageButton searchButton = requireView().findViewById(R.id.searchButton);
-                    searchButton.setOnClickListener(v -> {
-                        lockAndSearchKeyword();  // 아이콘 눌렀을 때 검색 실행
-                    });
+                requireActivity().runOnUiThread(this::setupSearchUI);
+            } else {
+                // 토큰이 없으면 새로 발급
+                TokenHelper.getAccessToken(requireContext(), new TokenHelper.TokenCallback() {
+                    @Override
+                    public void onSuccess(String token) {
+                        accessToken = token;
+                        // ✅ Room DB에 저장하는 코드 추가 필요
+                        TokenRepository repo = new TokenRepository(requireContext().getApplicationContext());
+                        repo.setAccessToken(token);
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "store token to db: " + accessToken, Toast.LENGTH_SHORT).show();
+                        });
+                        requireActivity().runOnUiThread(SearchFragment.this::setupSearchUI);
+                    }
 
-                    //deleteKeyWord button click event
-                    ImageButton deletekeywordButton = requireView().findViewById(R.id.deleteKeywordButton);
-                    deletekeywordButton.setOnClickListener(v ->{
-                       searchEditText.setText("");
-                    });
-
-                    //search(enter in keyboard) click event
-                    searchEditText.setOnEditorActionListener((v, actionId, event) -> {
-                        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                            lockAndSearchKeyword();
-                            return true;
-                        }
-                        return false;
-                    });
-
-                    searchEditText.addTextChangedListener(new TextWatcher() {
-                        private Handler searchHandler = new Handler();
-                        private Runnable searchRunnable;
-                        private static final long SEARCH_DELAY = 500;
-
-                        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-                        //text 수정 event
-                        @Override
-                        public void onTextChanged(CharSequence s, int start, int before, int count) {
-                            if(searchLocked && !s.toString().equals(finalKeyword))
-                                searchLocked = false;
-
-                            if (searchRunnable != null) searchHandler.removeCallbacks(searchRunnable);
-
-                            searchRunnable = () -> {
-                                if (accessToken != null && !searchLocked && s.length() >= 1) {
-                                    searchTracks(s.toString(), accessToken);
-                                }
-                            };
-                            searchHandler.postDelayed(searchRunnable, SEARCH_DELAY);
-                        }
-
-                        @Override public void afterTextChanged(Editable s) {}
-                    });
+                    @Override
+                    public void onFailure(String error) {
+                        if (!isAdded()) return;
+                        requireActivity().runOnUiThread(() -> {
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("token error")
+                                    .setMessage(error)
+                                    .setPositiveButton("exit", null)
+                                    .show();
+                        });
+                    }
                 });
             }
-
-            @Override
-            public void onFailure(String error) {
-                if (!isAdded()) return;
-                requireActivity().runOnUiThread(() -> {
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("token error")
-                            .setMessage(error)
-                            .setPositiveButton("exit", null)
-                            .show();
-                });
-            }
-        });
+        }).start();
     }
+
 
     private void lockAndSearchKeyword(){
         //hide keyboard
@@ -161,6 +137,54 @@ public class SearchFragment extends Fragment {
             searchTracks(finalKeyword, accessToken);
             searchLocked = true;
         }
+    }
+
+    private void setupSearchUI() {
+        //search button click event
+        ImageButton searchButton = requireView().findViewById(R.id.searchButton);
+        searchButton.setOnClickListener(v -> {
+            lockAndSearchKeyword();  // 아이콘 눌렀을 때 검색 실행
+        });
+
+        //delete keyword button click event
+        ImageButton deletekeywordButton = requireView().findViewById(R.id.deleteKeywordButton);
+        deletekeywordButton.setOnClickListener(v -> {
+            searchEditText.setText("");
+        });
+
+        // search(enter in keyboard) click event
+        searchEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                lockAndSearchKeyword();
+                return true;
+            }
+            return false;
+        });
+
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            private final Handler searchHandler = new Handler();
+            private Runnable searchRunnable;
+
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (searchLocked && !s.toString().equals(finalKeyword)) {
+                    searchLocked = false;
+                }
+
+                if (searchRunnable != null) searchHandler.removeCallbacks(searchRunnable);
+
+                searchRunnable = () -> {
+                    if (accessToken != null && !searchLocked && s.length() >= 1) {
+                        searchTracks(s.toString(), accessToken);
+                    }
+                };
+                searchHandler.postDelayed(searchRunnable, SEARCH_DELAY);
+            }
+
+            @Override public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void searchTracks(String keyword, String accessToken) {

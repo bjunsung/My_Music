@@ -4,6 +4,7 @@
     package="com.example.mymusic">
 
     <application
+        android:name=".MyMusicApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -13,9 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyMusic"
         tools:targetApi="31">
-
-        <!-- ✅ Spotify SDK의 로그인 처리용 Activity -->
-        <activity android:name="com.spotify.sdk.android.authentication.LoginActivity" />
 
         <activity
             android:name=".MainActivity"

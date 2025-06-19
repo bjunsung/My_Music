@@ -1,6 +1,11 @@
 package com.example.mymusic.network;
 
+import android.content.Context;
 import android.util.Base64;
+
+import com.example.mymusic.data.local.AppDatabase;
+import com.example.mymusic.data.local.Token;
+import com.example.mymusic.data.local.TokenDao;
 
 import org.json.JSONObject;
 
@@ -18,48 +23,44 @@ public class TokenHelper {
         void onFailure(String error);
     }
 
-    public static void getAccessToken(TokenCallback callback) {
+    public static void getAccessToken(Context context, TokenCallback callback) {
         OkHttpClient client = new OkHttpClient();
 
         String credentials = CLIENT_ID + ":" + CLIENT_SECRET;
         String basicAuth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
 
-        RequestBody requestBody = new FormBody.Builder()
-                .add("grant_type", "client_credentials")
-                .build();
-
         Request request = new Request.Builder()
                 .url(TOKEN_URL)
-                .post(requestBody)
+                .post(new FormBody.Builder().add("grant_type", "client_credentials").build())
                 .addHeader("Authorization", basicAuth)
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
+            @Override
             public void onFailure(Call call, IOException e) {
-                android.util.Log.e("TokenHelper", "Connection failed: " + e.getMessage());
-                callback.onFailure("Connection error: " + e.getMessage());
+                callback.onFailure(e.getMessage());
             }
-
+            @Override
             public void onResponse(Call call, Response response) throws IOException {
-                String body = response.body().string();
-                android.util.Log.d("TokenHelper", "HTTP " + response.code());
-                android.util.Log.d("TokenHelper", "Body: " + body);
-
                 if (!response.isSuccessful()) {
-                    callback.onFailure("Token error: " + response.code() + "\n" + body);
+                    callback.onFailure("HTTP " + response.code());
                     return;
                 }
-
                 try {
-                    JSONObject json = new JSONObject(body);
-                    String token = json.getString("access_token");
-                    callback.onSuccess(token);
+                    JSONObject json = new JSONObject(response.body().string());
+                    String accessToken = json.getString("access_token");
+                    callback.onSuccess(accessToken);
+
+                    //DB 에 저장
+                    AppDatabase tokenDb = AppDatabase.getInstance(context.getApplicationContext());
+                    TokenDao tokenDao = tokenDb.tokenDao();
+                    Token tokenEntity = new Token(accessToken);
+                    tokenDao.setAccessToken(tokenEntity);
                 } catch (Exception e) {
                     callback.onFailure("Parse error: " + e.getMessage());
                 }
             }
         });
     }
-
 }

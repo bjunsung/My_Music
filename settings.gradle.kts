@@ -15,10 +15,8 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
+        gradlePluginPortal()
         mavenCentral()
-        flatDir {
-            dirs("libs") // AAR 경로를 여기에 명시
-        }
     }
 }
 
