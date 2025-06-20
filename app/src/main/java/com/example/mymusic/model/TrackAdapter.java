@@ -22,16 +22,22 @@ import java.util.List;
 public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder> {
     private List<Track> tracks;
     private Context context;
-    private OnItemClickListener listener;
+    private OnDetailClickListener detailClickListener;
+    private OnAddClickListener addClickListener;
 
-    public interface OnItemClickListener {
+    public interface OnDetailClickListener {
         void onItemClick(Track track);
     }
 
-    public TrackAdapter(List<Track> tracks, Context context, String accessToken, OnItemClickListener listener) {
+    public interface OnAddClickListener{
+        void onItemClick(Track track);
+    }
+
+    public TrackAdapter(List<Track> tracks, Context context, OnDetailClickListener detailClickListener, OnAddClickListener addClickListener) {
         this.tracks = tracks;
         this.context = context;
-        this.listener = listener;
+        this.detailClickListener = detailClickListener;
+        this.addClickListener = addClickListener;
     }
 
     @NonNull
@@ -58,7 +64,11 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
                 });
 
         //detailButton 클릭 event
-        holder.detailButton.setOnClickListener(v -> listener.onItemClick(track));
+        holder.detailButton.setOnClickListener(v -> detailClickListener.onItemClick(track));
+
+        //addButton 클릭 event
+        holder.addButton.setOnClickListener(v -> addClickListener.onItemClick(track));
+
     }
 
     @Override
@@ -69,7 +79,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     public static class TrackViewHolder extends RecyclerView.ViewHolder {
         TextView title, artist;
         ImageView image;
-        ImageButton detailButton;
+        ImageButton addButton, detailButton;
 
         public TrackViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -77,6 +87,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             artist = itemView.findViewById(R.id.artistTextView);
             image = itemView.findViewById(R.id.imageView);
             detailButton = itemView.findViewById(R.id.showDetailButton);
+            addButton = itemView.findViewById(R.id.addButton);
         }
     }
 }

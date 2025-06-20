@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <!-- 체크박스 (필터 모드에서만 표시) -->
+    <CheckBox
+        android:id="@+id/checkbox_select"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <!-- 앨범 이미지 -->
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginEnd="12dp"
+        android:scaleType="centerCrop" />
+
+    <!-- 텍스트 정보 (제목, 아티스트) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/titleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NoNoNo"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:layout_marginEnd="4dp"
+                android:ellipsize="end" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:layout_marginEnd="4dp"
+                android:ellipsize="end" />
+            <TextView
+                android:id="@+id/artistTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Apink"
+                android:textStyle="italic|bold"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" ("
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:id="@+id/albumTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Secret Garden"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=")"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:layout_marginEnd="4dp"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="재생시간: "
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:id="@+id/durationTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3분40초"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="발매일: "
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:id="@+id/releaseDateTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2013-07-05"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="추가한 날짜: "
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:id="@+id/addedDateTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2025-06-20"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+    <ImageButton
+        android:id="@+id/deleteButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_delete_favorite_song"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="@id/artistTextView"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        android:layout_marginEnd="8dp"/>
+    <ImageButton
+        android:id="@+id/showDetailButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_info"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="@id/artistTextView"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        android:layout_marginEnd="16dp"/>
+</LinearLayout>

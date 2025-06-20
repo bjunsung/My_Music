@@ -1,59 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <!-- 정사각형 이미지 -->
-    <ImageView
-        android:id="@+id/artworkImage"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:scaleType="centerCrop"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintDimensionRatio="1:1" />
-
-    <!-- 곡 정보 영역 -->
-    <ScrollView
-        android:id="@+id/infoScroll"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/artworkImage"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <ImageView
+            android:id="@+id/artworkImage"
+            android:layout_width="755dp"
+            android:layout_height="755dp"
+            android:scaleType="centerCrop" />
         <LinearLayout
-            android:orientation="vertical"
-            android:padding="16dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
             <TextView
                 android:id="@+id/trackTitle"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Dumhdurum"
-                android:textSize="30sp"
-                android:textStyle="bold"
                 android:layout_marginTop="16dp"
-                android:textIsSelectable="true"/>
-
+                android:text="Mr. Chu"
+                android:textIsSelectable="true"
+                android:textSize="30sp"
+                android:textStyle="bold" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:orientation="horizontal">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="아티스트: "
-                    android:textSize="24sp"
                     android:textIsSelectable="true"
+                    android:textSize="24sp"
                     android:maxLines="1"
                     android:ellipsize="end"/>
                 <TextView
@@ -61,10 +45,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Apink"
+                    android:textIsSelectable="true"
                     android:textSize="24sp"
-                    android:textIsSelectable="true"/>
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
             </LinearLayout>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -74,17 +59,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="앨범: "
+                    android:textIsSelectable="true"
                     android:textSize="24sp"
-                    android:textIsSelectable="true"/>
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
                 <TextView
                     android:id="@+id/albumName"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="LOOK"
-                    android:textSize="24sp"
-                    android:textIsSelectable="true"/>
+                    android:text="Pink Blossom"
+                    android:textIsSelectable="true"
+                    android:textSize="24sp" />
             </LinearLayout>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -94,17 +80,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="발매일: "
+                    android:textIsSelectable="true"
                     android:textSize="24sp"
-                    android:textIsSelectable="true"/>
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
                 <TextView
                     android:id="@+id/releaseDate"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="2020-04-13"
-                    android:textSize="24sp"
-                    android:textIsSelectable="true"/>
+                    android:text="2014-03-31"
+                    android:textIsSelectable="true"
+                    android:textSize="24sp" />
             </LinearLayout>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -114,18 +101,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="재생시간: "
+                    android:textIsSelectable="true"
                     android:textSize="24sp"
-                    android:textIsSelectable="true"/>
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
                 <TextView
                     android:id="@+id/durationMs"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="3분 28초"
-                    android:textSize="24sp"
-                    android:textIsSelectable="true"/>
+                    android:text="3분 34초"
+                    android:textIsSelectable="true"
+                    android:textSize="24sp" />
             </LinearLayout>
-
         </LinearLayout>
-    </ScrollView>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</LinearLayout>

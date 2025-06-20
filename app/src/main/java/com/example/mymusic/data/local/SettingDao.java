@@ -1,4 +1,4 @@
 package com.example.mymusic.data.local;
 
-public class SettingDao {
+public interface SettingDao {
 }

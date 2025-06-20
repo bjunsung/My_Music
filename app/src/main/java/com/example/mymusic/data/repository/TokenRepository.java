@@ -19,8 +19,8 @@ public class TokenRepository {
     // 비동기로 accessToken 저장
     public void setAccessToken(String accessToken) {
         executor.execute(() -> {
-            Token token = new Token(accessToken); // tokenId는 생성자에서 자동 0
-            tokenDao.setAccessToken(token);
+            Token token = new Token(accessToken); //Token 객체 생성과 동시에 accessToken 값 setting
+            tokenDao.setAccessToken(token); //생성한 객체를 db에 저장해달라고 Dao에 요청
         });
     }
 

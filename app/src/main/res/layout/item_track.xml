@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:padding="4dp">
 
     <!-- 앨범 이미지 -->
     <ImageView
@@ -25,7 +25,7 @@
             android:id="@+id/titleTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="앨범명"
+            android:text="LUV"
             android:textSize="16sp"
             android:textStyle="bold"
             android:maxLines="1"
@@ -35,18 +35,30 @@
             android:id="@+id/artistTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="아티스트"
+            android:text="Apink"
             android:textSize="14sp"
             android:textColor="#666666"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
     <ImageButton
+        android:id="@+id/addButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_add_button"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="@id/artistTextView"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        android:layout_marginEnd="4dp"/>
+    <ImageButton
         android:id="@+id/showDetailButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_info"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_gravity="center_vertical"
         app:layout_constraintTop_toTopOf="@id/artistTextView"
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"

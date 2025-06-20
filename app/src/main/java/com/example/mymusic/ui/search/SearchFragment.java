@@ -2,6 +2,8 @@ package com.example.mymusic.ui.search;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -24,12 +26,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.data.local.Favorites;
 import com.example.mymusic.data.local.Token;
 import com.example.mymusic.data.repository.TokenRepository;
-import com.example.mymusic.model.SearchViewModel;
 import com.example.mymusic.model.TrackAdapter;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.TokenHelper;
+import com.example.mymusic.ui.favorites.FavoritesViewModel;
+
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,6 +43,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,12 +60,15 @@ public class SearchFragment extends Fragment {
     private SearchViewModel viewModel;
     private TokenRepository tokenRepository;
 
+    private FavoritesViewModel favoritesViewModel;
 
     //ViewModel 연결
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(this).get(SearchViewModel.class);
+        favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+
         tokenRepository = new TokenRepository(requireContext().getApplicationContext());
     }
 
@@ -77,7 +86,7 @@ public class SearchFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         if(!viewModel.searchResults.isEmpty()){
-            TrackAdapter adapter = new TrackAdapter(viewModel.searchResults, getContext(), accessToken, track -> showDetails(track));
+            TrackAdapter adapter = new TrackAdapter(viewModel.searchResults, getContext(), this::showDetails, this::addFavoriteSong);
             recyclerView.setAdapter(adapter);
         }
 
@@ -90,10 +99,6 @@ public class SearchFragment extends Fragment {
 
             if (token != null && token.getAccessToken() != null) {
                 accessToken = token.getAccessToken();
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(getContext(), "load token in db: " + accessToken, Toast.LENGTH_SHORT).show();
-                });
-
                 requireActivity().runOnUiThread(this::setupSearchUI);
             } else {
                 // 토큰이 없으면 새로 발급
@@ -234,8 +239,9 @@ public class SearchFragment extends Fragment {
                 viewModel.searchResults.clear();
                 viewModel.searchResults.addAll(tracks);
 
+                //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                 requireActivity().runOnUiThread(() -> {
-                    TrackAdapter adapter = new TrackAdapter(tracks, getContext(), accessToken, track -> showDetails(track));
+                    TrackAdapter adapter = new TrackAdapter(tracks, getContext(), track -> showDetails(track), track -> addFavoriteSong(track));
                     RecyclerView recyclerView = requireView().findViewById(R.id.resultRecyclerView);
                     recyclerView.setAdapter(adapter);
                 });
@@ -264,4 +270,33 @@ public class SearchFragment extends Fragment {
                 .setPositiveButton("닫기", null)
                 .show();
     }
+
+    //addButton click시 db에 노래 저장
+    private void addFavoriteSong(Track track){
+        new AlertDialog.Builder(getContext())
+                .setTitle("관심목록에 추가")
+                .setMessage(track.trackName + " - " + track.artistName + " 을 Favorites List 에 추가할까요?")
+                .setNegativeButton("취소", null)
+                .setPositiveButton("확인", new DialogInterface.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int which) {
+                        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        Favorites song = new Favorites(track, today);
+                        new Thread(() -> {
+                            try {
+                                favoritesViewModel.insert(track, today);
+                                requireActivity().runOnUiThread(() -> {
+                                    Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                });
+                            } catch (SQLiteConstraintException e) {
+                                requireActivity().runOnUiThread(() -> {
+                                    Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        }).start();
+
+                    }
+                })
+        .show();
+    }
+
 }

@@ -1,6 +1,8 @@
-package com.example.mymusic.model;
+package com.example.mymusic.ui.search;
 
 import androidx.lifecycle.ViewModel;
+
+import com.example.mymusic.model.Track;
 
 import java.util.ArrayList;
 import java.util.List;

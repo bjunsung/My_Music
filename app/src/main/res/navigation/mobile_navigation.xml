@@ -43,4 +43,11 @@
              app:argType="com.example.mymusic.model.Track" />
     </fragment>
 
+    <fragment
+        android:id="@+id/navigation_favorites"
+        android:name="com.example.mymusic.ui.favorites.FavoritesFragment"
+        android:label="Favorites"
+        tools:layout="@layout/fragment_favotrites">
+    </fragment>
+
 </navigation>

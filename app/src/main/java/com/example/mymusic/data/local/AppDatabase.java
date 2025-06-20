@@ -5,10 +5,12 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {Token.class}, version = 1)
+@Database(entities = {Token.class, Favorites.class}, version = 1)
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase instance;
     public abstract TokenDao tokenDao();
+    public abstract FavoritesDao favoritesDao();
+    //public abstract SettingDao settingDao();
     public static synchronized AppDatabase getInstance(Context context){
         if (instance == null){
             instance = Room.databaseBuilder(

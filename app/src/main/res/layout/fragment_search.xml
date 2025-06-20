@@ -19,6 +19,7 @@
     <EditText
         android:id="@+id/searchEditText"
         android:layout_width="0dp"
+        android:layout_marginLeft="10dp"
         android:layout_height="wrap_content"
         android:hint="노래 제목을 입력하세요"
         android:inputType="text"
@@ -51,6 +52,5 @@
         app:layout_constraintBottom_toBottomOf="@id/searchEditText"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginEnd="16dp"/>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

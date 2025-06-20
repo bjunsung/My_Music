@@ -48,11 +48,11 @@ public class MusicInfoFragment extends Fragment {
                 com.squareup.picasso.Picasso.get().load(track.artworkUrl).into(artworkImage);
             }
             trackTitle.setText(track.trackName);
-            artistName.setText("아티스트: " + track.artistName);
-            albumName.setText("앨범: " + track.albumName);
-            releaseDate.setText("발매일: " + track.releaseDate);
+            artistName.setText(track.artistName);
+            albumName.setText(track.albumName);
+            releaseDate.setText(track.releaseDate);
             int durationSec = (int) Double.parseDouble(track.durationMs)/1000;
-            durationMs.setText("재생시간: "+ durationSec/60 + "분" + durationSec%60 + "초");
+            durationMs.setText(durationSec/60 + "분 " + durationSec%60 + "초");
             Log.d("TraceId - artist ID", track.artistId);
             Log.d("TraceId - album ID", track.albumId);
             Log.d("TraceId - track ID", track.trackId);
