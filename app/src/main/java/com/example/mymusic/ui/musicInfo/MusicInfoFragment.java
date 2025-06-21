@@ -1,28 +1,43 @@
 package com.example.mymusic.ui.musicInfo;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.data.local.Favorites;
 import com.example.mymusic.model.Track;
+import com.example.mymusic.ui.favorites.FavoritesAdapter;
+import com.example.mymusic.ui.favorites.FavoritesViewModel;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class MusicInfoFragment extends Fragment {
-    private static final String ARG_TRACK = "track";
-    public static MusicInfoFragment newInstance(Track track, String accessToken) {
-        MusicInfoFragment fragment = new MusicInfoFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(ARG_TRACK, track);  // TrackItem implements Serializable
-        fragment.setArguments(args);
-        return fragment;
+    private Track track;
+    FavoritesViewModel favoritesViewModel;
+
+    //ViewModel 연결
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
     }
 
     @Override
@@ -34,7 +49,7 @@ public class MusicInfoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Track track = getArguments().getParcelable("track");
+        track = getArguments().getParcelable("track");
         if (track != null) {
             ImageView artworkImage = view.findViewById(R.id.artworkImage);
             TextView trackTitle = view.findViewById(R.id.trackTitle);
@@ -60,6 +75,33 @@ public class MusicInfoFragment extends Fragment {
         else {
             Log.e("MusicInfoFragment", "track is null!");
         }
+
+        ImageButton addButton = view.findViewById(R.id.addButton);
+        addButton.setOnClickListener(v -> {
+            new AlertDialog.Builder(getContext())
+                    .setTitle("관심목록에 추가")
+                    .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
+                    .setNegativeButton("취소", null)
+                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                            new Thread(() -> {
+                                try {
+                                    favoritesViewModel.insert(track, today);
+                                    requireActivity().runOnUiThread(() -> {
+                                        Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                    });
+                                } catch (SQLiteConstraintException e) {
+                                    requireActivity().runOnUiThread(() -> {
+                                        Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                                    });
+                                }
+                            }).start();
+                        }
+                    })
+            .show();
+        });
     }
 
 }

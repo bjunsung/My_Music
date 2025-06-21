@@ -8,18 +8,18 @@ import androidx.annotation.NonNull;
 import androidx.core.util.Consumer;
 import androidx.lifecycle.AndroidViewModel;
 
-import com.example.mymusic.data.repository.FavoritesRepository;
+import com.example.mymusic.data.repository.FavoriteSongsRepository;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 
 import java.util.List;
 
 public class FavoritesViewModel extends AndroidViewModel {
-    private final FavoritesRepository repository;
+    private final FavoriteSongsRepository repository;
 
     public FavoritesViewModel(@NonNull Application application) {
         super(application);
-        repository = new FavoritesRepository(application);
+        repository = new FavoriteSongsRepository(application);
     }
 
     /**

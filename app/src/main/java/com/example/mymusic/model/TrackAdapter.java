@@ -40,6 +40,21 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         this.addClickListener = addClickListener;
     }
 
+    public static class TrackViewHolder extends RecyclerView.ViewHolder {
+        TextView title, artist;
+        ImageView image;
+        ImageButton addButton, detailButton;
+
+        public TrackViewHolder(@NonNull View itemView) {
+            super(itemView);
+            title = itemView.findViewById(R.id.titleTextView);
+            artist = itemView.findViewById(R.id.artistTextView);
+            image = itemView.findViewById(R.id.imageView);
+            detailButton = itemView.findViewById(R.id.showDetailButton);
+            addButton = itemView.findViewById(R.id.addButton);
+        }
+    }
+
     @NonNull
     @Override
     public TrackViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -54,7 +69,15 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         holder.artist.setText(track.artistName);
 
         // 이미지 로딩 (Picasso 필요)
-        Picasso.get().load(track.artworkUrl).into(holder.image);
+        if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
+            Picasso.get()
+                    .load(track.artworkUrl)
+                    //.placeholder(R.drawable.default_artist_image) // 로딩 중 보여줄 이미지
+                    .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
+                    .into(holder.image);
+        } else {
+            holder.image.setImageResource(R.drawable.ic_image_not_found_foreground); // 기본 이미지로 대체
+        }
 
         holder.itemView.setOnClickListener(v -> {
                     Bundle bundle = new Bundle();
@@ -76,18 +99,5 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         return tracks.size();
     }
 
-    public static class TrackViewHolder extends RecyclerView.ViewHolder {
-        TextView title, artist;
-        ImageView image;
-        ImageButton addButton, detailButton;
 
-        public TrackViewHolder(@NonNull View itemView) {
-            super(itemView);
-            title = itemView.findViewById(R.id.titleTextView);
-            artist = itemView.findViewById(R.id.artistTextView);
-            image = itemView.findViewById(R.id.imageView);
-            detailButton = itemView.findViewById(R.id.showDetailButton);
-            addButton = itemView.findViewById(R.id.addButton);
-        }
-    }
 }

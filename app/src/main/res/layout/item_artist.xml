@@ -6,7 +6,7 @@
     android:orientation="horizontal"
     android:padding="4dp">
 
-    <!-- 앨범 이미지 -->
+    <!-- 아티스트 이미지 -->
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="60dp"
@@ -14,7 +14,7 @@
         android:layout_marginEnd="12dp"
         android:scaleType="centerCrop" />
 
-    <!-- 텍스트 정보 (제목, 아티스트) -->
+    <!-- 텍스트 정보 (이름, followers) -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -22,24 +22,37 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/titleTextView"
+            android:id="@+id/artistNameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LUV"
+            android:text="Apink"
             android:textSize="16sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/artistTextView"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Apink"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:layout_weight="1"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="followers: "
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:id="@+id/followersTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1303867"
+                android:textSize="14sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
     </LinearLayout>
     <ImageButton
         android:id="@+id/addButton"

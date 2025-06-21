@@ -31,6 +31,23 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         this.deleteClickListener = deleteClickListener;
     }
 
+    public class FavoriteViewHolder extends RecyclerView.ViewHolder{
+        ImageView image;
+        TextView title, artist, album, duration, releasedDate, addedDate;
+        ImageButton deleteButton;
+        public FavoriteViewHolder(@NonNull View itemView){
+            super(itemView);
+            image = itemView.findViewById(R.id.imageView);
+            title = itemView.findViewById(R.id.titleTextView);
+            artist = itemView.findViewById(R.id.artistTextView);
+            album = itemView.findViewById(R.id.albumTextView);
+            duration = itemView.findViewById(R.id.durationTextView);
+            releasedDate = itemView.findViewById(R.id.releaseDateTextView);
+            addedDate = itemView.findViewById(R.id.addedDateTextView);
+            deleteButton = itemView.findViewById(R.id.deleteButton);
+        }
+    }
+
     @NonNull
     @Override
     public FavoriteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType){
@@ -50,7 +67,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         String durationStr = durationSec/60 + "분 " + durationSec%60 + "초";
         holder.duration.setText(durationStr);
         holder.addedDate.setText(favorite.addedDate);
-
+        holder.releasedDate.setText(track.releaseDate);
         holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(track));
     }
 
@@ -59,21 +76,6 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         return favoritesList.size();
     }
 
-    public class FavoriteViewHolder extends RecyclerView.ViewHolder{
-        ImageView image;
-        TextView title, artist, album, duration, addedDate;
-        ImageButton deleteButton;
-        public FavoriteViewHolder(@NonNull View itemView){
-            super(itemView);
-            image = itemView.findViewById(R.id.imageView);
-            title = itemView.findViewById(R.id.titleTextView);
-            artist = itemView.findViewById(R.id.artistTextView);
-            album = itemView.findViewById(R.id.albumTextView);
-            duration = itemView.findViewById(R.id.durationTextView);
-            addedDate = itemView.findViewById(R.id.addedDateTextView);
-            deleteButton = itemView.findViewById(R.id.deleteButton);
-        }
-    }
 
     public void updateData(List<Favorite> newList) {
         this.favoritesList = newList;

@@ -16,10 +16,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <ImageButton
+        android:id="@+id/searchModeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_info"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toTopOf="@id/searchEditText"
+        app:layout_constraintBottom_toBottomOf="@id/searchEditText"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="4dp"/>
+
     <EditText
         android:id="@+id/searchEditText"
         android:layout_width="0dp"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="4dp"
         android:layout_height="wrap_content"
         android:hint="노래 제목을 입력하세요"
         android:inputType="text"
@@ -27,7 +38,7 @@
         android:focusableInTouchMode="true"
         android:imeOptions="actionSearch"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/searchModeButton"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>
 

@@ -182,5 +182,5 @@
         app:layout_constraintTop_toTopOf="@id/artistTextView"
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginEnd="6dp"/>
 </LinearLayout>

@@ -3,7 +3,6 @@ package com.example.mymusic.ui.favorites;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +18,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 
 import java.util.ArrayList;
@@ -29,7 +27,7 @@ public class FavoritesFragment extends Fragment {
     private List<String> selectedArtistIds = new ArrayList<>();
     private RecyclerView recyclerView;
     private ImageButton filterButton;
-    private FavoritesViewModel viewModel;
+    private FavoritesViewModel favoritesViewModel;
     FavoritesAdapter adapter;
 
     TextView emptyFavoritesTextView, favoritesLoadedCountTextView;
@@ -49,9 +47,9 @@ public class FavoritesFragment extends Fragment {
         emptyFavoritesTextView = view.findViewById(R.id.emptyMessageTextView);
         favoritesLoadedCountTextView = view.findViewById(R.id.favoritesLoadedCountTextView);
 
-        viewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+        favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
 
-        viewModel.loadFavorites(favoritesList -> {
+        favoritesViewModel.loadFavorites(favoritesList -> {
             adapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong);
             recyclerView.setAdapter(adapter);
             if (favoritesList.isEmpty()) {
@@ -78,11 +76,11 @@ public class FavoritesFragment extends Fragment {
                 .setNegativeButton("취소", null)
                 .setPositiveButton("확인", new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int which){
-                        viewModel.deleteFavoriteSong(track);
+                        favoritesViewModel.deleteFavoriteSong(track);
                         Toast.makeText(getContext(),
                                 track.trackName + " - " + track.artistName + " 이(가) Favorites List 에서 삭제되었습니다.",
                                 Toast.LENGTH_SHORT).show();
-                        viewModel.loadFavorites(updatedList -> {
+                        favoritesViewModel.loadFavorites(updatedList -> {
                             if (updatedList.isEmpty()) {
                                 emptyFavoritesTextView.setVisibility(View.VISIBLE);
                                 recyclerView.setVisibility(View.GONE);
