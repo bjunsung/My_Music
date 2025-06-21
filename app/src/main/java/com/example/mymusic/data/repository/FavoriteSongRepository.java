@@ -16,10 +16,10 @@ import java.util.concurrent.Executors;
 
 
 
-public class FavoriteSongsRepository {
+public class FavoriteSongRepository {
     private final FavoritesDao favoritesDao;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    public FavoriteSongsRepository(Context context){
+    public FavoriteSongRepository(Context context){
         AppDatabase db = AppDatabase.getInstance(context);
         favoritesDao = db.favoritesDao();
     }

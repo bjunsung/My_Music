@@ -8,18 +8,19 @@ import androidx.annotation.NonNull;
 import androidx.core.util.Consumer;
 import androidx.lifecycle.AndroidViewModel;
 
-import com.example.mymusic.data.repository.FavoriteSongsRepository;
+import com.example.mymusic.data.repository.FavoriteArtistRepository;
+import com.example.mymusic.data.repository.FavoriteSongRepository;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 
 import java.util.List;
 
 public class FavoritesViewModel extends AndroidViewModel {
-    private final FavoriteSongsRepository repository;
+    private final FavoriteSongRepository repository;
 
     public FavoritesViewModel(@NonNull Application application) {
         super(application);
-        repository = new FavoriteSongsRepository(application);
+        repository = new FavoriteSongRepository(application);
     }
 
     /**
@@ -40,4 +41,6 @@ public class FavoritesViewModel extends AndroidViewModel {
     public void insert(Track track, String addedDate) {
         repository.saveFavoritesSong(track, addedDate); // 내부에서 Thread 처리
     }
+
+
 }

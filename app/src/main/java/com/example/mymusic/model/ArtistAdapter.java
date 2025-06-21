@@ -24,25 +24,32 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
     private Context context;
 
     OnDetailClickListener detailClickListener;
+    OnAddClickListener addClickListener;
 
     public interface OnDetailClickListener{
         void onClickItem(Artist artist);
     }
-    public ArtistAdapter(List<Artist> artists, Context context, OnDetailClickListener detailClickListener){
+
+    public interface OnAddClickListener{
+        void onClickItem(Artist artist);
+    }
+    public ArtistAdapter(List<Artist> artists, Context context, OnDetailClickListener detailClickListener, OnAddClickListener addClickListener){
         this.artists = artists;
         this.context = context;
         this.detailClickListener = detailClickListener;
+        this.addClickListener = addClickListener;
     }
     public static class ArtistViewHolder extends RecyclerView.ViewHolder{
         TextView nameTextView, followersTextView;
         ImageView imageTextView;
-        ImageButton detailButton;
+        ImageButton detailButton, addButton;
         public ArtistViewHolder(@NonNull View itemView){
             super(itemView);
             nameTextView = itemView.findViewById(R.id.artistNameTextView);
             followersTextView = itemView.findViewById(R.id.followersTextView);
             imageTextView = itemView.findViewById(R.id.imageView);
             detailButton = itemView.findViewById(R.id.showDetailButton);
+            addButton = itemView.findViewById(R.id.addButton);
         }
     }
 
@@ -73,7 +80,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
         }
 
         holder.detailButton.setOnClickListener(v -> {detailClickListener.onClickItem(artist);});
-
+        holder.addButton.setOnClickListener(v -> addClickListener.onClickItem(artist));
     }
 
     @Override

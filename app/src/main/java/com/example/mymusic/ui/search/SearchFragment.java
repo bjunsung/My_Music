@@ -34,6 +34,7 @@ import com.example.mymusic.model.ArtistAdapter;
 import com.example.mymusic.model.TrackAdapter;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.TokenHelper;
+import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 
 
@@ -63,6 +64,7 @@ public class SearchFragment extends Fragment {
     private TokenRepository tokenRepository;
 
     private FavoritesViewModel favoritesViewModel;
+    private FavoriteArtistViewModel favoriteArtistViewModel;
     private static final int MAX_RETRY_REFRESH_TOKEN_COUNT = 3;
     private static int retryRefreshTokenCount;
 
@@ -73,6 +75,7 @@ public class SearchFragment extends Fragment {
         super.onCreate(savedInstanceState);
         searchViewModel = new ViewModelProvider(this).get(SearchViewModel.class);
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+        favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
 
         tokenRepository = new TokenRepository(requireContext().getApplicationContext());
     }
@@ -95,7 +98,7 @@ public class SearchFragment extends Fragment {
             if (searchViewModel.selectedOption == 0)
                 adapter = new TrackAdapter(searchViewModel.searchTrackResults, getContext(), this::showTrackDetails, this::addFavoriteSong);
             else
-                adapter = new ArtistAdapter(searchViewModel.searchArtistResults, getContext(), artist -> this.showArtistDetails(artist));
+                adapter = new ArtistAdapter(searchViewModel.searchArtistResults, getContext(), this::showArtistDetails, this::addFavoriteArtist);
             recyclerView.setAdapter(adapter);
         }
         retryRefreshTokenCount = 0;
@@ -329,7 +332,7 @@ public class SearchFragment extends Fragment {
 
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
-                        ArtistAdapter adapter = new ArtistAdapter(artists, getContext(), artist -> this.showArtistDetails(artist));
+                        ArtistAdapter adapter = new ArtistAdapter(artists, getContext(), this::showArtistDetails, this::addFavoriteArtist);
                         RecyclerView recyclerView = requireView().findViewById(R.id.resultRecyclerView);
                         recyclerView.setAdapter(adapter);
                     });
@@ -393,7 +396,7 @@ public class SearchFragment extends Fragment {
     private void addFavoriteSong(Track track){
         new AlertDialog.Builder(getContext())
                 .setTitle("관심목록에 추가")
-                .setMessage(track.trackName + " - " + track.artistName + " 을 Favorites List 에 추가할까요?")
+                .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
                 .setNegativeButton("취소", null)
                 .setPositiveButton("확인", new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int which) {
@@ -416,6 +419,32 @@ public class SearchFragment extends Fragment {
         .show();
     }
 
+
+    private void addFavoriteArtist(Artist artist){
+        new AlertDialog.Builder(getContext())
+                .setTitle("관심목록에 추가")
+                .setMessage(artist.artistName  + " 을(를) Favorites List 에 추가할까요?")
+                .setNegativeButton("취소", null)
+                .setPositiveButton("확인", new DialogInterface.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int which) {
+                        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        new Thread(() -> {
+                            try {
+                                favoriteArtistViewModel.insert(artist, today);
+                                requireActivity().runOnUiThread(() -> {
+                                    Toast.makeText(getContext(), artist.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                });
+                            } catch (SQLiteConstraintException e) {
+                                requireActivity().runOnUiThread(() -> {
+                                    Toast.makeText(getContext(), artist.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        }).start();
+
+                    }
+                })
+                .show();
+    }
     private void showOptionDialog(){
         String[] options = {"노래 검색", "아티스트 검색"};
         new AlertDialog.Builder(requireContext())
