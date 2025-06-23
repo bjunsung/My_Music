@@ -11,14 +11,10 @@ import com.example.mymusic.model.Track;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 
 
 public class FavoriteSongRepository {
     private final FavoritesDao favoritesDao;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     public FavoriteSongRepository(Context context){
         AppDatabase db = AppDatabase.getInstance(context);
         favoritesDao = db.favoritesDao();

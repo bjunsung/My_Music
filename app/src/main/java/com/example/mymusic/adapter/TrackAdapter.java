@@ -1,4 +1,4 @@
-package com.example.mymusic.model;
+package com.example.mymusic.adapter;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -15,6 +15,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.model.Track;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

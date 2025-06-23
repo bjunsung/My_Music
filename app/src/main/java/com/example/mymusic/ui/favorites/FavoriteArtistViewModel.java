@@ -45,16 +45,15 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         repository.saveFavoriteArtist(artist, addedDate); // 내부에서 Thread 처리
     }
 
-    public void getAddedDateAsync(String artistId, Consumer<String> callback) {
+    //백그라운드 Thread 에서 db접근 후 UI Thread 로 넘기기
+    public void getAddedDateAsync(String artistId, Consumer<String> callback){
         new Thread(() -> {
-            String date = null;
             FavoriteArtist artist = repository.getFavoriteArtist(artistId);
-            if (artist != null) date = artist.addedDate;
-
-            String finalDate = date;
-            new Handler(Looper.getMainLooper()).post(() -> callback.accept(finalDate));
+            if (artist == null) new Handler(Looper.getMainLooper()).post(() -> callback.accept((null)));
+            else new Handler(Looper.getMainLooper()).post(() -> {
+                callback.accept((artist.addedDate));
+            });
         }).start();
     }
-
 
 }

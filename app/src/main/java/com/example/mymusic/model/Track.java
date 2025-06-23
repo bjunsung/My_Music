@@ -3,9 +3,7 @@ package com.example.mymusic.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
-
-public class Track implements Serializable, Parcelable{
+public class Track implements Parcelable{
     public String trackId;
     public String albumId;
     public String artistId;

@@ -1,9 +1,11 @@
 package com.example.mymusic.data.local;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.List;
 
@@ -16,6 +18,7 @@ public interface FavoritesDao {
     //delete song by trackId
     @Query("DELETE FROM favorites_table WHERE trackId = :trackId")
     void deleteFavoritesSong(String trackId);
+
 
     //save favorite song
     @Insert(onConflict = OnConflictStrategy.ABORT)

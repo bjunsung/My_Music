@@ -3,7 +3,6 @@ package com.example.mymusic.ui.search;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,8 +29,8 @@ import com.example.mymusic.R;
 import com.example.mymusic.data.local.Token;
 import com.example.mymusic.data.repository.TokenRepository;
 import com.example.mymusic.model.Artist;
-import com.example.mymusic.model.ArtistAdapter;
-import com.example.mymusic.model.TrackAdapter;
+import com.example.mymusic.adapter.ArtistAdapter;
+import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.TokenHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
@@ -46,7 +45,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.Buffer;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -90,46 +88,26 @@ public class SearchFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         searchEditText = view.findViewById(R.id.searchEditText);
-        recyclerView = view.findViewById(R.id.resultRecyclerView);
+
+        recyclerView = view.findViewById(R.id.result_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        if(!(searchViewModel.searchTrackResults.isEmpty() || searchViewModel.searchArtistResults.isEmpty() )){
-            RecyclerView.Adapter adapter;
-            if (searchViewModel.selectedOption == 0)
-                adapter = new TrackAdapter(searchViewModel.searchTrackResults, getContext(), this::showTrackDetails, this::addFavoriteSong);
-            else
-                adapter = new ArtistAdapter(searchViewModel.searchArtistResults, getContext(), this::showArtistDetails, this::addFavoriteArtist);
+        if (searchViewModel.selectedOption == 0 && !searchViewModel.searchTrackResults.isEmpty()) {
+            TrackAdapter adapter = new TrackAdapter(searchViewModel.searchTrackResults, getContext(), this::showTrackDetails, this::addFavoriteSong);
+            recyclerView.setAdapter(adapter);
+        } else if (searchViewModel.selectedOption == 1 && !searchViewModel.searchArtistResults.isEmpty()) {
+            ArtistAdapter adapter = new ArtistAdapter(searchViewModel.searchArtistResults, getContext(), this::showArtistDetails, this::addFavoriteArtist);
             recyclerView.setAdapter(adapter);
         }
+
         retryRefreshTokenCount = 0;
         getTokenAndEnableSearch();
     }
 
     //토큰 재발급
     private void refreshToken(){
-        TokenHelper.getAccessToken(requireContext(), new TokenHelper.TokenCallback() {
-            @Override
-            public void onSuccess(String token) {
-                accessToken = token;
-                TokenRepository repo = new TokenRepository(requireContext().getApplicationContext());
-                repo.setAccessToken(token);
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(getContext(), "store token to db: " + accessToken, Toast.LENGTH_SHORT).show();
-                });
-                requireActivity().runOnUiThread(SearchFragment.this::setupSearchUI);
-            }
-            @Override
-            public void onFailure(String error) {
-                if (!isAdded()) return;
-                requireActivity().runOnUiThread(() -> {
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("token error")
-                            .setMessage(error)
-                            .setPositiveButton("exit", null)
-                            .show();
-                });
-            }
-        });
+        TokenHelper.refreshTokenWithUI(requireContext(), this, this::setupSearchUI,
+                error -> Log.e("SearchFragment", "토큰 실패: " + error));
     }
 
     private void getTokenAndEnableSearch() {
@@ -146,11 +124,24 @@ public class SearchFragment extends Fragment {
     }
 
 
-    private void lockAndSearchKeyword(){
-        //hide keyboard
+    private void keyboardUp(){
+        searchEditText.requestFocus();
+        searchEditText.post(() -> {
+            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(searchEditText, InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+    }
+
+    private void hideKeyboard(){
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(searchEditText.getWindowToken(), 0);
+    }
 
+    private void lockAndSearchKeyword(){
+        //hide keyboard
+        hideKeyboard();
         finalKeyword = searchEditText.getText().toString();
         if(finalKeyword.length() >= 1 && accessToken != null) {
             search(finalKeyword, accessToken, searchViewModel.selectedOption);
@@ -299,7 +290,7 @@ public class SearchFragment extends Fragment {
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
                         TrackAdapter adapter = new TrackAdapter(tracks, getContext(), track -> showTrackDetails(track), track -> addFavoriteSong(track));
-                        RecyclerView recyclerView = requireView().findViewById(R.id.resultRecyclerView);
+                        RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
                         recyclerView.setAdapter(adapter);
                     });
                 }
@@ -333,7 +324,7 @@ public class SearchFragment extends Fragment {
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
                         ArtistAdapter adapter = new ArtistAdapter(artists, getContext(), this::showArtistDetails, this::addFavoriteArtist);
-                        RecyclerView recyclerView = requireView().findViewById(R.id.resultRecyclerView);
+                        RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
                         recyclerView.setAdapter(adapter);
                     });
                 }
@@ -368,25 +359,13 @@ public class SearchFragment extends Fragment {
 
 
     private void showArtistDetails(Artist artist){
-        StringBuilder genres = new StringBuilder();
-        genres.append("[");
-        if (artist.genres.size() == 0)
-            genres.append("]");
-        else
-            for (int i=0; i<artist.genres.size(); i++) {
-                genres.append(artist.genres.get(i));
-                if (i < artist.genres.size() - 1)
-                    genres.append(", ");
-                else
-                    genres.append("]");
-            }
         DecimalFormat formatter = new DecimalFormat("#,###");
         String followers = formatter.format(artist.followers);
 
         new AlertDialog.Builder(getContext())
                 .setTitle("세부사항")
                 .setMessage("아티스트: " + artist.artistName +
-                        "\n장르: " + genres.toString() +
+                        "\n장르: " + artist.getJoinedGenres() +
                         "\nfollowers: " + followers)
                 .setPositiveButton("닫기", null)
                 .show();

@@ -1,12 +1,11 @@
 package com.example.mymusic.data.local;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.navigation.Navigator;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 import com.example.mymusic.model.Track;
+
 
 @Entity(tableName = "favorites_table")
 public class Favorites

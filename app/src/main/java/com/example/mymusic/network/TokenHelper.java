@@ -1,11 +1,20 @@
 package com.example.mymusic.network;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Base64;
+import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.core.util.Consumer;
+import androidx.fragment.app.Fragment;
 
 import com.example.mymusic.data.local.AppDatabase;
 import com.example.mymusic.data.local.Token;
 import com.example.mymusic.data.local.TokenDao;
+import com.example.mymusic.data.repository.TokenRepository;
 
 import org.json.JSONObject;
 
@@ -51,16 +60,57 @@ public class TokenHelper {
                     JSONObject json = new JSONObject(response.body().string());
                     String accessToken = json.getString("access_token");
                     callback.onSuccess(accessToken);
-
                     //DB 에 저장
-                    AppDatabase tokenDb = AppDatabase.getInstance(context.getApplicationContext());
-                    TokenDao tokenDao = tokenDb.tokenDao();
-                    Token tokenEntity = new Token(accessToken);
-                    tokenDao.setAccessToken(tokenEntity);
+                    TokenRepository repository = new TokenRepository(context.getApplicationContext());
+                    repository.setAccessToken(accessToken);
                 } catch (Exception e) {
                     callback.onFailure("Parse error: " + e.getMessage());
                 }
             }
         });
     }
+
+
+    public static void refreshTokenWithUI(
+            Context context,
+            @Nullable Fragment fragment, // null 가능
+            @Nullable Runnable onSuccess,
+            @Nullable Consumer<String> onFailure) {
+
+        getAccessToken(context, new TokenCallback() {
+            @Override
+            public void onSuccess(String accessToken) {
+                Runnable runTask = () -> {
+                    Toast.makeText(context, "store token to db: " + accessToken, Toast.LENGTH_SHORT).show();
+                    if (onSuccess != null) onSuccess.run();
+                };
+
+                if (fragment != null && fragment.isAdded()) {
+                    fragment.requireActivity().runOnUiThread(runTask);
+                } else {
+                    new Handler(Looper.getMainLooper()).post(runTask);
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Runnable runTask = () -> {
+                    if (onFailure != null) onFailure.accept(error);
+                    new AlertDialog.Builder(context)
+                            .setTitle("token error")
+                            .setMessage(error)
+                            .setPositiveButton("exit", null)
+                            .show();
+                };
+
+                if (fragment != null && fragment.isAdded()) {
+                    fragment.requireActivity().runOnUiThread(runTask);
+                } else {
+                    new Handler(Looper.getMainLooper()).post(runTask);
+                }
+            }
+        });
+    }
+
+
 }

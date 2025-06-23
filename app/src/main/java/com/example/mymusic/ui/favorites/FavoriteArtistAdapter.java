@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.data.local.FavoriteArtist;
+import com.example.mymusic.data.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.squareup.picasso.Picasso;
 
@@ -33,7 +33,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         this.deleteClickListener = deleteClickListener;
         this.viewModel = viewModel;
     }
-    public class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
+    public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView artistName, followers, addedDate;
         ImageButton deleteButton;
@@ -51,25 +51,24 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     @Override
     public FavoriteArtistViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType){
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_favorite_artist, parent, false);
-        return new FavoriteArtistAdapter.FavoriteArtistViewHolder(view);
+        return new FavoriteArtistViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull FavoriteArtistViewHolder holder, int position){
         Artist artist = artistList.get(position);
         holder.artistName.setText(artist.artistName);
-        DecimalFormat formatter = new DecimalFormat("#,###");
-        String followers = formatter.format(artist.followers);
-        holder.followers.setText(followers);
+        holder.followers.setText(NumberUtils.formatWithComma(artist.followers));
         //String addedDate = viewModel.getAddedDateAsync(artist.artistId);
-        // ✅ 비동기로 날짜 가져오기
-        viewModel.getAddedDateAsync(artist.artistId, addedDate -> {
-            holder.addedDate.setText(addedDate != null ? addedDate : "날짜 없음");
-        });
+
+        // 비동기로 날짜 가져오기
+        viewModel.getAddedDateAsync(artist.artistId, addedDate -> holder.addedDate.setText(addedDate != null ? addedDate : "날짜 없음"));
+
         Picasso.get()
                 .load(artist.artworkUrl)
                 .error(R.drawable.ic_image_not_found_foreground)
                 .into(holder.image);
+
         holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(artist));
 
     }

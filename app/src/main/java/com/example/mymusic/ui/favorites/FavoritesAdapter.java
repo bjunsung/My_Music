@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
-import com.example.mymusic.model.TrackAdapter;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

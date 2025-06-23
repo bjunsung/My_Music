@@ -28,9 +28,13 @@
         android:name="com.example.mymusic.ui.search.SearchFragment"
         android:label="Search"
         tools:layout="@layout/fragment_search">
-    <action
-        android:id="@+id/action_searchFragment_to_musicInfoFragment"
-        app:destination="@id/musicInfoFragment" />
+        <action
+            android:id="@+id/action_searchFragment_to_musicInfoFragment"
+            app:destination="@id/musicInfoFragment" />
+        <action
+            android:id="@+id/action_searchFragment_to_artistInfoFragment"
+            app:destination="@id/artist_info" />
+
     </fragment>
 
     <fragment
@@ -48,6 +52,16 @@
         android:name="com.example.mymusic.ui.favorites.FavoritesFragment"
         android:label="Favorites"
         tools:layout="@layout/fragment_favotrites">
+    </fragment>
+
+    <fragment
+        android:id="@+id/artist_info"
+        android:name="com.example.mymusic.ui.artistInfo.ArtistInfoFragment"
+        android:label="Artist Information"
+        tools:layout="@layout/fragment_aritist_info">
+        <argument
+            android:name="artist"
+            app:argType="com.example.mymusic.model.Artist" />
     </fragment>
 
 </navigation>

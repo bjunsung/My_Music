@@ -49,7 +49,9 @@ public class MusicInfoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         track = getArguments().getParcelable("track");
+
         if (track != null) {
             ImageView artworkImage = view.findViewById(R.id.artworkImage);
             TextView trackTitle = view.findViewById(R.id.trackTitle);
@@ -73,7 +75,7 @@ public class MusicInfoFragment extends Fragment {
             Log.d("TraceId - track ID", track.trackId);
         }
         else {
-            Log.e("MusicInfoFragment", "track is null!");
+            Log.e("MusicInfoFragment", "track(Track) is null!");
         }
 
         ImageButton addButton = view.findViewById(R.id.addButton);
