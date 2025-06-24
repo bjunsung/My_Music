@@ -10,6 +10,15 @@ android {
     namespace = "com.example.mymusic"
     compileSdk = 35
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("C:\\Users\\baejunsungssu\\Documents\\android studio\\key")
+            storePassword = "cgial01"
+            keyAlias = "key0"
+            keyPassword = "cgial01"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.mymusic"
         minSdk = 26
@@ -26,10 +35,15 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
     }
     compileOptions {

@@ -18,6 +18,9 @@ public class Settings {
     public boolean personalized;
     public boolean trackIdInputPrefersNumeric;
 
+    @ColumnInfo(defaultValue = "0")
+    public boolean trackIdInputPrefersNumeric;
+
     public Settings(){}
     public Settings(int id, int maxSearchedTracks, int maxSearchedArtists, int maxSearchedAlbumsByArtist){
         this.id = id;
