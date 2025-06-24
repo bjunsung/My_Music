@@ -21,7 +21,7 @@ public interface FavoritesDao {
 
 
     //save favorite song
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void saveFavoritesSong(Favorites song);
 
     //get favorites songs count
@@ -35,5 +35,8 @@ public interface FavoritesDao {
     //get favorites songs by selected artists
     @Query("SELECT * FROM favorites_table WHERE artistId IN (:artistIds)")
     List<Favorites> getFavoritesByArtistIds(List<String> artistIds);
+
+    @Update
+    int updateFavoriteSong(Favorites song);  // update
 
 }

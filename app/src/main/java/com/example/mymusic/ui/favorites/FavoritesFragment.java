@@ -2,12 +2,16 @@ package com.example.mymusic.ui.favorites;
 
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -26,7 +30,9 @@ import com.example.mymusic.R;
 import com.example.mymusic.adapter.FavoriteArtistAdapter;
 import com.example.mymusic.adapter.FavoritesAdapter;
 import com.example.mymusic.model.Artist;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
+import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.LyricsSearchService;
 
 import java.util.ArrayList;
@@ -49,12 +55,14 @@ public class FavoritesFragment extends Fragment {
     private ImageButton filterButton;
 
     private WebView webView;
+    private String focusedTrackId;
+    TextView lyricsTextView;
 
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+        favoritesViewModel = new ViewModelProvider(requireActivity()).get(FavoritesViewModel.class);
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
     }
 
@@ -71,13 +79,17 @@ public class FavoritesFragment extends Fragment {
         elementCountTextView = view.findViewById(R.id.element_count);
         elementCountTextView.setText("Songs");
 
+        lyricsTextView = getView().findViewById(R.id.metadata_lyrics);
+
         //switch toggle event
         SwitchCompat favoriteOptionSwitch = view.findViewById(R.id.favorite_option_switch);
         favoriteOptionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked)
                 favoriteOption = 0; //track
-            else
+            else {
                 favoriteOption = 1; //artist
+                lyricsTextView.setVisibility(TextView.INVISIBLE);
+            }
             loadFavoritesAndUpdateUI();
         });
 
@@ -93,7 +105,7 @@ public class FavoritesFragment extends Fragment {
         if(favoriteOption == 0) {//track
             emptyFavoriteArtistTextView.setVisibility(View.GONE);
             favoritesViewModel.loadFavorites(favoritesList -> {
-                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::addLyric);
+                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::onLyricClick, this::onLyricLongClick);
                 recyclerView.setAdapter(favoriteTrackAdapter);
                 if (favoritesList.isEmpty()) {
                     emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
@@ -134,7 +146,7 @@ public class FavoritesFragment extends Fragment {
     private void loadFavoritesAndUpdateUI() {
         if (favoriteOption == 0) {
             favoritesViewModel.loadFavorites(favoritesList -> {
-                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::addLyric);
+                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::onLyricClick, this::onLyricLongClick);
                 recyclerView.setAdapter(favoriteTrackAdapter);
                 updateEmptyState(favoritesList.isEmpty());
                 favoriteTrackAdapter.updateData(favoritesList);
@@ -231,7 +243,54 @@ public class FavoritesFragment extends Fragment {
     }
 
 
-    private void addLyric(){
+
+    private void onLyricLongClick(String trackIdDb){
+        favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
+            if (favorite != null && favorite.metadata != null && favorite.metadata.lyrics != null){
+                addLyric(trackIdDb, true);
+            } else {
+                new AlertDialog.Builder(getContext())
+                        .setTitle("가사정보 없음")
+                        .setMessage("링크를 입력해 가사를 추가하세요")
+                        .setPositiveButton("닫기", null)
+                        .show();
+            }
+        });
+
+    }
+    private void onLyricClick(String trackIdDb){
+
+        favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
+            if (favorite != null && favorite.metadata != null && favorite.metadata.lyrics != null){
+                showLyricsByScreenMode(favorite);
+            } else {
+                addLyric(trackIdDb, false);
+            }
+        });
+    }
+
+    private void showLyricsByScreenMode(Favorite favorite){
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // 가로모드
+            if(lyricsTextView.getVisibility() == TextView.VISIBLE && favorite.track.trackId.equals(focusedTrackId)){
+                lyricsTextView.setVisibility(TextView.INVISIBLE);
+            }
+            else {
+                lyricsTextView.setText(favorite.metadata.lyrics);
+                lyricsTextView.setVisibility(TextView.VISIBLE);
+                focusedTrackId = favorite.track.trackId;
+            }
+
+        } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            // 세로모드
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("상세정보")
+                    .setMessage(favorite.metadata.lyrics)
+                    .setPositiveButton("닫기", null)
+                    .show();
+        }
+    }
+    private void addLyric(String trackIdDb, boolean editMode){
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(50, 40, 50, 10);
@@ -239,9 +298,15 @@ public class FavoritesFragment extends Fragment {
         final EditText input = new EditText(getContext());
         input.setHint("https://vibe.naver.com/track/3861527");
         input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
+        input.setImeOptions(EditorInfo.IME_ACTION_DONE);
+
+        final EditText input_lyrics = new EditText(getContext());
+        input_lyrics.setHint("여기에 가사 직접 입력");
+        input_lyrics.setInputType(InputType.TYPE_CLASS_TEXT);
+        input_lyrics.setImeOptions(EditorInfo.IME_ACTION_DONE);
 
         TextView message = new TextView(getContext());
-        message.setText("NAVER VIBE 주소를 입력하세요.");
+        message.setText("NAVER VIBE 주소를 입력 또는 직접 가사 추가");
         message.setTextSize(17);
 
 
@@ -253,29 +318,88 @@ public class FavoritesFragment extends Fragment {
 
         layout.addView(message);
         layout.addView(input);
+        layout.addView(input_lyrics);
+
+        String dialogTitle;
+        if (editMode){
+            dialogTitle = "가사 편집";
+        }
+        else{
+            dialogTitle = "가사 정보 등록";
+        }
 
         new AlertDialog.Builder(getContext())
-                .setTitle("가사 정보 등록")
+                .setTitle(dialogTitle)
                 .setView(layout)
                 .setPositiveButton("확인", (dialog, which) -> {
-                    String userInput = input.getText().toString().trim();
-                    String trackId = extractTrackId(userInput);
-                    LyricsSearchService.fetchLyrics(requireContext(), webView, trackId, new LyricsSearchService.LyricCallback() {
-                        @Override
-                        public void onSuccess(String lyrics) {
-                            if (lyrics == null || lyrics.trim().isEmpty()) return;
-                            new AlertDialog.Builder(requireContext())
-                                    .setTitle("가사")
-                                    .setMessage(lyrics)
-                                    .setPositiveButton("닫기", null)
-                                    .show();
-                        }
+                    if (!input.getText().toString().isEmpty()) {
+                        String userInput = input.getText().toString().trim();
+                        String trackIdNaverVibe = extractTrackId(userInput);
 
-                        @Override
-                        public void onFailure(String reason) {
-                            Toast.makeText(getContext(), "실패: " + reason, Toast.LENGTH_SHORT).show();
-                        }
-                    });
+
+                        LyricsSearchService.fetchMetadata(webView, trackIdNaverVibe, new LyricsSearchService.MetadataCallback() {
+                            @Override
+                            public void onSuccess(TrackMetadata metadata) {
+                                if (metadata.getLyrics() == null || metadata.getLyrics().trim().isEmpty())
+                                    return;
+                                new AlertDialog.Builder(requireContext())
+                                        .setTitle("아래 정보를 저장하시겠습니까?")
+                                        .setMessage(metadata.toString())
+                                        .setPositiveButton("저장", (dialog, which) -> {
+                                            favoritesViewModel.addMetadata(trackIdDb, metadata, updated -> {
+                                                if (updated > 0) {
+                                                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
+
+                                                } else {
+                                                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show());
+                                                }
+                                            });
+
+                                        })
+                                        .setNegativeButton("닫기", null)
+                                        .show();
+                            }
+
+                            @Override
+                            public void onFailure(String reason) {
+                                Toast.makeText(getContext(), "실패: " + reason, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                    else{
+                        Log.d("Metadata input", "metadata inuput");
+                        favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
+                                    if (favorite != null) {
+                                        Log.d("favorite != null", "favorite != null");
+                                        TrackMetadata newMetadata = new TrackMetadata();
+                                        if (!(favorite.metadata.title == null && favorite.metadata.lyrics == null && favorite.metadata.composers == null && favorite.metadata.lyricists == null)) {
+                                            Log.d("metadata is not null", favorite.metadata.title + favorite.metadata.lyrics + favorite.metadata.composers + favorite.metadata.lyricists);
+                                            newMetadata.title = favorite.metadata.title;
+                                            newMetadata.lyrics = favorite.metadata.lyrics;
+                                            newMetadata.lyricists = favorite.metadata.lyricists;
+                                            newMetadata.composers = favorite.metadata.composers;
+                                        }
+
+                                        if (!input_lyrics.getText().toString().isEmpty()) {
+                                            newMetadata.lyrics = input_lyrics.getText().toString();
+                                            Log.d("added new lyrics to newMetadata", "added new lyrics to newMetadata");
+                                        }
+
+                                        favoritesViewModel.addMetadata(trackIdDb, newMetadata, updated -> {
+                                            if (updated > 0) {
+                                                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
+
+                                            } else {
+                                                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show());
+                                            }
+                                        });
+                                    }
+                                }
+                            );
+
+
+
+                    }
                 })
                 .setNegativeButton("취소", null)
                 .show();

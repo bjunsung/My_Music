@@ -81,10 +81,12 @@ public class MusicInfoFragment extends Fragment {
             albumName.setOnClickListener(v -> {
                 ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
                 apiHelper.getAlbum(track.albumId, 0, album -> {
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable("album",  album);
-                    NavController navController = NavHostFragment.findNavController(this);
-                    navController.navigate(R.id.action_musicInfoFragment_to_albumInfoFragment, bundle);
+                    if (album != null) {
+                        Bundle bundle = new Bundle();
+                        bundle.putParcelable("album", album);
+                        NavController navController = NavHostFragment.findNavController(this);
+                        navController.navigate(R.id.action_musicInfoFragment_to_albumInfoFragment, bundle);
+                    }
                 });
             });
 

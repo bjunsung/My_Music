@@ -56,4 +56,5 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         }).start();
     }
 
+
 }

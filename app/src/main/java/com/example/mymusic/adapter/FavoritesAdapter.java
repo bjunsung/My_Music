@@ -1,5 +1,6 @@
 package com.example.mymusic.adapter;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,29 +22,39 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     List<Favorite> favoritesList;
     OnDeleteClickListener deleteClickListener;
     OnLyricClickListener lyricClickListener;
+    OnLyricLongClickListener lyricLongClickListener;
 
     public interface OnDeleteClickListener{
         void onItemClick(Track track);
     }
 
     public interface OnLyricClickListener{
-        void onItemClick();
+        void onItemClick(String trackId);
     }
 
-    public FavoritesAdapter(List<Favorite> favoritesList, OnDeleteClickListener deleteClickListener, OnLyricClickListener lyricClickListener){
+    public interface OnLyricLongClickListener{
+        void onItemClick(String trackId);
+    }
+
+    public FavoritesAdapter(List<Favorite> favoritesList,
+                            OnDeleteClickListener deleteClickListener,
+                            OnLyricClickListener lyricClickListener,
+                            OnLyricLongClickListener lyricLongClickListener){
         this.favoritesList = favoritesList;
         this.deleteClickListener = deleteClickListener;
         this.lyricClickListener = lyricClickListener;
+        this.lyricLongClickListener = lyricLongClickListener;
     }
 
     public class FavoriteViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
-        TextView title, artist, album, duration, releasedDate, addedDate;
+        TextView title, titleKr, artist, album, duration, releasedDate, addedDate;
         ImageButton deleteButton, lyricButton;
         public FavoriteViewHolder(@NonNull View itemView){
             super(itemView);
             image = itemView.findViewById(R.id.imageView);
             title = itemView.findViewById(R.id.titleTextView);
+            titleKr = itemView.findViewById(R.id.titleKRTextView);
             artist = itemView.findViewById(R.id.artistTextView);
             album = itemView.findViewById(R.id.albumTextView);
             duration = itemView.findViewById(R.id.durationTextView);
@@ -67,6 +78,13 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         Track track = favorite.track;
         Picasso.get().load(track.artworkUrl).into(holder.image);
         holder.title.setText(track.trackName);
+        if (favorite.metadata != null && favorite.metadata.title != null){
+            Log.d("Korean Title EXIXT", "Korean Title: " + favorite.metadata.title);
+            holder.titleKr.setText(favorite.metadata.title);
+        }
+        else {
+            holder.titleKr.setText(track.trackName);
+        }
         holder.artist.setText(track.artistName);
         holder.album.setText(track.albumName);
         int durationSec = (int) Double.parseDouble(track.durationMs)/1000;
@@ -74,13 +92,23 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         holder.duration.setText(durationStr);
         holder.addedDate.setText(favorite.addedDate);
         holder.releasedDate.setText(track.releaseDate);
+
+
         holder.deleteButton.setOnClickListener(v -> {
             deleteClickListener.onItemClick(track);
         });
 
-       holder.lyricButton.setOnClickListener(v -> {
-           lyricClickListener.onItemClick();
-       });
+        //lyrics button 클릭 이벤트
+        holder.lyricButton.setOnClickListener(v -> {
+            lyricClickListener.onItemClick(track.trackId);
+        });
+
+        //lyrics button long 클릭 이벤트
+        holder.lyricButton.setOnLongClickListener(v -> {
+            lyricLongClickListener.onItemClick(track.trackId);
+            return true;
+        });
+
     }
 
     @Override

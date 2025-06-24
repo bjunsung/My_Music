@@ -6,6 +6,8 @@ import androidx.room.PrimaryKey;
 
 import com.example.mymusic.model.Track;
 
+import java.util.List;
+
 
 @Entity(tableName = "favorites_table")
 public class Favorites
@@ -22,8 +24,14 @@ public class Favorites
     public String releaseDate;
     public String durationMs;
     public String addedDate;
+
+    public String trackNameKr;
+    public String lyrics;
+    public List<String> lyricists;
+    public List<String> composers;
+
     public Favorites(){}
-    public Favorites(Track track, String addedDate){
+    public Favorites(Track track, String addedDate, String trackNameKr, String lyrics, List<String> lyricists, List<String> composers){
         this.trackId = track.trackId;
         this.albumId = track.albumId;
         this.artistId = track.artistId;
@@ -34,5 +42,9 @@ public class Favorites
         this.releaseDate = track.releaseDate;
         this.durationMs = track.durationMs;
         this.addedDate = addedDate;
+        this.trackNameKr = trackNameKr;
+        this.lyrics = lyrics;
+        this.lyricists = lyricists;
+        this.composers = composers;
     }
 }

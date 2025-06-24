@@ -155,19 +155,28 @@ public class ArtistApiHelper {
     public void getAlbum(String albumId, int refreshCount, Consumer<Album> callback){
         getAccessToken(token -> {
             AlbumSearchService.searchAlbumByAlbumId(albumId, token, callback, errorMessage -> {
+                // 실패 시 재발급 후 다시 검색
                 if (errorMessage.equals("Error,만료된 토큰입니다.") && refreshCount < 3){
                     refreshToken(refreshed -> {
                         if (refreshed != null)
                             new Handler(Looper.getMainLooper()).post(() -> getAlbum(albumId, refreshCount + 1, callback));
-                        else
+                        else {
                             new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+
+                        }
                     });
                 }
-                else {
+                else{ // 토큰 만료에 의한 접근 실패가 아닌 경우 에러 메시지 출력하고 null callback
+                    alertError(errorMessage);
                     new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
                 }
             });
-        }, error -> new Handler(Looper.getMainLooper()).post(() -> callback.accept(null)));
+        }, error -> {
+            //token access 실패
+            alertError("Error,token access fail");
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+        }
+        );
     }
 
 
