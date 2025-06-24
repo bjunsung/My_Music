@@ -46,6 +46,9 @@ android {
 
 
 dependencies {    // Room core
+    implementation("io.github.everythingme:overscroll-decor-android:1.1.1") //overscroll
+    implementation("com.github.bumptech.glide:glide:4.16.0")  //Glide
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0") // Java 프로젝트용 Glide
     implementation("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
     implementation(files("libs/auth-release.aar"))

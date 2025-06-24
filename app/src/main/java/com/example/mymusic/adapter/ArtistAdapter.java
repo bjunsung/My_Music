@@ -12,11 +12,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import androidx.navigation.NavigatorProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.data.util.NumberUtils;
+import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.squareup.picasso.Picasso;
 

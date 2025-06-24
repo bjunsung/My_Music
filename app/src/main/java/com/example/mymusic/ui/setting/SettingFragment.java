@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -27,13 +28,15 @@ public class SettingFragment extends Fragment {
     private EditText maxSearchedArtistEditText;
     private EditText maxSearchedAlbumnsByArtistEditText;
     private TextView cancelButton, confirmButton;
-    private SettingRepository repository;
+    private SettingRepository settingRepository;
     private int originalTracksLimit, originalArtistsLimit, originalAlbumsLimit;
+    private SwitchCompat numericPadStateSwitch;
+    private boolean numericPadState;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         super.onCreateView(inflater, container, savedInstanceState);
-        repository = new SettingRepository(requireContext());
+        settingRepository = new SettingRepository(requireContext());
         return inflater.inflate(R.layout.fragment_settings, container, false);
     }
 
@@ -45,6 +48,8 @@ public class SettingFragment extends Fragment {
         maxSearchedAlbumnsByArtistEditText = view.findViewById(R.id.max_searched_albums_by_artist);
         cancelButton = view.findViewById(R.id.cancel_button);
         confirmButton = view.findViewById(R.id.confirm_button);
+        numericPadStateSwitch = view.findViewById(R.id.number_pad_state_switch);
+
 
         loadInitialValues();
 
@@ -54,14 +59,28 @@ public class SettingFragment extends Fragment {
         });
         cancelButton.setOnClickListener(v -> this.restoreOriginalValues());
 
+        numericPadStateSwitch.setOnCheckedChangeListener(((buttonView, isChecked) -> {
+            if (isChecked) {
+                new Thread(() -> {
+                    settingRepository.setNumericPreference(true);
+                }).start();
+            }
+            else {
+                new Thread(() -> {
+                    settingRepository.setNumericPreference(false);
+                }).start();
+            }
+        }));
+
     }
 
     private void loadInitialValues() {
         // 백그라운드 쓰레드에서 Room 접근
         new Thread(() -> {
-            originalTracksLimit = repository.getMaxSearchedTracks();
-            originalArtistsLimit = repository.getMaxSearchedArtists();
-            originalAlbumsLimit = repository.getMaxSearchedAlbumsByArtist();
+            originalTracksLimit = settingRepository.getMaxSearchedTracks();
+            originalArtistsLimit = settingRepository.getMaxSearchedArtists();
+            originalAlbumsLimit = settingRepository.getMaxSearchedAlbumsByArtist();
+            numericPadState = settingRepository.getNumericPreference();
             // 여기서 호출해야 값이 정상적으로 표시됨
             requireActivity().runOnUiThread(this::setTextSync);
         }).start();
@@ -74,6 +93,7 @@ public class SettingFragment extends Fragment {
         maxSearchedTracksEditText.setHint(String.valueOf(originalTracksLimit));
         maxSearchedArtistEditText.setHint(String.valueOf(originalArtistsLimit));
         maxSearchedAlbumnsByArtistEditText.setHint(String.valueOf(originalAlbumsLimit));
+        numericPadStateSwitch.setChecked(numericPadState);
     }
 
 
@@ -140,7 +160,7 @@ public class SettingFragment extends Fragment {
             new Thread(() -> {
                 boolean storeSuccess = true;
                 if (finalMaxTrackUpdate){
-                    boolean success = repository.setMaxSearchedTracks(finalTracks);
+                    boolean success = settingRepository.setMaxSearchedTracks(finalTracks);
                     storeSuccess &= success;
                     requireActivity().runOnUiThread(() -> {
                         maxSearchedTracksEditText.setText("");
@@ -148,7 +168,7 @@ public class SettingFragment extends Fragment {
                     });
                 }
                 if (finalMaxAlbumUpdate) {
-                    boolean success = repository.setMaxSearchedAlbumsByArtist(finalAlbums);
+                    boolean success = settingRepository.setMaxSearchedAlbumsByArtist(finalAlbums);
                     storeSuccess &= success;
                     requireActivity().runOnUiThread(() -> {
                         maxSearchedAlbumnsByArtistEditText.setText("");
@@ -156,7 +176,7 @@ public class SettingFragment extends Fragment {
                     });
                 }
                 if (finalMaxArtistUpdate) {
-                    boolean success = repository.setMaxSearchedArtists(finalArtist);
+                    boolean success = settingRepository.setMaxSearchedArtists(finalArtist);
                     storeSuccess &= success;
                     requireActivity().runOnUiThread(() -> {
                         maxSearchedArtistEditText.setText("");

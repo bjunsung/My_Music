@@ -14,7 +14,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.data.util.NumberUtils;
+import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.squareup.picasso.Picasso;

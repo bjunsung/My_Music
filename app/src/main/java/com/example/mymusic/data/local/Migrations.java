@@ -18,4 +18,12 @@ public class Migrations {
     };
 
     // 향후 다른 Migration도 여기에 추가 가능
+
+    public static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE favorites_table ADD COLUMN vibeTrackId TEXT");
+            db.execSQL("ALTER TABLE settings_table ADD COLUMN trackIdInputPrefersNumeric INTEGER NOT NULL DEFAULT 1");
+        }
+    };
 }

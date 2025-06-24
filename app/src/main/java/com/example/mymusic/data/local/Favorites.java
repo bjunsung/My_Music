@@ -25,13 +25,15 @@ public class Favorites
     public String durationMs;
     public String addedDate;
 
+    public String vibeTrackId;
+
     public String trackNameKr;
     public String lyrics;
     public List<String> lyricists;
     public List<String> composers;
 
     public Favorites(){}
-    public Favorites(Track track, String addedDate, String trackNameKr, String lyrics, List<String> lyricists, List<String> composers){
+    public Favorites(Track track, String addedDate, String vibeTrackId, String trackNameKr, String lyrics, List<String> lyricists, List<String> composers){
         this.trackId = track.trackId;
         this.albumId = track.albumId;
         this.artistId = track.artistId;
@@ -42,6 +44,7 @@ public class Favorites
         this.releaseDate = track.releaseDate;
         this.durationMs = track.durationMs;
         this.addedDate = addedDate;
+        this.vibeTrackId = vibeTrackId;
         this.trackNameKr = trackNameKr;
         this.lyrics = lyrics;
         this.lyricists = lyricists;

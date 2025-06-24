@@ -17,13 +17,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
-import com.example.mymusic.data.util.NumberUtils;
+import com.example.mymusic.model.Favorite;
+import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
+import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.ArtistApiHelper;
@@ -55,7 +59,9 @@ public class ArtistInfoFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        return inflater.inflate(R.layout.fragment_artist_info, container, false);
+        View view = inflater.inflate(R.layout.fragment_artist_info, container, false);
+        new EdgeSwipeBackGestureHelper().attachToView(view.findViewById(R.id.gesture_overlay), view.findViewById(R.id.swipe_content),this);
+        return view;
     }
 
     @Override
@@ -85,13 +91,14 @@ public class ArtistInfoFragment extends Fragment {
             genresTextView.setText(artist.getJoinedGenres());
             followersTextView.setText(NumberUtils.formatWithComma(artist.followers));
             ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext(), requireActivity());
-            apiHelper.searchAlbumsByArtist(artist.artistId, albumList -> {
+            apiHelper.searchAlbumsByArtist(artist.artistId, 0, albumList -> {
                 SimpleAlbumAdapter albumAdapter = new SimpleAlbumAdapter(albumList);
                 albumRecyclerView.setAdapter(albumAdapter);
                 albumRecyclerView.setNestedScrollingEnabled(false);
 
 
-            }, 0);
+            });
+
             apiHelper.searchTrackByArtist(artist.artistId, tracks -> {
                 TrackAdapter trackAdapter = new TrackAdapter(tracks, getContext(), this::showTrackDetails, this::addFavoriteSong);
                 trackRecyclerView.setAdapter(trackAdapter);
@@ -131,6 +138,7 @@ public class ArtistInfoFragment extends Fragment {
 
 
     }
+
 
 
     private void addFavoriteSong(Track track){

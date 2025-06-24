@@ -1,145 +1,185 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:layout_height="match_parent">
 
+    <!-- ✅ 이동 대상 -->
     <LinearLayout
+        android:id="@+id/swipe_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <!-- 아티스트 정보 영역 -->
-        <LinearLayout
-            android:id="@+id/linear_layout_1"
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:id="@+id/artworkImage"
-                android:layout_width="400dp"
-                android:layout_height="400dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_image_not_found_foreground" />
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingLeft="16dp"
-                android:paddingTop="4dp">
+                android:padding="8dp">
 
-                <LinearLayout
+                <!-- 🔽 기존 내용 전부 그대로 유지 -->
+                <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:app="http://schemas.android.com/apk/res-auto"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_height="match_parent"
+                    android:fillViewport="true">
 
-                    <TextView
-                        android:id="@+id/artist_name"
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingTop="50dp"
-                        android:text="Apink"
-                        android:textSize="30sp"
-                        android:textStyle="bold"
-                        android:textIsSelectable="true" />
+                        android:orientation="vertical"
+                        android:padding="8dp">
 
-                    <ImageButton
-                        android:id="@+id/add_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_add_button"
-                        android:background="?attr/selectableItemBackgroundBorderless" />
-                </LinearLayout>
+                        <!-- 아티스트 정보 영역 -->
+                        <LinearLayout
+                            android:id="@+id/linear_layout_1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                            <ImageView
+                                android:id="@+id/artworkImage"
+                                android:layout_width="400dp"
+                                android:layout_height="400dp"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_image_not_found_foreground" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="장르: "
-                        android:textSize="24sp"
-                        android:maxLines="1"
-                        android:ellipsize="end"
-                        android:textIsSelectable="true" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:paddingLeft="16dp"
+                                android:paddingTop="4dp">
 
-                    <TextView
-                        android:id="@+id/genres"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="[k-pop]"
-                        android:textSize="24sp"
-                        android:textIsSelectable="true" />
-                </LinearLayout>
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                                    <TextView
+                                        android:id="@+id/artist_name"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:paddingTop="50dp"
+                                        android:text="Apink"
+                                        android:textSize="30sp"
+                                        android:textStyle="bold"
+                                        android:textIsSelectable="true" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="followers: "
-                        android:textSize="24sp"
-                        android:textIsSelectable="true" />
+                                    <ImageButton
+                                        android:id="@+id/add_button"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:padding="8dp"
+                                        android:src="@drawable/ic_add_button"
+                                        android:background="?attr/selectableItemBackgroundBorderless" />
+                                </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/followers"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1,303,633"
-                        android:textSize="24sp"
-                        android:textIsSelectable="true" />
-                </LinearLayout>
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="장르: "
+                                        android:textSize="24sp"
+                                        android:maxLines="1"
+                                        android:ellipsize="end"
+                                        android:textIsSelectable="true" />
+
+                                    <TextView
+                                        android:id="@+id/genres"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="[k-pop]"
+                                        android:textSize="24sp"
+                                        android:textIsSelectable="true" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="followers: "
+                                        android:textSize="24sp"
+                                        android:textIsSelectable="true" />
+
+                                    <TextView
+                                        android:id="@+id/followers"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="1,303,633"
+                                        android:textSize="24sp"
+                                        android:textIsSelectable="true" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- 앨범 타이틀 -->
+                        <TextView
+                            android:id="@+id/album_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="30dp"
+                            android:text="Albums"
+                            android:textSize="30sp"
+                            android:textStyle="bold" />
+
+                        <!-- 앨범 RecyclerView -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/album_result_recycler_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+
+                        <!-- 곡 타이틀 -->
+                        <TextView
+                            android:id="@+id/track_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="30dp"
+                            android:text="Songs"
+                            android:textSize="30sp"
+                            android:textStyle="bold" />
+
+                        <!-- 트랙 RecyclerView -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/track_result_recycler_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingBottom="@dimen/navigation_bar_margin"
+                            android:nestedScrollingEnabled="false" />
+
+                    </LinearLayout>
+                </androidx.core.widget.NestedScrollView>
+
+                <!-- 아티스트 정보 -->
+                <!-- 앨범 RecyclerView -->
+                <!-- 트랙 RecyclerView -->
+                <!-- 생략된 부분은 그대로 유지하세요 -->
+
             </LinearLayout>
-        </LinearLayout>
-
-        <!-- 앨범 타이틀 -->
-        <TextView
-            android:id="@+id/album_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:text="Albums"
-            android:textSize="30sp"
-            android:textStyle="bold" />
-
-        <!-- 앨범 RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/album_result_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
-
-        <!-- 곡 타이틀 -->
-        <TextView
-            android:id="@+id/track_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:text="Songs"
-            android:textSize="30sp"
-            android:textStyle="bold" />
-
-        <!-- 트랙 RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/track_result_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="@dimen/navigation_bar_margin"
-            android:nestedScrollingEnabled="false" />
-
+        </androidx.core.widget.NestedScrollView>
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+
+    <!-- ✅ 제스처 감지용 오버레이 -->
+    <View
+        android:id="@+id/gesture_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent" />
+</FrameLayout>

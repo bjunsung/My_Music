@@ -25,7 +25,7 @@ public class FavoriteSongRepository {
         favoritesDao = db.favoritesDao();
     }
     public void saveFavoritesSong(Track track, String addedDate){
-        Favorites song = new Favorites(track, addedDate, null, null, null, null);
+        Favorites song = new Favorites(track, addedDate, null, null, null, null, null);
         favoritesDao.saveFavoritesSong(song);
     }
     public String deleteFavoritesSong(String trackId){
@@ -50,7 +50,7 @@ public class FavoriteSongRepository {
                 song.artworkUrl,
                 song.releaseDate,
                 song.durationMs);
-        TrackMetadata metadata = new TrackMetadata(song.trackNameKr, song.lyrics, song.lyricists, song.composers);
+        TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.lyricists, song.composers);
         return new Favorite(track, song.addedDate, metadata);
     }
     public int getFavoritesCount(){
@@ -71,7 +71,7 @@ public class FavoriteSongRepository {
                     song.releaseDate,
                     song.durationMs
             );
-            TrackMetadata metadata = new TrackMetadata(song.trackNameKr, song.lyrics, song.lyricists, song.composers);
+            TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.lyricists, song.composers);
             favorites.add(new Favorite(track, song.addedDate, metadata));
         }
         return favorites;
@@ -83,6 +83,7 @@ public class FavoriteSongRepository {
 
     public void updateFavoriteSong(String trackId, TrackMetadata metadata, Consumer<Integer> callback){
         Favorites favorites = favoritesDao.getFavoritesSong(trackId);
+        favorites.vibeTrackId = metadata.vibeTrackId;
         favorites.trackNameKr = metadata.title;
         favorites.lyrics = metadata.lyrics;
         favorites.lyricists = metadata.lyricists;

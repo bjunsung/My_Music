@@ -1,67 +1,79 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipe_content"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.search.SearchFragment">
+    android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/result_recycler_view"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_margin="8dp"
-        android:paddingBottom="@dimen/navigation_bar_margin"
-        app:layout_constraintTop_toBottomOf="@id/searchEditText"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_height="match_parent"
+        tools:context=".ui.search.SearchFragment"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-    <ImageButton
-        android:id="@+id/searchModeButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_info"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintTop_toTopOf="@id/searchEditText"
-        app:layout_constraintBottom_toBottomOf="@id/searchEditText"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="4dp"/>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/result_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:paddingBottom="@dimen/navigation_bar_margin"
+            app:layout_constraintTop_toBottomOf="@id/searchEditText"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            />
 
-    <EditText
-        android:id="@+id/searchEditText"
-        android:layout_width="0dp"
-        android:layout_marginLeft="4dp"
-        android:layout_height="wrap_content"
-        android:hint="노래 제목을 입력하세요"
-        android:inputType="text"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:imeOptions="actionSearch"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/searchModeButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        <ImageButton
+            android:id="@+id/searchModeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_info"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintTop_toTopOf="@id/searchEditText"
+            app:layout_constraintBottom_toBottomOf="@id/searchEditText"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="4dp"/>
 
-    <ImageButton
-        android:id="@+id/deleteKeywordButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/baseline_backspace_24"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintTop_toTopOf="@id/searchEditText"
-        app:layout_constraintBottom_toBottomOf="@id/searchEditText"
-        app:layout_constraintEnd_toStartOf="@id/searchButton"
-        android:layout_marginEnd="16dp"/>
+        <EditText
+            android:id="@+id/searchEditText"
+            android:layout_width="0dp"
+            android:layout_marginLeft="4dp"
+            android:layout_height="wrap_content"
+            android:hint="노래 제목을 입력하세요"
+            android:inputType="text"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:imeOptions="actionSearch"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/searchModeButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"/>
 
-    <ImageButton
-        android:id="@+id/searchButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_info"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintTop_toTopOf="@id/searchEditText"
-        app:layout_constraintBottom_toBottomOf="@id/searchEditText"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="16dp"/>
+        <ImageButton
+            android:id="@+id/deleteKeywordButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_backspace_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintTop_toTopOf="@id/searchEditText"
+            app:layout_constraintBottom_toBottomOf="@id/searchEditText"
+            app:layout_constraintEnd_toStartOf="@id/searchButton"
+            android:layout_marginEnd="16dp"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageButton
+            android:id="@+id/searchButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_info"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintTop_toTopOf="@id/searchEditText"
+            app:layout_constraintBottom_toBottomOf="@id/searchEditText"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginEnd="16dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

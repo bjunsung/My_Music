@@ -1,153 +1,202 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/foreground_fragment_container"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.search.SearchFragment">
+    android:layout_height="match_parent">
+<FrameLayout
+    android:id="@+id/background_fragment_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
 
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/favorite_option_switch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginRight="8dp"
-        app:layout_constraintStart_toStartOf="parent"
-        android:checked="false"
-        tools:ignore="UseSwitchCompatOrMaterialXml" />
-
-
-    <ImageButton
-        android:id="@+id/filter_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="28dp"
-        android:src="@drawable/baseline_backspace_24"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/favorite_option_switch"
-        android:layout_marginEnd="16dp"/>
-
-
-    <TextView
-        android:id="@+id/favorites_loaded_count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="#"
-        android:textSize="16sp"
-        android:textColor="#666666"
-        android:layout_marginTop="28dp"
-        android:layout_marginRight="8dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/element_count"
-        />
-
-    <TextView
-        android:id="@+id/element_count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="elements"
-        android:textSize="16sp"
-        android:textColor="#666666"
-        android:layout_marginTop="28dp"
-        android:layout_marginRight="10dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        />
-
-    <TextView
-        android:id="@+id/empty_favorite_song"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Favorites List 가 비어있습니다. 좋아하는 노래를 추가하세요."
-        android:textSize="16sp"
-        android:layout_marginLeft="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/filter_button"
-        app:layout_constraintStart_toStartOf="parent"
-        android:visibility="visible"
-        />
-
-    <TextView
-        android:id="@+id/empty_favorite_artist"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Favorites List 가 비어있습니다. 좋아하는 아티스트를 추가하세요."
-        android:textSize="16sp"
-        android:layout_marginLeft="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/filter_button"
-        app:layout_constraintStart_toStartOf="parent"
-        android:visibility="visible"
-        />
-
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/result_recycler_view"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_margin="8dp"
-        android:paddingBottom="@dimen/navigation_bar_margin"
-        app:layout_constraintTop_toBottomOf="@id/filter_button"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_height="match_parent"
+        tools:context=".ui.search.SearchFragment">
 
 
-    <include layout="@layout/include_webview_hidden" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/favorite_option_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginLeft="4dp"
+            app:layout_constraintStart_toStartOf="parent"
+            android:checked="false"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
 
 
-    <TextView
-        android:id="@+id/baselineLeft"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:text="___기준선___"
-        android:visibility="invisible"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/scroll_area"
-        app:layout_constraintDimensionRatio="4:5"
-        app:layout_constraintHorizontal_weight="6"/>
-
-    <TextView
-        android:id="@+id/baselineRight"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:text="___기준선___"
-        android:visibility="invisible"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/scroll_area"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintDimensionRatio="4:5"
-        app:layout_constraintHorizontal_weight="1"/>
+        <ImageButton
+            android:id="@+id/filter_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="28dp"
+            android:src="@drawable/baseline_backspace_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/favorite_option_switch"
+            android:layout_marginEnd="16dp"
+            android:visibility="invisible"/>
 
 
-    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/scroll_area"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/baselineLeft"
-        app:layout_constraintEnd_toStartOf="@id/baselineRight"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="60dp"
-        android:paddingRight="80dp"
-        android:scrollbars="none"
-        app:layout_constraintHorizontal_weight="5">
+        <TextView
+            android:id="@+id/favorites_loaded_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="#"
+            android:textSize="16sp"
+            android:textColor="#666666"
+            android:layout_marginTop="28dp"
+            android:layout_marginRight="8dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/element_count"
+            />
+
+        <TextView
+            android:id="@+id/element_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="elements"
+            android:textSize="16sp"
+            android:textColor="#666666"
+            android:layout_marginTop="28dp"
+            android:layout_marginRight="10dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            />
+
+        <TextView
+            android:id="@+id/empty_favorite_song"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Favorites List 가 비어있습니다. 좋아하는 노래를 추가하세요."
+            android:textSize="16sp"
+            android:layout_marginLeft="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/filter_button"
+            app:layout_constraintStart_toStartOf="parent"
+            android:visibility="visible"
+            />
+
+        <TextView
+            android:id="@+id/empty_favorite_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Favorites List 가 비어있습니다. 좋아하는 아티스트를 추가하세요."
+            android:textSize="16sp"
+            android:layout_marginLeft="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/filter_button"
+            app:layout_constraintStart_toStartOf="parent"
+            android:visibility="visible"
+            />
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/result_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:paddingBottom="@dimen/navigation_bar_margin"
+            app:layout_constraintTop_toBottomOf="@id/filter_button"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            />
+
+
+        <include layout="@layout/include_webview_hidden" />
+
+
+        <TextView
+            android:id="@+id/baselineLeft"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:text="___기준선___"
+            android:visibility="invisible"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/scroll_area"
+            app:layout_constraintDimensionRatio="4:5"
+            app:layout_constraintHorizontal_weight="6"/>
+
+        <TextView
+            android:id="@+id/baselineRight"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:text="___기준선___"
+            android:visibility="invisible"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/scroll_area"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintDimensionRatio="4:5"
+            app:layout_constraintHorizontal_weight="1"/>
 
         <LinearLayout
             android:id="@+id/metadata_layout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            app:layout_constraintStart_toStartOf="@id/scroll_area"
+            app:layout_constraintEnd_toEndOf="@id/scroll_area"
+            app:layout_constraintTop_toTopOf="parent"
+
+            app:layout_constraintBottom_toTopOf="@id/scroll_area"
+            android:orientation="horizontal">
             <TextView
-                android:id="@+id/metadata_lyrics"
+                android:id="@+id/on_lyrics_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="슬퍼하지마 No No No
+                android:text="하늘바라기 (Feat.하림)"
+                android:textSize="16sp"
+                android:maxLines="1"
+                android:textStyle="bold"
+                android:ellipsize="end"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="  -  "
+                android:textSize="16sp"
+                />
+            <TextView
+                android:id="@+id/on_lyrics_artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="JEONG EUN JI"
+                android:textStyle="italic|bold"
+                android:textSize="16sp"
+                android:textIsSelectable="false"/>
+        </LinearLayout>
+
+        <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/scroll_area"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@+id/metadata_layout"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/baselineLeft"
+            app:layout_constraintEnd_toStartOf="@id/baselineRight"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="60dp"
+            android:paddingRight="80dp"
+            android:scrollbars="none"
+            app:layout_constraintHorizontal_weight="5"
+            android:visibility="gone"
+            >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/metadata_lyrics"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="슬퍼하지마 No No No
 \n혼자가 아냐 No No No
 \n언제나나나 내게 항상 빛이 돼 준 그대
 \n내 손을 잡아요 이제 지금 다가와 기대
@@ -185,48 +234,13 @@
 \n나를 언제나 믿어주던 그대
 \n다들 그만해 라고 말할 때
 \n마지막 니가 바라볼 사랑 이젠 내가 돼 줄게"
-                android:textSize="16sp"
-                android:textColor="#666666"
-                android:textIsSelectable="true"
-                android:visibility="invisible"/>
-            <TextView
-                android:id="@+id/followersTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="1,303,867"
-                android:textSize="10sp"
-                android:textColor="#666666"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:visibility="gone"/>
-        </LinearLayout>
-    </ScrollView>
+                    android:textSize="16sp"
+                    android:textColor="#666666"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
+        </ScrollView>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="60"
-            android:background="#66000000"
-            android:visibility="invisible"/>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="40"
-            android:background="#66000000"
-            android:visibility="invisible"/>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="22"
-            android:background="#66000000"
-            android:visibility="invisible"/>
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>
+</FrameLayout>

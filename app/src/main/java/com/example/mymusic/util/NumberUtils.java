@@ -1,4 +1,4 @@
-package com.example.mymusic.data.util;
+package com.example.mymusic.util;
 
 import java.text.DecimalFormat;
 

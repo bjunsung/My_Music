@@ -7,6 +7,7 @@ public class Track implements Parcelable{
     public String trackId;
     public String albumId;
     public String artistId;
+    public String artistNameKr;
     public String trackName;
     public String albumName;
     public String artistName;

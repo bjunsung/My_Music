@@ -16,6 +16,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.squareup.picasso.Picasso;
 
@@ -66,7 +67,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         return new TrackViewHolder(view);
     }
 
-    @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
         if (showPosition){
@@ -92,12 +92,15 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         if (!showImage)
             holder.image.setVisibility(TextView.GONE);
 
+
         holder.itemView.setOnClickListener(v -> {
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable("track", track);
-                    NavController navController = Navigation.findNavController(v);
-                    navController.navigate(R.id.musicInfoFragment, bundle);
-                });
+            Bundle bundle = new Bundle();
+            Favorite favorite = new Favorite(track);
+            bundle.putParcelable("favorite", favorite);
+            NavController navController = Navigation.findNavController(v);
+            navController.navigate(R.id.musicInfoFragment, bundle);
+        });
+
 
         //detailButton 클릭 event
         holder.detailButton.setOnClickListener(v -> detailClickListener.onItemClick(track));

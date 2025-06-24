@@ -36,6 +36,7 @@ public class LyricsBridge {
                 Gson gson = new Gson();
                 MetadataRaw raw = gson.fromJson(json, MetadataRaw.class);
                 TrackMetadata metadata = new TrackMetadata(
+                        null,
                         raw.title,
                         raw.lyrics,
                         Arrays.asList(raw.lyricists),

@@ -28,7 +28,7 @@ public class FavoritesViewModel extends AndroidViewModel {
     /**
      * DB에서 데이터를 가져오고 결과를 콜백(Consumer)으로 넘김
      */
-    public void loadFavorites(Consumer<List<Favorite>> callback) {
+    public void loadAllFavorites(Consumer<List<Favorite>> callback) {
         new Thread(() -> {
             List<Favorite> result = repository.getAllFavoriteTracks(); // 직접 반환하는 DAO 사용
             new Handler(Looper.getMainLooper()).post(() -> callback.accept(result)); // UI 스레드로 전달

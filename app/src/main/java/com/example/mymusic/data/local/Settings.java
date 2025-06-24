@@ -16,6 +16,7 @@ public class Settings {
     public Integer maxSearchedArtists;
     public Integer maxSearchedAlbumsByArtist;
     public boolean personalized;
+    public boolean trackIdInputPrefersNumeric;
 
     public Settings(){}
     public Settings(int id, int maxSearchedTracks, int maxSearchedArtists, int maxSearchedAlbumsByArtist){
@@ -23,6 +24,7 @@ public class Settings {
         this.maxSearchedTracks = maxSearchedTracks;
         this.maxSearchedArtists = maxSearchedArtists;
         this.maxSearchedAlbumsByArtist = maxSearchedAlbumsByArtist;
+        this.trackIdInputPrefersNumeric = true;
     }
 
     public int getId(){

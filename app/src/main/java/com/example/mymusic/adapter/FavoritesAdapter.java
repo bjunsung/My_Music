@@ -1,5 +1,7 @@
 package com.example.mymusic.adapter;
 
+import android.annotation.SuppressLint;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
@@ -25,15 +29,15 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     OnLyricLongClickListener lyricLongClickListener;
 
     public interface OnDeleteClickListener{
-        void onItemClick(Track track);
+        void onItemClick(Favorite favorite);
     }
 
     public interface OnLyricClickListener{
-        void onItemClick(String trackId);
+        void onItemClick(String trackId, String trackName);
     }
 
     public interface OnLyricLongClickListener{
-        void onItemClick(String trackId);
+        void onItemClick(String trackId, String trackName);
     }
 
     public FavoritesAdapter(List<Favorite> favoritesList,
@@ -79,7 +83,6 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         Picasso.get().load(track.artworkUrl).into(holder.image);
         holder.title.setText(track.trackName);
         if (favorite.metadata != null && favorite.metadata.title != null){
-            Log.d("Korean Title EXIXT", "Korean Title: " + favorite.metadata.title);
             holder.titleKr.setText(favorite.metadata.title);
         }
         else {
@@ -95,18 +98,26 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
 
         holder.deleteButton.setOnClickListener(v -> {
-            deleteClickListener.onItemClick(track);
+            deleteClickListener.onItemClick(favorite);
         });
 
         //lyrics button 클릭 이벤트
         holder.lyricButton.setOnClickListener(v -> {
-            lyricClickListener.onItemClick(track.trackId);
+            lyricClickListener.onItemClick(track.trackId, track.trackName);
         });
 
         //lyrics button long 클릭 이벤트
         holder.lyricButton.setOnLongClickListener(v -> {
-            lyricLongClickListener.onItemClick(track.trackId);
+            lyricLongClickListener.onItemClick(track.trackId,  track.trackName);
             return true;
+        });
+
+
+        holder.itemView.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putParcelable("favorite", favorite);
+            NavController navController = Navigation.findNavController(v);
+            navController.navigate(R.id.action_favoritesFragment_to_musicInfoFragment, bundle);
         });
 
     }
@@ -115,6 +126,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     public int getItemCount() {
         return favoritesList.size();
     }
+
 
 
     public void updateData(List<Favorite> newList) {

@@ -50,4 +50,13 @@ public class SettingRepository {
         return false;
     }
 
+    public boolean setNumericPreference(boolean numeric){
+        int result = settingDao.updateNumericPreference(numeric);
+        return result > 0;
+    }
+
+    public boolean getNumericPreference(){
+        return settingDao.getNumeriPadPreference();
+    }
+
 }

@@ -16,12 +16,17 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.util.Consumer;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.fragment.FragmentNavigator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -32,6 +37,7 @@ import com.example.mymusic.data.repository.TokenRepository;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.adapter.ArtistAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.TokenHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
@@ -66,6 +72,7 @@ public class SearchFragment extends Fragment {
     private FavoriteArtistViewModel favoriteArtistViewModel;
     private static final int MAX_RETRY_REFRESH_TOKEN_COUNT = 3;
     private static int retryRefreshTokenCount;
+    private TrackAdapter trackAdapter;
 
 
     //ViewModel 연결, repository 연결
@@ -93,21 +100,34 @@ public class SearchFragment extends Fragment {
         recyclerView = view.findViewById(R.id.result_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        //TrackViewModel 에 리스트 있으면 그거 가져옴
+        //track search mode 일 때 music info 로 bundle, shared view 넘김
         if (searchViewModel.selectedOption == 0 && !searchViewModel.searchTrackResults.isEmpty()) {
-            TrackAdapter adapter = new TrackAdapter(searchViewModel.searchTrackResults, getContext(), this::showTrackDetails, this::addFavoriteSong);
-            recyclerView.setAdapter(adapter);
+            trackAdapter= new TrackAdapter(searchViewModel.searchTrackResults,
+                    getContext(),
+                    this::showTrackDetails,
+                    this::addFavoriteSong);
+
+            recyclerView.setAdapter(trackAdapter);
         } else if (searchViewModel.selectedOption == 1 && !searchViewModel.searchArtistResults.isEmpty()) {
             ArtistAdapter adapter = new ArtistAdapter(searchViewModel.searchArtistResults, getContext(), this::showArtistDetails, this::addFavoriteArtist);
             recyclerView.setAdapter(adapter);
         }
-
-        retryRefreshTokenCount = 0;
+        retryRefreshTokenCount++;
         getTokenAndEnableSearch();
     }
 
     //토큰 재발급
-    private void refreshToken(){
-        TokenHelper.refreshTokenWithUI(requireContext(), this, this::setupSearchUI,
+    private void refreshToken(Consumer<String> callback){
+        TokenHelper.refreshTokenWithUI(requireContext(), this, refreshed -> {
+            if (refreshed != null){
+                callback.accept(refreshed);
+            }
+            else{
+                Log.e("SearchFragment", "토큰 get 실패");
+                callback.accept(null);
+            }
+                },
                 error -> Log.e("SearchFragment", "토큰 실패: " + error));
     }
 
@@ -119,7 +139,10 @@ public class SearchFragment extends Fragment {
                 accessToken = token.getAccessToken();
                 requireActivity().runOnUiThread(this::setupSearchUI);
             } else {
-                refreshToken();
+                refreshToken(refreshed -> {
+                    accessToken = refreshed;
+                    requireActivity().runOnUiThread(this::setupSearchUI);
+                });
             }
         }).start();
     }
@@ -242,10 +265,14 @@ public class SearchFragment extends Fragment {
                                     .show();
                         });
                         return;
+                    }else {
+                        refreshToken(refreshed -> {
+                            if (refreshed != null){
+                                search(keyword, refreshed, searchTypeInt);
+                            }
+                        });
+                        return;
                     }
-                    refreshToken();
-                    search(keyword, accessToken, searchViewModel.selectedOption);
-                    return;
                 } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) { //403
                     requireActivity().runOnUiThread(() -> {
                         new AlertDialog.Builder(getContext())
@@ -385,8 +412,8 @@ public class SearchFragment extends Fragment {
                 .setTitle("관심목록에 추가")
                 .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
                 .setNegativeButton("취소", null)
-                .setPositiveButton("확인", new DialogInterface.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int which) {
+                .setPositiveButton("확인", (dialog, which) -> favoritesViewModel.loadFavoriteItem(track.trackId, duplicates -> {
+                    if (duplicates == null){
                         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                         new Thread(() -> {
                             try {
@@ -400,9 +427,11 @@ public class SearchFragment extends Fragment {
                                 });
                             }
                         }).start();
-
                     }
-                })
+                    else{
+                        Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                }))
         .show();
     }
 
@@ -449,6 +478,7 @@ public class SearchFragment extends Fragment {
                 .setNegativeButton("취소", null)
                 .show();
     }
+
 
 
 }

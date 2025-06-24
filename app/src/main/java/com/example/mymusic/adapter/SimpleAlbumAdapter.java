@@ -1,8 +1,5 @@
 package com.example.mymusic.adapter;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,7 +59,7 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
             Bundle bundle = new Bundle();
             bundle.putParcelable("album", album);
             NavController navController = Navigation.findNavController(v);
-            navController.navigate(R.id.album_info_fragment, bundle);
+            navController.navigate(R.id.album_info, bundle);
         });
     }
 

@@ -1,9 +1,13 @@
 package com.example.mymusic.network;
 
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.example.mymusic.model.TrackMetadata;
+import android.webkit.ConsoleMessage;
+
+
 
 public class LyricsSearchService {
 
@@ -62,11 +66,25 @@ public class LyricsSearchService {
             }
 
 
-            @Override
+            @Override //HTML 오류 또는 네트워크 오류 감지
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 callback.onFailure(description);
             }
+
+
         });
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                String message = consoleMessage.message();
+                if (message.contains("Uncaught")) {
+                    callback.onFailure("JavaScript 오류: " + message);
+                }
+                return true;
+            }
+        });
+
 
         String fullUrl = trackId.startsWith("http") ? trackId : "https://vibe.naver.com/track/" + trackId;
         webView.loadUrl(fullUrl);

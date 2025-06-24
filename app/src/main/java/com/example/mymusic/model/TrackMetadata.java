@@ -3,13 +3,15 @@ package com.example.mymusic.model;
 import java.util.List;
 
 public class TrackMetadata {
+    public String vibeTrackId;
     public String title;
     public String lyrics;
     public List<String> lyricists;
     public List<String> composers;
     public TrackMetadata(){}
 
-    public TrackMetadata(String title, String lyrics, List<String> lyricists, List<String> composers) {
+    public TrackMetadata(String vibeTrackId, String title, String lyrics, List<String> lyricists, List<String> composers) {
+        this.vibeTrackId = vibeTrackId;
         this.title = title;
         this.lyrics = lyrics;
         this.lyricists = lyricists;

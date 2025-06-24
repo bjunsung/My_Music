@@ -74,15 +74,19 @@ public class TokenHelper {
     public static void refreshTokenWithUI(
             Context context,
             @Nullable Fragment fragment, // null 가능
-            @Nullable Runnable onSuccess,
+            @Nullable Consumer<String> onSuccess,
             @Nullable Consumer<String> onFailure) {
 
         getAccessToken(context, new TokenCallback() {
             @Override
             public void onSuccess(String accessToken) {
                 Runnable runTask = () -> {
-                    Toast.makeText(context, "store token to db: " + accessToken, Toast.LENGTH_SHORT).show();
-                    if (onSuccess != null) onSuccess.run();
+                    Toast.makeText(context, "SUCCESS to get new Access Token: " + accessToken, Toast.LENGTH_SHORT).show();
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        if (onSuccess != null){
+                            onSuccess.accept(accessToken);
+                        }
+                    });
                 };
 
                 if (fragment != null && fragment.isAdded()) {

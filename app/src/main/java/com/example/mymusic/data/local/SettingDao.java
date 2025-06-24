@@ -29,5 +29,11 @@ public interface SettingDao {
     @Query("UPDATE settings_table SET maxSearchedAlbumsByArtist = :value WHERE id = 0")
     int updateMaxSearchedAlbumsByArtist(int value);
 
+    @Query("UPDATE settings_table SET trackIdInputPrefersNumeric = :value WHERE id = 0")
+    int updateNumericPreference(boolean value);
+
+    @Query("SELECT trackIdInputPrefersNumeric FROM settings_table WHERE id = 0 LIMIT 1")
+    boolean getNumeriPadPreference();
+
 
 }
