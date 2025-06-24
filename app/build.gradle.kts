@@ -11,13 +11,21 @@ android {
     compileSdk = 35
 
     signingConfigs {
+        getByName("debug") {
+            storeFile = file("C:\\Users\\baejunsung\\Documents\\android studio\\key\\My_Music_key.jks")
+            storePassword = "cgial01"
+            keyAlias = "key0"
+            keyPassword = "cgial01"
+        }
+
         create("release") {
-            storeFile = file("C:\\Users\\baejunsungssu\\Documents\\android studio\\key")
+            storeFile = file("C:\\Users\\baejunsung\\Documents\\android studio\\key\\My_Music_key.jks")
             storePassword = "cgial01"
             keyAlias = "key0"
             keyPassword = "cgial01"
         }
     }
+
 
     defaultConfig {
         applicationId = "com.example.mymusic"
@@ -33,7 +41,7 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
@@ -41,11 +49,14 @@ android {
                 "proguard-rules.pro"
             )
         }
+
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

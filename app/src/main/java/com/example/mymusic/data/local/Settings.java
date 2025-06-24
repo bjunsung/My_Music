@@ -16,6 +16,7 @@ public class Settings {
     public Integer maxSearchedArtists;
     public Integer maxSearchedAlbumsByArtist;
     public boolean personalized;
+    @ColumnInfo(defaultValue = "0")
     public boolean trackIdInputPrefersNumeric;
 
     @ColumnInfo(defaultValue = "0")
