@@ -6,6 +6,18 @@
     android:orientation="horizontal"
     android:padding="4dp">
 
+    <TextView
+        android:id="@+id/position"
+        android:layout_width="30dp"
+        android:layout_height="wrap_content"
+        android:text="#"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_margin="4dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:visibility="gone" />
+
     <!-- 앨범 이미지 -->
     <ImageView
         android:id="@+id/imageView"

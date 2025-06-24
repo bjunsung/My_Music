@@ -59,10 +59,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Apink"
-                    android:textIsSelectable="true"
-                    android:textSize="24sp"
-                    android:maxLines="1"
-                    android:ellipsize="end"/>
+                    android:textStyle="italic|bold"
+                    android:textIsSelectable="false"
+                    android:textSize="24sp" />
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
@@ -82,7 +81,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Pink Blossom"
-                    android:textIsSelectable="true"
+                    android:textStyle="italic|bold"
+                    android:textIsSelectable="false"
                     android:textSize="24sp" />
             </LinearLayout>
             <LinearLayout

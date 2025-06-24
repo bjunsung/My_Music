@@ -3,6 +3,7 @@ package com.example.mymusic.adapter;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
@@ -56,6 +59,10 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
 
         holder.itemView.setOnClickListener(v -> {
             //todo move album info fragment
+            Bundle bundle = new Bundle();
+            bundle.putParcelable("album", album);
+            NavController navController = Navigation.findNavController(v);
+            navController.navigate(R.id.album_info_fragment, bundle);
         });
     }
 

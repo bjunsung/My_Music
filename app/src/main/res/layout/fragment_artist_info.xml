@@ -138,7 +138,7 @@
             android:id="@+id/track_result_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="50dp"
+            android:paddingBottom="@dimen/navigation_bar_margin"
             android:nestedScrollingEnabled="false" />
 
     </LinearLayout>

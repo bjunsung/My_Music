@@ -16,4 +16,9 @@
         android:icon="@drawable/ic_home_black_24dp"
         android:title="Search" />
 
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@drawable/ic_home_black_24dp"
+        android:title="Settings" />
+
 </menu>

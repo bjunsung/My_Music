@@ -11,14 +11,16 @@ import java.util.List;
 public class Album implements Parcelable {
     public String artistId;
     public String albumId;
+    public String artistName;
     public String albumName;
     public String releaseDate;
     public String artworkUrl;
     public int totalTracks;
     public List<Track> tracks;
-    public Album(String artistId, String albumId, String albumName, String releaseDate, String artworkUrl, int totalTracks){
+    public Album(String artistId, String albumId, String artistName, String albumName, String releaseDate, String artworkUrl, int totalTracks){
         this.artistId = artistId;
         this.albumId = albumId;
+        this.artistName = artistName;
         this.albumName = albumName;
         this.releaseDate = releaseDate;
         this.artworkUrl = artworkUrl;
@@ -29,6 +31,7 @@ public class Album implements Parcelable {
     protected Album(Parcel in) {
         artistId = in.readString();
         albumId = in.readString();
+        artistName = in.readString();
         albumName = in.readString();
         releaseDate = in.readString();
         artworkUrl = in.readString();
@@ -61,6 +64,7 @@ public class Album implements Parcelable {
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeString(artistId);
         dest.writeString(albumId);
+        dest.writeString(artistName);
         dest.writeString(albumName);
         dest.writeString(releaseDate);
         dest.writeString(artworkUrl);

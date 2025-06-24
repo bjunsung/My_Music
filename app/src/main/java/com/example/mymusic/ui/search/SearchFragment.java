@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
 import com.example.mymusic.data.local.Token;
+import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.data.repository.TokenRepository;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.adapter.ArtistAdapter;
@@ -215,7 +216,14 @@ public class SearchFragment extends Fragment {
             try {
                 String encodedKeyword = URLEncoder.encode(keyword, "UTF-8");
                 String searchType = (searchTypeInt == 0) ? "track" : "artist";
-                String urlStr = "https://api.spotify.com/v1/search?q=" + encodedKeyword + "&type=" + searchType + "&market=KR&limit=20";
+
+                SettingRepository settingRepository = new SettingRepository(requireContext());
+                int limit;
+                if (searchType.equals("track"))
+                    limit = settingRepository.getMaxSearchedTracks();
+                else limit = settingRepository.getMaxSearchedArtists();
+                String finalLimit = String.valueOf(limit);
+                String urlStr = "https://api.spotify.com/v1/search?q=" + encodedKeyword + "&type=" + searchType + "&market=KR&limit=" + finalLimit;
                 URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");

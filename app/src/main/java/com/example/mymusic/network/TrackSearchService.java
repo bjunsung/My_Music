@@ -109,7 +109,7 @@ public class TrackSearchService {
             List<Track> result = new ArrayList<>();
 
             try {
-                String urlStr = "https://api.spotify.com/v1/albums/" + album.albumId + "/tracks?market=KR";
+                String urlStr = "https://api.spotify.com/v1/albums/" + album.albumId + "/tracks?market=KR&limit=50";
                 URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");

@@ -24,7 +24,6 @@ import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.data.util.NumberUtils;
-import com.example.mymusic.model.Album;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.ArtistApiHelper;
@@ -34,7 +33,6 @@ import com.squareup.picasso.Picasso;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 public class ArtistInfoFragment extends Fragment {
 
@@ -57,7 +55,7 @@ public class ArtistInfoFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        return inflater.inflate(R.layout.fragment_aritist_info, container, false);
+        return inflater.inflate(R.layout.fragment_artist_info, container, false);
     }
 
     @Override
@@ -93,12 +91,12 @@ public class ArtistInfoFragment extends Fragment {
                 albumRecyclerView.setNestedScrollingEnabled(false);
 
 
-            });
+            }, 0);
             apiHelper.searchTrackByArtist(artist.artistId, tracks -> {
                 TrackAdapter trackAdapter = new TrackAdapter(tracks, getContext(), this::showTrackDetails, this::addFavoriteSong);
                 trackRecyclerView.setAdapter(trackAdapter);
                 trackRecyclerView.setNestedScrollingEnabled(false);
-            });
+            }, 0);
 
             addArtistButton.setOnClickListener(v -> {
                 new AlertDialog.Builder(getContext())

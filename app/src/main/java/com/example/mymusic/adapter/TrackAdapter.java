@@ -1,5 +1,6 @@
 package com.example.mymusic.adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -25,7 +26,8 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     private Context context;
     private OnDetailClickListener detailClickListener;
     private OnAddClickListener addClickListener;
-
+    private boolean showImage = true;
+    private boolean showPosition = false;
     public interface OnDetailClickListener {
         void onItemClick(Track track);
     }
@@ -42,7 +44,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     }
 
     public static class TrackViewHolder extends RecyclerView.ViewHolder {
-        TextView title, artist;
+        TextView title, artist, positionTextView;
         ImageView image;
         ImageButton addButton, detailButton;
 
@@ -53,6 +55,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             image = itemView.findViewById(R.id.imageView);
             detailButton = itemView.findViewById(R.id.showDetailButton);
             addButton = itemView.findViewById(R.id.addButton);
+            positionTextView = itemView.findViewById(R.id.position);
         }
     }
 
@@ -63,8 +66,14 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         return new TrackViewHolder(view);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
+        if (showPosition){
+            holder.positionTextView.setText(String.valueOf(position+1));
+            holder.positionTextView.setVisibility(TextView.VISIBLE);
+        }
+
         Track track = tracks.get(position);
         holder.title.setText(track.trackName);
         holder.artist.setText(track.artistName);
@@ -79,6 +88,9 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         } else {
             holder.image.setImageResource(R.drawable.ic_image_not_found_foreground); // 기본 이미지로 대체
         }
+
+        if (!showImage)
+            holder.image.setVisibility(TextView.GONE);
 
         holder.itemView.setOnClickListener(v -> {
                     Bundle bundle = new Bundle();
@@ -98,6 +110,17 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     @Override
     public int getItemCount() {
         return tracks.size();
+    }
+
+
+    public void setShowImage(boolean show) {
+        this.showImage = show;
+        notifyDataSetChanged(); // 변경 반영 위해 전체 갱신
+    }
+
+    public void setShowPosition(boolean show) {
+        this.showPosition = show;
+        notifyDataSetChanged(); // 변경 반영 위해 전체 갱신
     }
 
 

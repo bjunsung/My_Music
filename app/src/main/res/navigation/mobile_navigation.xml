@@ -42,6 +42,13 @@
         android:name="com.example.mymusic.ui.musicInfo.MusicInfoFragment"
         android:label="Music Information"
         tools:layout="@layout/fragment_music_info">
+
+        <action
+            android:id="@+id/action_musicInfoFragment_to_albumInfoFragment"
+            app:destination="@id/album_info_fragment" />
+        <action
+            android:id="@+id/action_musicInfoFragment_to_artistInfoFragment"
+            app:destination="@id/artist_info" />
          <argument
              android:name="song"
              app:argType="com.example.mymusic.model.Track" />
@@ -51,17 +58,43 @@
         android:id="@+id/navigation_favorites"
         android:name="com.example.mymusic.ui.favorites.FavoritesFragment"
         android:label="Favorites"
-        tools:layout="@layout/fragment_favotrites">
+        tools:layout="@layout/fragment_favorites">
+        <action
+            android:id="@+id/action_favoritesFragment_to_artistInfoFragment"
+            app:destination="@id/artist_info" />
     </fragment>
 
     <fragment
         android:id="@+id/artist_info"
         android:name="com.example.mymusic.ui.artistInfo.ArtistInfoFragment"
         android:label="Artist Information"
-        tools:layout="@layout/fragment_aritist_info">
+        tools:layout="@layout/fragment_artist_info">
+
+        <action
+            android:id="@+id/action_artistInfoFragment_to_albumInfoFragment"
+            app:destination="@id/album_info_fragment" />
+
         <argument
             android:name="artist"
             app:argType="com.example.mymusic.model.Artist" />
     </fragment>
+
+    <fragment
+        android:id="@+id/album_info_fragment"
+        android:name="com.example.mymusic.ui.albumInfo.AlbumInfoFragment"
+        android:label="Album Information"
+        tools:layout="@layout/fragment_album_info">
+        <argument
+            android:name="album"
+            app:argType="com.example.mymusic.model.Album" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_settings"
+        android:name="com.example.mymusic.ui.setting.SettingFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" >
+    </fragment>
+
 
 </navigation>

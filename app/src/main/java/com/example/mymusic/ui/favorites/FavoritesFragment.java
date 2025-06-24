@@ -1,11 +1,15 @@
 package com.example.mymusic.ui.favorites;
 
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,11 +23,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.adapter.FavoriteArtistAdapter;
+import com.example.mymusic.adapter.FavoritesAdapter;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Track;
+import com.example.mymusic.network.LyricsSearchService;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import android.widget.LinearLayout;
+
+
 
 public class FavoritesFragment extends Fragment {
     private RecyclerView recyclerView;
@@ -37,6 +48,8 @@ public class FavoritesFragment extends Fragment {
     private List<String> selectedArtistIds = new ArrayList<>();
     private ImageButton filterButton;
 
+    private WebView webView;
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
@@ -47,7 +60,7 @@ public class FavoritesFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        View view = inflater.inflate(R.layout.fragment_favotrites, container, false);
+        View view = inflater.inflate(R.layout.fragment_favorites, container, false);
         return view;
     }
 
@@ -75,11 +88,12 @@ public class FavoritesFragment extends Fragment {
         emptyFavoriteSongTextView = view.findViewById(R.id.empty_favorite_song);
         emptyFavoriteArtistTextView = view.findViewById(R.id.empty_favorite_artist);
         favoritesLoadedCountTextView = view.findViewById(R.id.favorites_loaded_count);
+        webView = view.findViewById(R.id.hidden_web_view);
 
         if(favoriteOption == 0) {//track
             emptyFavoriteArtistTextView.setVisibility(View.GONE);
             favoritesViewModel.loadFavorites(favoritesList -> {
-                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong);
+                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::addLyric);
                 recyclerView.setAdapter(favoriteTrackAdapter);
                 if (favoritesList.isEmpty()) {
                     emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
@@ -120,7 +134,7 @@ public class FavoritesFragment extends Fragment {
     private void loadFavoritesAndUpdateUI() {
         if (favoriteOption == 0) {
             favoritesViewModel.loadFavorites(favoritesList -> {
-                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong);
+                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::addLyric);
                 recyclerView.setAdapter(favoriteTrackAdapter);
                 updateEmptyState(favoritesList.isEmpty());
                 favoriteTrackAdapter.updateData(favoritesList);
@@ -215,5 +229,68 @@ public class FavoritesFragment extends Fragment {
                 })
                 .show();
     }
+
+
+    private void addLyric(){
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+        final EditText input = new EditText(getContext());
+        input.setHint("https://vibe.naver.com/track/3861527");
+        input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
+
+        TextView message = new TextView(getContext());
+        message.setText("NAVER VIBE 주소를 입력하세요.");
+        message.setTextSize(17);
+
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        input.setLayoutParams(params);
+
+        layout.addView(message);
+        layout.addView(input);
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("가사 정보 등록")
+                .setView(layout)
+                .setPositiveButton("확인", (dialog, which) -> {
+                    String userInput = input.getText().toString().trim();
+                    String trackId = extractTrackId(userInput);
+                    LyricsSearchService.fetchLyrics(requireContext(), webView, trackId, new LyricsSearchService.LyricCallback() {
+                        @Override
+                        public void onSuccess(String lyrics) {
+                            if (lyrics == null || lyrics.trim().isEmpty()) return;
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("가사")
+                                    .setMessage(lyrics)
+                                    .setPositiveButton("닫기", null)
+                                    .show();
+                        }
+
+                        @Override
+                        public void onFailure(String reason) {
+                            Toast.makeText(getContext(), "실패: " + reason, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("취소", null)
+                .show();
+
+    }
+
+
+    private String extractTrackId(String input) {
+        if (input.startsWith("http") && input.contains("/track/")) {
+            return input.substring(input.lastIndexOf("/") + 1);
+        } else {
+            return input;
+        }
+    }
+
+
 
 }

@@ -1,5 +1,6 @@
-package com.example.mymusic.ui.favorites;
+package com.example.mymusic.adapter;
 
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,14 +9,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
 import com.example.mymusic.data.util.NumberUtils;
 import com.example.mymusic.model.Artist;
+import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.squareup.picasso.Picasso;
 
-import java.text.DecimalFormat;
 import java.util.List;
 
 public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAdapter.FavoriteArtistViewHolder> {
@@ -28,7 +31,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         void onItemClick(Artist artist);
     }
 
-    FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, FavoriteArtistViewModel viewModel){
+    public FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, FavoriteArtistViewModel viewModel){
         this.artistList = artistList;
         this.deleteClickListener = deleteClickListener;
         this.viewModel = viewModel;
@@ -70,6 +73,13 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                 .into(holder.image);
 
         holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(artist));
+
+        holder.itemView.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putParcelable("artist", artist);
+            NavController navController = Navigation.findNavController(v);
+            navController.navigate(R.id.artist_info, bundle);
+        });
 
     }
 

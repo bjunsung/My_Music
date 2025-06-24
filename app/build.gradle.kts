@@ -20,6 +20,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders.put("redirectSchemeName", "com.example.mymusic")
         manifestPlaceholders.put("redirectHostName", "callback")
+
     }
 
     buildTypes {
@@ -48,9 +49,11 @@ dependencies {    // Room core
     implementation("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
     implementation(files("libs/auth-release.aar"))
+    implementation("androidx.core:core-ktx:1.12.0") // Kotlin DSL 필요
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.squareup.picasso:picasso:2.71828")
+    implementation("androidx.webkit:webkit:1.8.0") // WebView 지원 향상
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)

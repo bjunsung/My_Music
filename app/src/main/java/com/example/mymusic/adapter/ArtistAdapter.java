@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.NavigatorProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
@@ -94,6 +95,8 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.artist_info, bundle);
         });
+
+
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.example.mymusic.ui.musicInfo;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
@@ -18,12 +18,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.mymusic.R;
-import com.example.mymusic.data.local.Favorites;
 import com.example.mymusic.model.Track;
-import com.example.mymusic.ui.favorites.FavoritesAdapter;
+import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 
 import java.time.LocalDate;
@@ -46,6 +46,7 @@ public class MusicInfoFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_music_info, container, false);
     }
 
+    @SuppressLint("ResourceType")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -66,7 +67,28 @@ public class MusicInfoFragment extends Fragment {
             }
             trackTitle.setText(track.trackName);
             artistName.setText(track.artistName);
+            artistName.setOnClickListener(v -> {
+                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+                apiHelper.getArtist(track.artistId, artist -> {
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable("artist", artist);
+                    NavController navController = NavHostFragment.findNavController(this);
+                    navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);
+                }, 0);
+            });
+
             albumName.setText(track.albumName);
+            albumName.setOnClickListener(v -> {
+                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+                apiHelper.getAlbum(track.albumId, 0, album -> {
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable("album",  album);
+                    NavController navController = NavHostFragment.findNavController(this);
+                    navController.navigate(R.id.action_musicInfoFragment_to_albumInfoFragment, bundle);
+                });
+            });
+
+
             releaseDate.setText(track.releaseDate);
             int durationSec = (int) Double.parseDouble(track.durationMs)/1000;
             durationMs.setText(durationSec/60 + "분 " + durationSec%60 + "초");

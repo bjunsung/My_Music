@@ -12,11 +12,14 @@ import android.widget.Toast;
 import androidx.core.util.Consumer;
 
 import com.example.mymusic.data.local.Token;
+import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.data.repository.TokenRepository;
 import com.example.mymusic.model.Album;
+import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.ui.search.SearchFragment;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ArtistApiHelper {
@@ -39,20 +42,29 @@ public class ArtistApiHelper {
             }
             else {
                 //refresh accessToken
-                TokenHelper.refreshTokenWithUI(context, null, () -> {
-                    //get accessToken
-                    Token refreshed = tokenRepository.getAccessTokenSync();
-                    if (refreshed != null && refreshed.getAccessToken() != null) {
-                        new Handler(Looper.getMainLooper()).post(() -> onSuccess.accept(refreshed.getAccessToken()));
-                    } else {
-                        new Handler(Looper.getMainLooper()).post(() -> onFailure.accept("토큰 발급 실패"));
-                    }
-                }, error -> {new Handler(Looper.getMainLooper()).post(() -> onFailure.accept("토큰 refresh 실패" + error));
+                refreshToken(refreshedToken -> {
+                    if (refreshedToken != null)
+                        new Handler(Looper.getMainLooper()).post(() -> onSuccess.accept(refreshedToken));
+                    else
+                        new Handler(Looper.getMainLooper()).post(() -> onFailure.accept("토큰 재발급 실패"));
                 });
+
             }
         }).start();
     }
 
+    private void refreshToken(Consumer<String> callback){
+        TokenHelper.refreshTokenWithUI(context, null, () -> {
+            Token refreshed = tokenRepository.getAccessTokenSync();
+            if (refreshed != null && refreshed.getAccessToken() != null) {
+                new Handler(Looper.getMainLooper()).post(() -> callback.accept(refreshed.getAccessToken()));
+            } else {
+                new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+            }
+        }, error -> {
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+        });
+    }
 
     public void alertError(String errorMessage){
         String[] parts = errorMessage.split(",", 2);
@@ -67,30 +79,100 @@ public class ArtistApiHelper {
         });
     }
 
-    public void searchAlbumsByArtist(String artistId, Consumer<List<Album>> callback) {
+    public void searchAlbumsByArtist(String artistId, Consumer<List<Album>> callback, int refreshCount) {
+        if (refreshCount >= 3) {
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
+            return;
+        }
         getAccessToken(token -> {
-            AlbumSearchService.searchAlbumByArtist(artistId, token, callback, this::alertError);
+            AlbumSearchService.searchAlbumByArtist(artistId, context, token, callback, this::alertError);
         }, error -> {
-            // 실패 시 null 반환 (또는 오류 메시지를 별도로 처리해도 됨)
-            callback.accept(null);
+            // 실패 시 재발급 후 다시 검색
+            refreshToken(refreshedToken -> {
+                if (refreshedToken != null)
+                    new Handler(Looper.getMainLooper()).post(() -> searchAlbumsByArtist(artistId, callback, refreshCount + 1));
+                else
+                    new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
+            });
         });
     }
 
-    public void searchTrackByArtist(String artistId, Consumer<List<Track>> callback){
+    public void searchTrackByArtist(String artistId, Consumer<List<Track>> callback, int refreshCount){
+        if (refreshCount >= 3) {
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
+            return;
+        }
         getAccessToken(token -> {
             TrackSearchService.searchTrackByArtist(artistId, token, callback, this::alertError);
         }, error -> {
-            callback.accept(null);
+            // 실패 시 재발급 후 다시 검색
+            refreshToken(refreshedToken -> {
+                if (refreshedToken != null)
+                    new Handler(Looper.getMainLooper()).post(() -> searchTrackByArtist(artistId, callback, refreshCount + 1));
+                else
+                    new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
+            });
         });
     }
 
-    public void searchTrackByAlbum(Album album, Consumer<List<Track>> callback){
+    public void searchTrackByAlbum(Album album, Consumer<List<Track>> callback, int refreshCount){
+        if (refreshCount >= 3) {
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
+            return;
+        }
         getAccessToken(token -> {
             TrackSearchService.searchTrackByAlbum(album, token, callback, this::alertError);
         }, error -> {
-            callback.accept(null);
+            // 실패 시 재발급 후 다시 검색
+            refreshToken(refreshedToken -> {
+                if (refreshedToken != null)
+                    new Handler(Looper.getMainLooper()).post(() -> searchTrackByAlbum(album, callback, refreshCount + 1));
+                else
+                    new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
+            });
         });
     }
+
+    public void getArtist(String artistId, Consumer<Artist> callback, int refreshCount){
+        if (refreshCount >= 3){
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+            return;
+        }
+        getAccessToken(token -> {
+            ArtistSearchService.searchArtistByArtistId(artistId, token, callback, this::alertError);
+        }, error -> {
+            // 실패 시 재발급 후 다시 검색
+            refreshToken(refreshedToken -> {
+                if (refreshedToken != null)
+                    new Handler(Looper.getMainLooper()).post(() -> getArtist(artistId, callback, refreshCount + 1));
+                else
+                    new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+            });
+        });
+    }
+
+
+    public void getAlbum(String albumId, int refreshCount, Consumer<Album> callback){
+        getAccessToken(token -> {
+            AlbumSearchService.searchAlbumByAlbumId(albumId, token, callback, errorMessage -> {
+                if (errorMessage.equals("Error,만료된 토큰입니다.") && refreshCount < 3){
+                    refreshToken(refreshed -> {
+                        if (refreshed != null)
+                            new Handler(Looper.getMainLooper()).post(() -> getAlbum(albumId, refreshCount + 1, callback));
+                        else
+                            new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+                    });
+                }
+                else {
+                    new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+                }
+            });
+        }, error -> new Handler(Looper.getMainLooper()).post(() -> callback.accept(null)));
+    }
+
+
+
+
 
 }
 

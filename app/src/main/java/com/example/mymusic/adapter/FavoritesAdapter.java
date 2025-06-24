@@ -1,4 +1,4 @@
-package com.example.mymusic.ui.favorites;
+package com.example.mymusic.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,20 +20,26 @@ import java.util.List;
 public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoriteViewHolder> {
     List<Favorite> favoritesList;
     OnDeleteClickListener deleteClickListener;
+    OnLyricClickListener lyricClickListener;
 
     public interface OnDeleteClickListener{
         void onItemClick(Track track);
     }
 
-    FavoritesAdapter(List<Favorite> favoritesList, OnDeleteClickListener deleteClickListener){
+    public interface OnLyricClickListener{
+        void onItemClick();
+    }
+
+    public FavoritesAdapter(List<Favorite> favoritesList, OnDeleteClickListener deleteClickListener, OnLyricClickListener lyricClickListener){
         this.favoritesList = favoritesList;
         this.deleteClickListener = deleteClickListener;
+        this.lyricClickListener = lyricClickListener;
     }
 
     public class FavoriteViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView title, artist, album, duration, releasedDate, addedDate;
-        ImageButton deleteButton;
+        ImageButton deleteButton, lyricButton;
         public FavoriteViewHolder(@NonNull View itemView){
             super(itemView);
             image = itemView.findViewById(R.id.imageView);
@@ -44,6 +50,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             releasedDate = itemView.findViewById(R.id.releaseDateTextView);
             addedDate = itemView.findViewById(R.id.addedDateTextView);
             deleteButton = itemView.findViewById(R.id.deleteButton);
+            lyricButton = itemView.findViewById(R.id.lyric_button);
         }
     }
 
@@ -67,7 +74,13 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         holder.duration.setText(durationStr);
         holder.addedDate.setText(favorite.addedDate);
         holder.releasedDate.setText(track.releaseDate);
-        holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(track));
+        holder.deleteButton.setOnClickListener(v -> {
+            deleteClickListener.onItemClick(track);
+        });
+
+       holder.lyricButton.setOnClickListener(v -> {
+           lyricClickListener.onItemClick();
+       });
     }
 
     @Override

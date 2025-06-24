@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".ui.search.SearchFragment">
 
+
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/favorite_option_switch"
         android:layout_width="wrap_content"
@@ -86,9 +87,14 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_margin="8dp"
-        android:paddingBottom="50dp"
+        android:paddingBottom="@dimen/navigation_bar_margin"
         app:layout_constraintTop_toBottomOf="@id/filter_button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <include layout="@layout/include_webview_hidden" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
