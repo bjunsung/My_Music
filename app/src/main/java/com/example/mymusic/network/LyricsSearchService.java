@@ -26,25 +26,23 @@ public class LyricsSearchService {
             @Override
             public void onPageFinished(WebView view, String url){
                 view.evaluateJavascript(
-                        "(function waitForLyrics() {\n" +
-                                "  const check = () => {\n" +
-                                "    let paragraphs = document.querySelectorAll('div.lyrics p');\n" +
-                                "    if (paragraphs && paragraphs.length > 0) {\n" +
-                                "      let text = Array.from(paragraphs).map(p => p.innerText).join('\\n');\n" +
-                                "      if (typeof AndroidBridge !== 'undefined' && AndroidBridge.receiveLyrics) {\n" +
-                                "        AndroidBridge.receiveLyrics(text);\n" +
-                                "      } else {\n" +
-                                "        console.log('🔴 AndroidBridge not ready');\n" +
-                                "        setTimeout(check, 100);\n" +
-                                "      }\n" +
-                                "    } else {\n" +
-                                "      console.log('⏳ Waiting for lyrics DOM...');\n" +
-                                "      setTimeout(check, 100);\n" +
-                                "    }\n" +
-                                "  };\n" +
-                                "  check();\n" +
-                                "})();", null
-                );
+                        "(function waitForLyrics() {" +
+                                "const check = () => {" +
+                                "let paragraphs = document.querySelectorAll('div.lyrics p');" +
+                                "if (paragraphs && paragraphs.length > 0) {" +
+                                "let text = Array.from(paragraphs).map(p => p.innerText).join('\\n');" +
+                                "if (typeof AndroidBridge !== 'undefined' && AndroidBridge.receiveLyrics) {" +
+                                "if (!window._LYRICS_SENT && text.trim().length > 0) {" +
+                                "AndroidBridge.receiveLyrics(text);" +
+                                "window._LYRICS_SENT = true;" +
+                                "}" +
+                                "}" +
+                                "} else {" +
+                                "setTimeout(check, 100);" +
+                                "}" +
+                                "};" +
+                                "check();" +
+                                "})()", null);
             }
 
             @Override
