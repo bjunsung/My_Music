@@ -43,7 +43,8 @@ public class MusicInfoFragment extends Fragment {
     private Favorite favorite;
     private Track track;
     FavoritesViewModel favoritesViewModel;
-    TextView trackTitle, trackTitleKr;
+    TextView trackTitle, trackTitleKr, addedDate;
+    LinearLayout addedDateLayout;
     private boolean savedInDb;
 
     //ViewModel 연결
@@ -101,6 +102,9 @@ public class MusicInfoFragment extends Fragment {
             LinearLayout vocalistsLayout = view.findViewById(R.id.vocalists_layout);
             TextView vocalists = view.findViewById(R.id.vocalists);
             TextView daysBetween = view.findViewById(R.id.days_between);
+            addedDateLayout = view.findViewById(R.id.added_date_layout);
+            addedDate = view.findViewById(R.id.added_date);
+
 
             trackTitle.setText(track.trackName);
             if (metadata != null && metadata.title != null){
@@ -126,6 +130,11 @@ public class MusicInfoFragment extends Fragment {
             if (metadata != null && metadata.vocalists != null && !metadata.vocalists.isEmpty()){
                 vocalists.setText(metadata.vocalistsToString());
                 vocalistsLayout.setVisibility(TextView.VISIBLE);
+            }
+
+            if (favorite.addedDate != null && !favorite.addedDate.isEmpty()){
+                addedDate.setText(favorite.addedDate);
+                addedDateLayout.setVisibility(View.VISIBLE);
             }
 
             daysBetween.setText(String.valueOf(DateUtils.calculateDateDiffrence(track.releaseDate, DateUtils.today())));

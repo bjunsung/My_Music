@@ -7,14 +7,13 @@ import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import com.example.mymusic.model.TrackMetadata; // 이 import는 필요 없을 수 있습니다.
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class ArtistVibeLinkService {
     private static final String TAG = "ArtistVibeLinkService";
-    private static final int PER_ARTIST_TIMEOUT_MS = 5000; // 타임아웃 시간 단축 권장
+    private static final int PER_ARTIST_TIMEOUT_MS = 7000; // 타임아웃 시간 단축 권장
 
     public interface ArtistLinksCallback {
         void onComplete(List<List<String>> updatedVocalistList);
@@ -28,6 +27,8 @@ public class ArtistVibeLinkService {
     private static ArtistLinksCallback finalCallback;
     private static final Handler timeoutHandler = new Handler(Looper.getMainLooper());
     private static final ArtistVibeLinkBridge bridge = new ArtistVibeLinkBridge();
+
+    private static long startTime, endTime;
 
     public static void fetchAllLinks(WebView wv, List<List<String>> vocalistList, String url, ArtistLinksCallback callback) {
         // --- 1. 초기화 ---
@@ -58,11 +59,17 @@ public class ArtistVibeLinkService {
         }
 
         Log.d(TAG, "Starting link fetch for " + namesToFindQueue.size() + " vocalists.");
+        long startLinkFetchTime = System.currentTimeMillis();
 
         // --- 2. WebView 설정 및 페이지 로딩 (단 한번만 실행) ---
         new Handler(Looper.getMainLooper()).post(() -> {
+            long startSetupWebViewTime = System.currentTimeMillis();
             setupWebViewAndBridge();
+            long endSetupWebViewTime = System.currentTimeMillis();
             webView.loadUrl(url);
+            long endLoadUrlTime = System.currentTimeMillis();
+            Log.d("VIBELinkService", "setup WebView: " + (endSetupWebViewTime - startSetupWebViewTime) + "ms 소요됨");
+            Log.d("VIBELinkService", "load url: " + (endLoadUrlTime - endSetupWebViewTime) + "ms 소요됨");
         });
     }
 
@@ -118,6 +125,7 @@ public class ArtistVibeLinkService {
 
     // 다음 아티스트 검색을 시작하는 메소드
     private static void searchNextArtistInQueue() {
+
         timeoutHandler.removeCallbacksAndMessages(null); // 이전 타임아웃 취소
 
         if (namesToFindQueue.isEmpty()) {
@@ -128,6 +136,7 @@ public class ArtistVibeLinkService {
 
         String currentTargetName = namesToFindQueue.poll();
         Log.d(TAG, "Now processing: " + currentTargetName);
+        startTime = System.currentTimeMillis();
 
         // 새 검색을 시작하기 전에 브릿지 상태 초기화
         bridge.reset();
@@ -138,9 +147,14 @@ public class ArtistVibeLinkService {
             handleSearchResult(currentTargetName, null);
         }, PER_ARTIST_TIMEOUT_MS);
 
+
+
         // 자바스크립트 코드 생성 및 실행
         String jsCode = createJavascriptCode(currentTargetName);
-        new Handler(Looper.getMainLooper()).post(() -> webView.evaluateJavascript(jsCode, null));
+        new Handler(Looper.getMainLooper()).post(() -> {
+            webView.evaluateJavascript(jsCode, null);
+        });
+
     }
 
     // 검색 결과를 처리하고 다음 검색으로 넘어가는 공통 메소드
@@ -158,8 +172,12 @@ public class ArtistVibeLinkService {
 
             if (artistId != null) {
                 Log.i(TAG, "SUCCESS for " + name + " -> Extracted ID: " + artistId);
+                endTime = System.currentTimeMillis();
+                Log.d(TAG, name + (endTime - startTime) + "ms 소요됨.");
             } else {
                 Log.w(TAG, "NOT FOUND for " + name);
+                endTime = System.currentTimeMillis();
+                Log.d(TAG, name + (endTime - startTime) + "ms 소요됨.");
             }
 
             updateMasterList(name, artistId);
@@ -167,7 +185,6 @@ public class ArtistVibeLinkService {
         });
     }
 
-    // 아래 두 메소드는 수정할 필요가 없습니다.
     private static void updateMasterList(String name, String linkId) {
         for (List<String> pair : masterVocalistList) {
             if (pair.get(0).equals(name)) {
@@ -178,8 +195,6 @@ public class ArtistVibeLinkService {
     }
 
     private static String createJavascriptCode(String fullNameToSearch) {
-        // 이 메소드의 내용은 이전과 동일하게 유지됩니다.
-        // ... (이전 코드와 동일한 JS 코드 문자열 반환)
         String containerSelector = "dl.info_member";
         String linkSelector = "dd.info_desc a";
 
@@ -205,13 +220,13 @@ public class ArtistVibeLinkService {
                 "    }" +
                 "    if (retries > 0) {" +
                 "      console.log('Container not ready, retrying...');" +
-                "      setTimeout(() => findLink(retries - 1), 500);" +
+                "      setTimeout(() => findLink(retries - 1), 100);" +
                 "    } else {" +
                 "      console.log('FAILURE: Container not found after all retries.');" +
                 "      AndroidBridge.reportNotFound(searchName);" +
                 "    }" +
                 "  }" +
-                "  findLink(20);" +
+                "  findLink(50);" +
                 "})();";
     }
 }

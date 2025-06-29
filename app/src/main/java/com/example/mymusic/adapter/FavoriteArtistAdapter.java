@@ -25,21 +25,27 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
     List<Artist> artistList;
     OnDeleteClickListener deleteClickListener;
+    OnMetadataClickListener metadataClickListener;
     FavoriteArtistViewModel viewModel;
 
     public interface OnDeleteClickListener{
         void onItemClick(Artist artist);
     }
 
-    public FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, FavoriteArtistViewModel viewModel){
+    public interface OnMetadataClickListener{
+        void onItemClick(String artistId);
+    }
+
+    public FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, OnMetadataClickListener metadataClickListener, FavoriteArtistViewModel viewModel){
         this.artistList = artistList;
         this.deleteClickListener = deleteClickListener;
+        this.metadataClickListener = metadataClickListener;
         this.viewModel = viewModel;
     }
     public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView artistName, followers, addedDate;
-        ImageButton deleteButton;
+        ImageButton deleteButton, addButton;
         public FavoriteArtistViewHolder(@NonNull View itemView){
             super(itemView);
             image = itemView.findViewById(R.id.imageView);
@@ -47,6 +53,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             followers = itemView.findViewById(R.id.followersTextView);
             addedDate = itemView.findViewById(R.id.addedDateTextView);
             deleteButton = itemView.findViewById(R.id.deleteButton);
+            addButton = itemView.findViewById(R.id.add_button);
         }
     }
 
@@ -80,6 +87,8 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.artist_info, bundle);
         });
+
+        holder.addButton.setOnClickListener(v -> metadataClickListener.onItemClick(artist.artistId));
 
     }
 

@@ -37,9 +37,11 @@ import com.example.mymusic.adapter.FavoriteArtistAdapter;
 import com.example.mymusic.adapter.FavoritesAdapter;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.model.Artist;
+import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
+import com.example.mymusic.network.ArtistMetadataService;
 import com.example.mymusic.network.ArtistVibeLinkService;
 import com.example.mymusic.network.LyricsSearchService;
 
@@ -136,7 +138,7 @@ public class FavoritesFragment extends Fragment {
         else if(favoriteOption == 1) {//artist
             emptyFavoriteSongTextView.setVisibility(View.GONE);
             favoriteArtistViewModel.loadFavorites(favoriteArtistList -> {
-                favoriteArtistAdapter = new FavoriteArtistAdapter(favoriteArtistList, this::deleteFavoriteArtist, favoriteArtistViewModel);
+                favoriteArtistAdapter = new FavoriteArtistAdapter(favoriteArtistList, this::deleteFavoriteArtist, this::addArtistMetadata, favoriteArtistViewModel);
                 recyclerView.setAdapter(favoriteArtistAdapter);
                 if (favoriteArtistList.isEmpty()) {
                     emptyFavoriteArtistTextView.setVisibility(View.VISIBLE);
@@ -170,7 +172,7 @@ public class FavoritesFragment extends Fragment {
             });
         } else {
             favoriteArtistViewModel.loadFavorites(favoriteArtistList -> {
-                favoriteArtistAdapter = new FavoriteArtistAdapter(favoriteArtistList, this::deleteFavoriteArtist, favoriteArtistViewModel);
+                favoriteArtistAdapter = new FavoriteArtistAdapter(favoriteArtistList, this::deleteFavoriteArtist, this::addArtistMetadata, favoriteArtistViewModel);
                 recyclerView.setAdapter(favoriteArtistAdapter);
                 updateEmptyState(favoriteArtistList.isEmpty());
                 favoriteArtistAdapter.updateData(favoriteArtistList);
@@ -264,6 +266,9 @@ public class FavoritesFragment extends Fragment {
 
 
 
+
+
+
     private void onLyricLongClick(String trackIdDb, String trackName){
         favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
             if (favorite != null && favorite.metadata != null && favorite.metadata.lyrics != null){
@@ -320,6 +325,114 @@ public class FavoritesFragment extends Fragment {
                     .show();
         }
     }
+
+    private void addArtistMetadata(String artistId){
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+
+        final EditText input = new EditText(getContext());
+        input.setHint("https://vibe.naver.com/artist/# (#에 해당하는 숫자만 입력해도 괜찮습니다)");
+        input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
+        input.setImeOptions(EditorInfo.IME_ACTION_DONE);
+
+        int originalInputType = input.getInputType();
+
+        //NumberPad 세팅값 load
+        SettingRepository settingRepository = new SettingRepository(requireContext());
+        new Thread(() -> {
+            boolean numericPadMode = settingRepository.getNumericPreference();
+            if (numericPadMode){
+                input.setInputType(InputType.TYPE_CLASS_NUMBER);
+            }
+            else{
+                input.setInputType(originalInputType);
+            }
+
+        }).start();
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        input.setLayoutParams(params);
+
+        layout.addView(input);
+
+        AlertDialog dialog1 = new AlertDialog.Builder(getContext())
+                .setTitle("Artist Metadata 추가")
+                .setView(layout)
+                .setNegativeButton("취소", null)
+                .setPositiveButton("확인", ((dialog, which) -> {
+                    ArtistMetadataService.fetchMetadata(webView, input.getText().toString().trim() , new ArtistMetadataService.MetadataCallback() {
+                        @Override
+                        public void onSuccess(ArtistMetadata metadata) {
+                            if (getActivity() != null){
+                                getActivity().runOnUiThread(() -> {
+                                    new AlertDialog.Builder(requireContext())
+                                            .setTitle("아래 정보를 저장하시겠습니까?")
+                                            .setMessage(metadata.toString())
+                                            .setPositiveButton("저장", (dialog2, which2) -> {
+                                                //ArtistMetadata 수정
+                                                metadata.spotifyArtistId = artistId;
+                                                metadata.vibeArtistId = input.getText().toString().trim();
+
+                                                if (metadata.images != null && !metadata.images.isEmpty()) {
+                                                    List<String> cleanedImages = new ArrayList<>();
+                                                    for (String url : metadata.images) {
+                                                        if (url == null) {
+                                                            cleanedImages.add(null); // null 방어
+                                                            continue;
+                                                        }
+                                                        int idx = url.indexOf("?type=");
+                                                        if (idx != -1) {
+                                                            cleanedImages.add(url.substring(0, idx)); // 자름
+                                                        } else {
+                                                            cleanedImages.add(url); // 그대로 유지
+                                                        }
+                                                    }
+                                                    metadata.images = cleanedImages; // 원래 리스트 교체
+                                                }
+
+                                                if (metadata.members != null && !metadata.members.isEmpty()) {
+                                                    for (int i = 0 ; i < metadata.members.size(); i++){
+                                                        List<String> pair = metadata.members.get(i);
+                                                        if (pair.get(1) == null || pair.get(1).isEmpty())
+                                                            continue;
+                                                        int id = Integer.parseInt(pair.get(1));
+                                                        String padded = String.format("%06d", id); // 최소 6자리 패딩
+                                                        String key = String.format("%06d", id / 1000);
+                                                        String folder1 = key.substring(0, 3);    // 앞 3자리
+                                                        String folder2 = key.substring(3, 6);    // 뒤 3자리
+                                                        String link = "https://musicmeta-phinf.pstatic.net/artist/" + folder1 + "/" + folder2 + "/" + id + ".jpg";
+                                                        metadata.members.get(i).set(2, link);
+                                                    }
+                                                }
+
+                                                Log.d("FavoritesFragment", "수정된 metadata : " + metadata.toString());
+                                            })
+                                            .setNegativeButton("닫기", null)
+                                            .show();
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(String reason) {
+
+                        }
+                    });
+                }))
+                .create();
+
+
+
+
+        dialog1.show();
+
+    }
+
     private void addLyric(String trackIdDb, String trackName, boolean editMode){
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -391,19 +504,6 @@ public class FavoritesFragment extends Fragment {
         }
 
 
-        // 이 코드는 Fragment 내의 메소드라고 가정합니다.
-
-
-
-// ... 기존 코드 ...
-
-
-
-        // 이 코드를 붙여넣기 전에, 이 위 어딘가에
-// final AlertDialog[] loadingDialog = new AlertDialog[1];
-// 와 같이 'loadingDialog' 변수가 한 번만 선언되어 있는지 확인해주세요.
-// 만약 없다면, 아래 코드 시작 전(AlertDialog.Builder 앞)에 추가해주세요.
-
         AlertDialog dialog1 = new AlertDialog.Builder(getContext())
                 .setTitle(dialogTitle)
                 .setView(layout)
@@ -414,6 +514,8 @@ public class FavoritesFragment extends Fragment {
                         Toast.makeText(getContext(), "VIBE 트랙 주소를 입력해주세요.", Toast.LENGTH_SHORT).show();
                         return;
                     }
+
+                    long startFetchLyricsTime = System.currentTimeMillis();
 
                     String userInput = input.getText().toString().trim();
                     String trackIdNaverVibe = extractTrackId(userInput);
@@ -443,63 +545,74 @@ public class FavoritesFragment extends Fragment {
 
                             // --- 2단계: 아티스트 링크 가져오기 시작 ---
                             if (getActivity() == null) return;
-                            getActivity().runOnUiThread(() -> {
+                            if (metadata.artistLink != null && !metadata.artistLink.isEmpty() && metadata.vocalists != null && !metadata.vocalists.isEmpty()) {
+                                getActivity().runOnUiThread(() -> {
 
-                                // artistLink가 전체 주소일 경우와 상대 경로일 경우를 모두 처리
-                                String finalArtistPageUrl;
-                                if (metadata.artistLink != null && metadata.artistLink.startsWith("http")) {
-                                    finalArtistPageUrl = metadata.artistLink;
-                                } else {
-                                    finalArtistPageUrl = "https://vibe.naver.com" + metadata.artistLink;
-                                }
+                                    // artistLink가 전체 주소일 경우와 상대 경로일 경우를 모두 처리
+                                    String finalArtistPageUrl;
+                                    if (metadata.artistLink != null && metadata.artistLink.startsWith("http")) {
+                                        finalArtistPageUrl = metadata.artistLink;
+                                    } else {
+                                        finalArtistPageUrl = "https://vibe.naver.com" + metadata.artistLink;
+                                    }
 
-                                // [수정] 디버깅 코드를 삭제하고, 원래 로직의 주석을 해제합니다.
-                                ArtistVibeLinkService.fetchAllLinks(
-                                        webView2, // 아티스트 링크 탐색에 사용할 두 번째 WebView
-                                        metadata.vocalists,
-                                        finalArtistPageUrl, // 방금 만든 올바른 URL 사용
-                                        new ArtistVibeLinkService.ArtistLinksCallback() {
-                                            @Override
-                                            public void onComplete(List<List<String>> updatedVocalistList) {
-                                                // --- 최종 성공: 모든 정보가 준비됨 ---
-                                                if (getActivity() == null) return;
-                                                getActivity().runOnUiThread(() -> {
-                                                    if(loadingDialog[0] != null) loadingDialog[0].dismiss();
-                                                    metadata.setVocalists(updatedVocalistList);
+                                    long startTime = System.currentTimeMillis();
+                                    // [수정] 디버깅 코드를 삭제하고, 원래 로직의 주석을 해제합니다.
+                                    ArtistVibeLinkService.fetchAllLinks(
+                                            webView2, // 아티스트 링크 탐색에 사용할 두 번째 WebView
+                                            metadata.vocalists,
+                                            finalArtistPageUrl, // 방금 만든 올바른 URL 사용
+                                            new ArtistVibeLinkService.ArtistLinksCallback() {
+                                                @Override
+                                                public void onComplete(List<List<String>> updatedVocalistList) {
+                                                    long linkFetchedTime = System.currentTimeMillis();
+                                                    // --- 최종 성공: 모든 정보가 준비됨 ---
+                                                    if (getActivity() == null) return;
+                                                    getActivity().runOnUiThread(() -> {
+                                                        if (loadingDialog[0] != null)
+                                                            loadingDialog[0].dismiss();
+                                                        metadata.setVocalists(updatedVocalistList);
 
-                                                    new AlertDialog.Builder(requireContext())
-                                                            .setTitle("아래 정보를 저장하시겠습니까?")
-                                                            .setMessage(metadata.toString())
-                                                            .setPositiveButton("저장", (dialog2, which2) -> {
-                                                                if (metadata.title != null && metadata.title.equals(trackName)){
-                                                                    metadata.title = null;
-                                                                }
-                                                                favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
-                                                                    if (updated > 0) {
-                                                                        requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
-                                                                        loadFavoritesAndUpdateUI();
-                                                                    } else {
-                                                                        requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show());
+                                                        long updatedTime = System.currentTimeMillis();
+                                                        Log.d("FavoritesFragment", "Lyrics: " + (startTime - startFetchLyricsTime) + "ms 소요됨");
+                                                        Log.d("FavoritesFragment", "link: " + (linkFetchedTime - startTime) + "ms 소요됨");
+                                                        Log.d("FavoritesFragment", "update metadata: " + (updatedTime - linkFetchedTime) + "ms 소요됨");
+
+                                                        new AlertDialog.Builder(requireContext())
+                                                                .setTitle("아래 정보를 저장하시겠습니까?")
+                                                                .setMessage(metadata.toString())
+                                                                .setPositiveButton("저장", (dialog2, which2) -> {
+                                                                    if (metadata.title != null && metadata.title.equals(trackName)) {
+                                                                        metadata.title = null;
                                                                     }
-                                                                });
-                                                            })
-                                                            .setNegativeButton("닫기", null)
-                                                            .show();
-                                                });
-                                            }
+                                                                    favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
+                                                                        if (updated > 0) {
+                                                                            requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
+                                                                            loadFavoritesAndUpdateUI();
+                                                                        } else {
+                                                                            requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show());
+                                                                        }
+                                                                    });
+                                                                })
+                                                                .setNegativeButton("닫기", null)
+                                                                .show();
+                                                    });
+                                                }
 
-                                            @Override
-                                            public void onError(String reason) {
-                                                // 2단계 실패 시 처리
-                                                if (getActivity() == null) return;
-                                                getActivity().runOnUiThread(() -> {
-                                                    if(loadingDialog[0] != null) loadingDialog[0].dismiss();
-                                                    Toast.makeText(getContext(), "아티스트 링크 업데이트 실패: " + reason, Toast.LENGTH_SHORT).show();
-                                                });
+                                                @Override
+                                                public void onError(String reason) {
+                                                    // 2단계 실패 시 처리
+                                                    if (getActivity() == null) return;
+                                                    getActivity().runOnUiThread(() -> {
+                                                        if (loadingDialog[0] != null)
+                                                            loadingDialog[0].dismiss();
+                                                        Toast.makeText(getContext(), "아티스트 링크 업데이트 실패: " + reason, Toast.LENGTH_SHORT).show();
+                                                    });
+                                                }
                                             }
-                                        }
-                                );
-                            });
+                                    );
+                                });
+                            }
                         }
 
                         @Override
@@ -524,11 +637,8 @@ public class FavoritesFragment extends Fragment {
 
 
         dialog1.setOnShowListener(d -> {
-            Log.d("test33" , "test");
             Button neutralBtn = dialog1.getButton(AlertDialog.BUTTON_NEUTRAL);
             neutralBtn.setOnClickListener(v -> {
-
-                Log.d("test" , "test");
                 dialog1.dismiss();
 
                 new AlertDialog.Builder(getContext())

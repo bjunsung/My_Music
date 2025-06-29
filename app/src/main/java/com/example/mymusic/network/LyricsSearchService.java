@@ -16,9 +16,11 @@ public class LyricsSearchService {
         void onFailure(String reason);
     }
 
-    private static final int TIMEOUT_MS = 5000; // 5초 타임아웃
+    private static final int TIMEOUT_MS = 10000; // 10초 타임아웃
 
     public static void fetchMetadata(WebView webView, String trackId, MetadataCallback callback) {
+
+
         // [추가됨] 타임아웃 핸들러
         final Handler timeoutHandler = new Handler(Looper.getMainLooper());
         // final 변수로 만들어 콜백에서 접근 가능하게 함
@@ -65,7 +67,7 @@ public class LyricsSearchService {
                 public void onPageFinished(WebView view, String url) {
                     // [수정됨] 실패 보고 로직이 추가된 Javascript
                     // 보내주신 Javascript 코드 기반으로 수정
-                    String jsCode = "(function waitForLyrics(retries = 20) {\n" +
+                    String jsCode = "(function waitForLyrics(retries = 100) {\n" +
                             "    const check = () => {\n" +
                             "        let paragraphs = document.querySelectorAll('div.lyrics p');\n" +
                             "        if (paragraphs.length > 0 && paragraphs[0].innerText.trim() !== '') {\n" +
@@ -95,7 +97,7 @@ public class LyricsSearchService {
                             "                }));\n" +
                             "            }\n" +
                             "        } else if (retries > 0) {\n" +
-                            "            setTimeout(() => check(), 500);\n" + // 자기 자신(check)을 다시 호출
+                            "            setTimeout(() => check(), 100);\n" + // 자기 자신(check)을 다시 호출
                             "        } else {\n" +
                             "            // [추가됨] 재시도 모두 실패 시, 명시적으로 실패 보고\n" +
                             "            if (typeof AndroidBridge !== 'undefined') {\n" +
@@ -133,9 +135,11 @@ public class LyricsSearchService {
                 }
             });
 
+
             timeoutHandler.postDelayed(timeoutRunnable, TIMEOUT_MS);
             String fullUrl = trackId.startsWith("http") ? trackId : "https://vibe.naver.com/track/" + trackId;
             webView.loadUrl(fullUrl);
+
         });
     }
 }

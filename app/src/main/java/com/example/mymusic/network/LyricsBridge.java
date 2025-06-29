@@ -41,7 +41,6 @@ public class LyricsBridge {
                 Gson gson = new Gson();
                 MetadataRaw raw = gson.fromJson(json, MetadataRaw.class);
 
-                // [수정 없음] 보내주신 코드 로직 그대로 사용
                 TrackMetadata metadata = new TrackMetadata();
                 metadata.title = raw.title;
                 metadata.lyrics = raw.lyrics;
