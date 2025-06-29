@@ -21,6 +21,10 @@ public class ArtistVibeLinkBridge {
         this.isFinished = false;
     }
 
+    public void reset() {
+        this.isFinished = false;
+    }
+
     @JavascriptInterface
     public void receiveMetadata(String json) {
         if (isFinished) return;

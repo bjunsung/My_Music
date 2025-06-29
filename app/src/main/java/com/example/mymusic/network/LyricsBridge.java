@@ -25,6 +25,8 @@ public class LyricsBridge {
         this.isFinished = false;
     }
 
+
+
     @JavascriptInterface
     public void receiveMetadata(String json) {
         if (isFinished || json == null || json.trim().isEmpty()) {

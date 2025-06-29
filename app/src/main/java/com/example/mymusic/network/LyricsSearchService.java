@@ -75,10 +75,11 @@ public class LyricsSearchService {
                             "            let artistClass = document.querySelector('a.link_sub_title');\n" +
                             "            let link = artistClass ? artistClass.getAttribute('href') : null;\n" +
                             "            function extractCredits(label) {\n" +
-                            "                return Array.from(document.querySelectorAll('div.item'))\n" +
+                            "                const items = Array.from(document.querySelectorAll('div.item'))\n" +
                             "                    .filter(div => div.innerText.includes(label))\n" +
                             "                    .flatMap(div => Array.from(div.querySelectorAll('a.song_info_artist')))\n" +
                             "                    .map(a => a.innerText.trim());\n" +
+                            "                return items.length > 0 ? items : null;\n" +
                             "            }\n" +
                             "            let vocalists = extractCredits('보컬');\n" +
                             "            let lyricists = extractCredits('작사');\n" +

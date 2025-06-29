@@ -28,13 +28,6 @@ public class TrackMetadata {
         this.vocalists = vocalists;
     }
 
-    public TrackMetadata(String vibeTrackId, String title, String lyrics, List<String> lyricists, List<String> composers) {
-        this.vibeTrackId = vibeTrackId;
-        this.title = title;
-        this.lyrics = lyrics;
-        this.lyricists = lyricists;
-        this.composers = composers;
-    }
 
 
     public void addVocalists(List<String> vocalistsName){
@@ -87,16 +80,20 @@ public class TrackMetadata {
     }
 
 
-    // (Optional) toString()
+
     @Override
     public String toString() {
-        return "artist link: " + artistLink + "" +
-                "\n제목: " + title +
-                "\n\n보컬: " + vocalistsToString()   +
-               // "\n\nid : " +  vocalistIdsToString() +
-                "\n\n작사: " + String.join(", ", lyricists) +
-                "\n작곡: " + String.join(", ", composers) +
-                "\n\n가사:\n" + lyrics;
+        StringBuilder result = new StringBuilder();
+        result.append("\n제목: ").append(title);
+        if (vocalists!=null && !vocalists.isEmpty())
+            result.append("\n\n보컬: ").append(vocalistsToString());
+        if (lyricists != null && !lyricists.isEmpty())
+            result.append("\n\n작사: ").append(String.join(", ", lyricists));
+        if (composers != null && !composers.isEmpty())
+            result.append("\n작곡: ").append(String.join(", ", composers));
+        result.append("\n\n가사:\n").append(lyrics);
+
+        return String.valueOf(result);
     }
 
 
