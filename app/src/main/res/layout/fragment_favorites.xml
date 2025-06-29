@@ -104,6 +104,11 @@
         <include layout="@layout/include_webview_hidden" />
 
 
+        <include layout="@layout/include_webview_hidden_2" />
+
+
+
+
         <TextView
             android:id="@+id/metadata_lyrics"
             android:layout_width="wrap_content"

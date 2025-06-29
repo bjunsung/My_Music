@@ -109,6 +109,9 @@
         <include layout="@layout/include_webview_hidden" />
 
 
+        <include layout="@layout/include_webview_hidden_2" />
+
+
         <TextView
             android:id="@+id/baselineLeft"
             android:layout_width="0dp"

@@ -42,12 +42,12 @@ public class LyricsBridge {
                 TrackMetadata metadata = new TrackMetadata(
                         null,
                         raw.title,
-                        raw.artistLink,
                         raw.lyrics,
-                        Arrays.asList(raw.vocalists),
                         Arrays.asList(raw.lyricists),
                         Arrays.asList(raw.composers)
                 );
+                metadata.setArtistLink(raw.artistLink);
+                metadata.addVocalists(Arrays.asList(raw.vocalists));
                 listener.onMetadataReceived(metadata);
                 metadataSent = true; // 이 위치가 중요
             } catch (Exception e) {

@@ -2,11 +2,11 @@ package com.example.mymusic.ui.favorites;
 
 
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.Notification;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,7 +19,6 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.OverScroller;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,15 +35,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.FavoriteArtistAdapter;
 import com.example.mymusic.adapter.FavoritesAdapter;
-import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
+import com.example.mymusic.network.ArtistVibeLinkService;
 import com.example.mymusic.network.LyricsSearchService;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +63,7 @@ public class FavoritesFragment extends Fragment {
     private List<String> selectedArtistIds = new ArrayList<>();
     private ImageButton filterButton;
 
-    private WebView webView;
+    private WebView webView, webView2;
     private String focusedTrackId;
     TextView lyricsTextView, onLyricsTitleTextView, getOnLyricsArtistTextView;
     ScrollView scrollAreaView;
@@ -117,6 +115,7 @@ public class FavoritesFragment extends Fragment {
         emptyFavoriteArtistTextView = view.findViewById(R.id.empty_favorite_artist);
         favoritesLoadedCountTextView = view.findViewById(R.id.favorites_loaded_count);
         webView = view.findViewById(R.id.hidden_web_view);
+        webView2 = view.findViewById(R.id.hidden_web_view_2);
 
         if(favoriteOption == 0) {//track
             emptyFavoriteArtistTextView.setVisibility(View.GONE);
@@ -413,7 +412,7 @@ public class FavoritesFragment extends Fragment {
                                             if (metadata.title != null && metadata.title.equals(trackName)){
                                                 metadata.title = null;
                                             }
-                                            favoritesViewModel.addMetadata(trackIdDb, metadata, updated -> {
+                                            favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
                                                 if (updated > 0) {
                                                     requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
                                                     loadFavoritesAndUpdateUI();
@@ -426,6 +425,47 @@ public class FavoritesFragment extends Fragment {
                                         })
                                         .setNegativeButton("닫기", null)
                                         .show();
+
+
+                                new Handler(Looper.getMainLooper()).post(() -> {
+                                    ArtistVibeLinkService.fetchMetadata(
+                                            webView2,
+                                            metadata.vocalists,
+                                            metadata.artistLink,
+                                            new ArtistVibeLinkService.MetadataCallback() {
+                                                @Override
+                                                public void onSuccess(TrackMetadata updatedMetadata) {
+                                                    metadata.update(updatedMetadata.vocalists);
+
+                                                    favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
+                                                        if (updated > 0) {
+                                                            requireActivity().runOnUiThread(() ->
+                                                                    Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show()
+                                                            );
+                                                            loadFavoritesAndUpdateUI();
+                                                        } else {
+                                                            requireActivity().runOnUiThread(() ->
+                                                                    Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show()
+                                                            );
+                                                        }
+                                                    });
+                                                }
+
+                                                @Override
+                                                public void onFailure(String reason) {
+                                                    Log.e("ArtistLinkFetch", "아티스트 링크 업데이트 실패: " + reason);
+                                                    requireActivity().runOnUiThread(() ->
+                                                            Toast.makeText(getContext(), "업데이트 실패: " + reason, Toast.LENGTH_SHORT).show()
+                                                    );
+                                                }
+                                            }
+                                    );
+
+                                });
+
+
+
+
                             }
 
                             @Override
@@ -437,13 +477,14 @@ public class FavoritesFragment extends Fragment {
                                     Toast.makeText(getContext(), "ERROR: " + reason, Toast.LENGTH_SHORT).show();
                                 }
                             }
+
+
                         });
                     }
                 })
                 .setNeutralButton("편집", null)
                 .setNegativeButton("취소", (dialog, which)  ->{})
                 .create();
-
 
         dialog1.setOnShowListener(d -> {
             Log.d("test33" , "test");
@@ -482,7 +523,7 @@ public class FavoritesFragment extends Fragment {
 
                                             }
 
-                                            favoritesViewModel.addMetadata(trackIdDb, newMetadata, updated -> {
+                                            favoritesViewModel.updateMetadata(trackIdDb, newMetadata, updated -> {
                                                 if (updated > 0) {
                                                     requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
 

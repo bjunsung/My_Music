@@ -1,8 +1,10 @@
 package com.example.mymusic.data.local;
 
 import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverter;
 
 import com.example.mymusic.model.Track;
 
@@ -29,12 +31,12 @@ public class Favorites
 
     public String trackNameKr;
     public String lyrics;
-    public List<String> vocalists;
+    public List<List<String>> vocalists;
     public List<String> lyricists;
     public List<String> composers;
 
     public Favorites(){}
-    public Favorites(Track track, String addedDate, String vibeTrackId, String trackNameKr, String lyrics, List<String> vocalists, List<String> lyricists, List<String> composers){
+    public Favorites(Track track, String addedDate, String vibeTrackId, String trackNameKr, String lyrics, List<List<String>> vocalists, List<String> lyricists, List<String> composers){
         this.trackId = track.trackId;
         this.albumId = track.albumId;
         this.artistId = track.artistId;

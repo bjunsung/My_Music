@@ -3,13 +3,11 @@ package com.example.mymusic.ui.favorites;
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.util.Consumer;
 import androidx.lifecycle.AndroidViewModel;
 
-import com.example.mymusic.data.repository.FavoriteArtistRepository;
 import com.example.mymusic.data.repository.FavoriteSongRepository;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
@@ -54,11 +52,12 @@ public class FavoritesViewModel extends AndroidViewModel {
         }).start();
     }
 
-    public void addMetadata(String trackId, TrackMetadata metadata, Consumer<Integer> callback){
+    public void updateMetadata(String trackId, TrackMetadata metadata, Consumer<Integer> callback){
         new Thread(() -> {
             repository.updateFavoriteSong(trackId, metadata, callback);
         }).start();
     }
+
 
 
 }
