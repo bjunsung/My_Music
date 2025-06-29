@@ -124,7 +124,7 @@ public class MusicInfoFragment extends Fragment {
             }
 
             if (metadata != null && metadata.vocalists != null && !metadata.vocalists.isEmpty()){
-                //vocalists.setText(metadata.vocalistsToString());
+                vocalists.setText(metadata.vocalistsToString());
                 vocalistsLayout.setVisibility(TextView.VISIBLE);
             }
 

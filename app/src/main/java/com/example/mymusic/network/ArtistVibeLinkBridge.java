@@ -5,48 +5,49 @@ import android.webkit.JavascriptInterface;
 
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ArtistVibeLinkBridge {
+    private static final String TAG = "ArtistVibeBridge";
 
     public interface OnLinkListener {
-        void onMetadataReceived(List<List<String>> updatedVocalistList);
+        void onLinkFound(String name, String link);
+        void onLinkNotFound(String name); // [추가됨] 링크를 못찾았을 때 호출될 인터페이스
     }
 
     private OnLinkListener listener;
-    private List<List<String>> vocalistList;
+    private boolean isFinished = false;
 
-    public void setListener(OnLinkListener listener, List<List<String>> vocalistList) {
+    public void setListener(OnLinkListener listener) {
         this.listener = listener;
-        this.vocalistList = vocalistList;
+        this.isFinished = false;
     }
 
     @JavascriptInterface
     public void receiveMetadata(String json) {
-        Log.d("ArtistVibeBridge", "Parsed JSON: " + json);
+        if (isFinished) return;
+        isFinished = true;
+
+        Log.d(TAG, "SUCCESS JSON: " + json);
         try {
             Gson gson = new Gson();
             LinkRaw raw = gson.fromJson(json, LinkRaw.class);
 
-            if (raw == null || raw.name == null) {
-                Log.e("ArtistVibeBridge", "Invalid data received");
-                return;
-            }
-
-            for (List<String> pair : vocalistList) {
-                if (pair.get(0).equals(raw.name)) {
-                    pair.set(1, raw.link);  // link may be null
-                    break;
-                }
-            }
-
             if (listener != null) {
-                listener.onMetadataReceived(new ArrayList<>(vocalistList));
+                listener.onLinkFound(raw.name, raw.link);
             }
-
         } catch (Exception e) {
-            Log.e("ArtistVibeBridge", "Error parsing metadata or updating list", e);
+            Log.e(TAG, "Error parsing metadata", e);
+        }
+    }
+
+    // [추가됨] Javascript가 '찾을 수 없음'을 알리는 메소드
+    @JavascriptInterface
+    public void reportNotFound(String name) {
+        if (isFinished) return;
+        isFinished = true;
+
+        Log.w(TAG, "NOT FOUND for: " + name);
+        if (listener != null) {
+            listener.onLinkNotFound(name);
         }
     }
 

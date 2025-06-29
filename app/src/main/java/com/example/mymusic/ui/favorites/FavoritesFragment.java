@@ -391,100 +391,137 @@ public class FavoritesFragment extends Fragment {
         }
 
 
+        // 이 코드는 Fragment 내의 메소드라고 가정합니다.
+
+
+
+// ... 기존 코드 ...
+
+
+
+        // 이 코드를 붙여넣기 전에, 이 위 어딘가에
+// final AlertDialog[] loadingDialog = new AlertDialog[1];
+// 와 같이 'loadingDialog' 변수가 한 번만 선언되어 있는지 확인해주세요.
+// 만약 없다면, 아래 코드 시작 전(AlertDialog.Builder 앞)에 추가해주세요.
+
         AlertDialog dialog1 = new AlertDialog.Builder(getContext())
                 .setTitle(dialogTitle)
                 .setView(layout)
+                // AlertDialog의 setPositiveButton 부분을 아래 코드로 완전히 교체하세요.
+
                 .setPositiveButton("확인", (dialog, which) -> {
-                    if (!input.getText().toString().isEmpty()) { //사용자가 주소를 입력했을 때
-                        String userInput = input.getText().toString().trim();
-                        String trackIdNaverVibe = extractTrackId(userInput);
+                    if (input.getText().toString().isEmpty()) {
+                        Toast.makeText(getContext(), "VIBE 트랙 주소를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-                        LyricsSearchService.fetchMetadata(webView, trackIdNaverVibe, new LyricsSearchService.MetadataCallback() {
-                            @Override
-                            public void onSuccess(TrackMetadata metadata) {
-                                if (metadata.lyrics == null || metadata.getLyrics().trim().isEmpty())
-                                    return;
-                                metadata.vibeTrackId = trackIdNaverVibe;
-                                new AlertDialog.Builder(requireContext())
-                                        .setTitle("아래 정보를 저장하시겠습니까?")
-                                        .setMessage(metadata.toString())
-                                        .setPositiveButton("저장", (dialog, which) -> {
-                                            if (metadata.title != null && metadata.title.equals(trackName)){
-                                                metadata.title = null;
-                                            }
-                                            favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
-                                                if (updated > 0) {
-                                                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
-                                                    loadFavoritesAndUpdateUI();
+                    String userInput = input.getText().toString().trim();
+                    String trackIdNaverVibe = extractTrackId(userInput);
+// 사용자 입력을 받을 첫 번째 다이얼로그
+// 로딩 다이얼로그를 담을 배열 (final로 만들어 콜백에서 접근 가능하게 함)
+                    final AlertDialog[] loadingDialog = new AlertDialog[1];
+                    loadingDialog[0] = new AlertDialog.Builder(getContext())
+                            .setTitle("전체 정보 로딩 중...")
+                            .setMessage("노래 정보와 아티스트 링크를 모두 가져오고 있습니다.")
+                            .setCancelable(false)
+                            .create();
+                    loadingDialog[0].show();
 
-                                                } else {
-                                                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show());
-                                                }
-                                            });
-
-                                        })
-                                        .setNegativeButton("닫기", null)
-                                        .show();
-
-
-                                new Handler(Looper.getMainLooper()).post(() -> {
-                                    ArtistVibeLinkService.fetchMetadata(
-                                            webView2,
-                                            metadata.vocalists,
-                                            metadata.artistLink,
-                                            new ArtistVibeLinkService.MetadataCallback() {
-                                                @Override
-                                                public void onSuccess(TrackMetadata updatedMetadata) {
-                                                    metadata.update(updatedMetadata.vocalists);
-
-                                                    favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
-                                                        if (updated > 0) {
-                                                            requireActivity().runOnUiThread(() ->
-                                                                    Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show()
-                                                            );
-                                                            loadFavoritesAndUpdateUI();
-                                                        } else {
-                                                            requireActivity().runOnUiThread(() ->
-                                                                    Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show()
-                                                            );
-                                                        }
-                                                    });
-                                                }
-
-                                                @Override
-                                                public void onFailure(String reason) {
-                                                    Log.e("ArtistLinkFetch", "아티스트 링크 업데이트 실패: " + reason);
-                                                    requireActivity().runOnUiThread(() ->
-                                                            Toast.makeText(getContext(), "업데이트 실패: " + reason, Toast.LENGTH_SHORT).show()
-                                                    );
-                                                }
-                                            }
-                                    );
-
+                    // --- 1단계: 노래 정보 가져오기 시작 ---
+                    LyricsSearchService.fetchMetadata(webView, trackIdNaverVibe, new LyricsSearchService.MetadataCallback() {
+                        @Override
+                        public void onSuccess(TrackMetadata metadata) {
+                            if (metadata.lyrics == null || metadata.getLyrics().trim().isEmpty()) {
+                                if (getActivity() == null) return;
+                                getActivity().runOnUiThread(() -> {
+                                    if(loadingDialog[0] != null) loadingDialog[0].dismiss();
+                                    Toast.makeText(getContext(), "가사 정보를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
                                 });
-
-
-
-
+                                return;
                             }
+                            metadata.vibeTrackId = trackIdNaverVibe;
 
-                            @Override
-                            public void onFailure(String reason) {
+                            // --- 2단계: 아티스트 링크 가져오기 시작 ---
+                            if (getActivity() == null) return;
+                            getActivity().runOnUiThread(() -> {
+
+                                // artistLink가 전체 주소일 경우와 상대 경로일 경우를 모두 처리
+                                String finalArtistPageUrl;
+                                if (metadata.artistLink != null && metadata.artistLink.startsWith("http")) {
+                                    finalArtistPageUrl = metadata.artistLink;
+                                } else {
+                                    finalArtistPageUrl = "https://vibe.naver.com" + metadata.artistLink;
+                                }
+
+                                // [수정] 디버깅 코드를 삭제하고, 원래 로직의 주석을 해제합니다.
+                                ArtistVibeLinkService.fetchAllLinks(
+                                        webView2, // 아티스트 링크 탐색에 사용할 두 번째 WebView
+                                        metadata.vocalists,
+                                        finalArtistPageUrl, // 방금 만든 올바른 URL 사용
+                                        new ArtistVibeLinkService.ArtistLinksCallback() {
+                                            @Override
+                                            public void onComplete(List<List<String>> updatedVocalistList) {
+                                                // --- 최종 성공: 모든 정보가 준비됨 ---
+                                                if (getActivity() == null) return;
+                                                getActivity().runOnUiThread(() -> {
+                                                    if(loadingDialog[0] != null) loadingDialog[0].dismiss();
+                                                    metadata.setVocalists(updatedVocalistList);
+
+                                                    new AlertDialog.Builder(requireContext())
+                                                            .setTitle("아래 정보를 저장하시겠습니까?")
+                                                            .setMessage(metadata.toString())
+                                                            .setPositiveButton("저장", (dialog2, which2) -> {
+                                                                if (metadata.title != null && metadata.title.equals(trackName)){
+                                                                    metadata.title = null;
+                                                                }
+                                                                favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
+                                                                    if (updated > 0) {
+                                                                        requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
+                                                                        loadFavoritesAndUpdateUI();
+                                                                    } else {
+                                                                        requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show());
+                                                                    }
+                                                                });
+                                                            })
+                                                            .setNegativeButton("닫기", null)
+                                                            .show();
+                                                });
+                                            }
+
+                                            @Override
+                                            public void onError(String reason) {
+                                                // 2단계 실패 시 처리
+                                                if (getActivity() == null) return;
+                                                getActivity().runOnUiThread(() -> {
+                                                    if(loadingDialog[0] != null) loadingDialog[0].dismiss();
+                                                    Toast.makeText(getContext(), "아티스트 링크 업데이트 실패: " + reason, Toast.LENGTH_SHORT).show();
+                                                });
+                                            }
+                                        }
+                                );
+                            });
+                        }
+
+                        @Override
+                        public void onFailure(String reason) {
+                            // 1단계 실패 시 처리
+                            if (getActivity() == null) return;
+                            getActivity().runOnUiThread(() -> {
+                                if(loadingDialog[0] != null) loadingDialog[0].dismiss();
                                 if(reason.contains("JavaScript 오류")){
                                     Toast.makeText(getContext(), "JavaScript 오류: 유효하지 않은 주소입니다.", Toast.LENGTH_SHORT).show();
-                                }
-                                else {
+                                } else {
                                     Toast.makeText(getContext(), "ERROR: " + reason, Toast.LENGTH_SHORT).show();
                                 }
-                            }
-
-
-                        });
-                    }
+                            });
+                        }
+                    });
                 })
+// .setNeutralButton... 등 나머지 체인은 그대로 이어집니다.
                 .setNeutralButton("편집", null)
                 .setNegativeButton("취소", (dialog, which)  ->{})
-                .create();
+                .show();
+
 
         dialog1.setOnShowListener(d -> {
             Log.d("test33" , "test");
