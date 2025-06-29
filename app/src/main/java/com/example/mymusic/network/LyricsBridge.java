@@ -7,6 +7,7 @@ import com.example.mymusic.model.TrackMetadata;
 import com.google.gson.Gson;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class LyricsBridge {
 
@@ -31,14 +32,19 @@ public class LyricsBridge {
 
         Log.d("LyricsBridge", "Received JSON: " + json);
 
+
+
         if (listener != null) {
             try {
                 Gson gson = new Gson();
                 MetadataRaw raw = gson.fromJson(json, MetadataRaw.class);
+
                 TrackMetadata metadata = new TrackMetadata(
                         null,
                         raw.title,
+                        raw.artistLink,
                         raw.lyrics,
+                        Arrays.asList(raw.vocalists),
                         Arrays.asList(raw.lyricists),
                         Arrays.asList(raw.composers)
                 );
@@ -53,7 +59,9 @@ public class LyricsBridge {
     // JSON 파싱용 내부 클래스
     static class MetadataRaw {
         String title;
+        String artistLink;
         String lyrics;
+        String[] vocalists;
         String[] lyricists;
         String[] composers;
     }

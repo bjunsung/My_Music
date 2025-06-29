@@ -3,6 +3,7 @@ package com.example.mymusic.ui.favorites;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Notification;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -289,13 +291,15 @@ public class FavoritesFragment extends Fragment {
     }
 
     private void showLyricsByScreenMode(Favorite favorite){
+        // 가로모드
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            // 가로모드
+            //가사 보이는 상태에서 클릭시 가리기
             if(scrollAreaView.getVisibility() == View.VISIBLE && favorite.track.trackId.equals(focusedTrackId)){
                 toggleLyricsVisibility(false);
             }
             else {
                 lyricsTextView.setText(favorite.metadata.lyrics);
+                lyricsTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.textPrimary));
                 if (favorite.metadata != null && favorite.metadata.title != null && !favorite.metadata.title.isEmpty()) {
                     onLyricsTitleTextView.setText(favorite.metadata.title);
                 }
@@ -307,8 +311,9 @@ public class FavoritesFragment extends Fragment {
                 focusedTrackId = favorite.track.trackId;
             }
 
-        } else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            // 세로모드
+        }     // 세로모드
+        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+
             new AlertDialog.Builder(requireContext())
                     .setTitle("상세정보")
                     .setMessage(favorite.metadata.lyrics)
@@ -401,13 +406,13 @@ public class FavoritesFragment extends Fragment {
                                 if (metadata.lyrics == null || metadata.getLyrics().trim().isEmpty())
                                     return;
                                 metadata.vibeTrackId = trackIdNaverVibe;
-                                if (metadata.title != null && metadata.title.equals(trackName)){
-                                    metadata.title = null;
-                                }
                                 new AlertDialog.Builder(requireContext())
                                         .setTitle("아래 정보를 저장하시겠습니까?")
                                         .setMessage(metadata.toString())
                                         .setPositiveButton("저장", (dialog, which) -> {
+                                            if (metadata.title != null && metadata.title.equals(trackName)){
+                                                metadata.title = null;
+                                            }
                                             favoritesViewModel.addMetadata(trackIdDb, metadata, updated -> {
                                                 if (updated > 0) {
                                                     requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
@@ -514,29 +519,37 @@ public class FavoritesFragment extends Fragment {
 
 
     private void toggleLyricsVisibility(boolean show) {
-        View metadataLayout = requireView().findViewById(R.id.metadata_layout);
+        try {
+            View metadataLayout = requireView().findViewById(R.id.metadata_layout);
 
-        if (show) {
-            Animation slideIn = AnimationUtils.loadAnimation(getContext(), R.anim.slide_in_bottom);
-            metadataLayout.setVisibility(View.VISIBLE);
-            scrollAreaView.setVisibility(View.VISIBLE);
-            metadataLayout.startAnimation(slideIn);
-            scrollAreaView.startAnimation(slideIn);
-        } else {
-            Animation slideOut = AnimationUtils.loadAnimation(getContext(), R.anim.slide_out_bottom);
-            metadataLayout.startAnimation(slideOut);
-            scrollAreaView.startAnimation(slideOut);
+            if (show) {
+                Animation slideIn = AnimationUtils.loadAnimation(getContext(), R.anim.slide_in_bottom);
+                metadataLayout.setVisibility(View.VISIBLE);
+                scrollAreaView.setVisibility(View.VISIBLE);
+                metadataLayout.startAnimation(slideIn);
+                scrollAreaView.startAnimation(slideIn);
+            } else {
+                Animation slideOut = AnimationUtils.loadAnimation(getContext(), R.anim.slide_out_bottom);
+                metadataLayout.startAnimation(slideOut);
+                scrollAreaView.startAnimation(slideOut);
 
-            slideOut.setAnimationListener(new Animation.AnimationListener() {
-                @Override public void onAnimationStart(Animation animation) {}
-                @Override public void onAnimationRepeat(Animation animation) {}
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    metadataLayout.setVisibility(View.GONE);
-                    scrollAreaView.setVisibility(View.GONE);
-                }
-            });
-        }
+                slideOut.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        metadataLayout.setVisibility(View.GONE);
+                        scrollAreaView.setVisibility(View.GONE);
+                    }
+                });
+            }
+        }catch (NullPointerException e){}
     }
 
 

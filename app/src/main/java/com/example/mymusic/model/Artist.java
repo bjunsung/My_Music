@@ -16,6 +16,8 @@ public class Artist implements Parcelable {
     public int followers;
     public int popularity;
 
+    public String debutDate;
+
     public Artist(String artistId, String artistName, String artworkUrl, List<String> genres, int followers, int popularity) {
         this.artistId = artistId;
         this.artistName = artistName;

@@ -142,6 +142,8 @@
                 android:layout_height="wrap_content"
                 android:paddingBottom="@dimen/navigation_bar_margin"
                 android:nestedScrollingEnabled="false" />
+
+
             <!-- 곡 텍스트 -->
             <!-- RecyclerView -->
         </LinearLayout>

@@ -194,6 +194,28 @@
                         </LinearLayout>
 
                         <LinearLayout
+                            android:id="@+id/vocalists_layout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="보컬: "
+                                android:textSize="22sp" />
+                            <TextView
+                                android:id="@+id/vocalists"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="정은지, 김남주, 윤보미, 박초롱, 손나은, 오하영"
+                                android:textStyle="italic"
+                                android:textSize="22sp"
+                                android:textIsSelectable="false"/>
+                        </LinearLayout>
+
+                        <LinearLayout
                             android:id="@+id/lyricists_layout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -246,13 +268,32 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="발매일: "
-                                android:textSize="24sp" />
+                                android:textSize="22sp" />
                             <TextView
                                 android:id="@+id/releaseDate"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="2020-04-13"
-                                android:textSize="24sp" />
+                                android:textSize="22sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="  (D + "
+                                android:textSize="22sp" />
+
+                            <TextView
+                                android:id="@+id/days_between"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="365"
+                                android:textSize="22sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text=")"
+                                android:textSize="22sp" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -264,13 +305,13 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="재생시간: "
-                                android:textSize="24sp" />
+                                android:textSize="22sp" />
                             <TextView
                                 android:id="@+id/durationMs"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="3분 28초"
-                                android:textSize="24sp" />
+                                android:textSize="22sp" />
                         </LinearLayout>
                     </LinearLayout>
                 </ScrollView>

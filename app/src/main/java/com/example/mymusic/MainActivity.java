@@ -3,6 +3,10 @@ package com.example.mymusic;
 import static com.spotify.sdk.android.auth.AccountsQueryParameters.CLIENT_ID;
 import static com.spotify.sdk.android.auth.AccountsQueryParameters.REDIRECT_URI;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -123,8 +127,29 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        setColor();
 
+    }
 
+    private void setColor(){
+        SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
+        int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
+
+        int[][] states = new int[][] {
+                new int[] { android.R.attr.state_checked },
+                new int[] { -android.R.attr.state_checked }
+        };
+
+        int[] colors = new int[] {
+                selectedColor,
+                Color.GRAY
+        };
+
+        ColorStateList colorStateList = new ColorStateList(states, colors);
+
+        BottomNavigationView bottomNav = findViewById(R.id.nav_view);
+        bottomNav.setItemIconTintList(colorStateList);
+        bottomNav.setItemTextColor(colorStateList);
     }
     @Override
     public boolean onSupportNavigateUp() {

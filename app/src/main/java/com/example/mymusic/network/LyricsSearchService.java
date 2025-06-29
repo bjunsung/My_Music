@@ -36,6 +36,9 @@ public class LyricsSearchService {
 
                                 "            let rawTitle = document.querySelector('.title')?.innerText || '';\n" +
                                 "            let title = rawTitle.replace(/^곡명\\s*/, '').trim();\n" +
+                                "            let artistClass = document.querySelector('a.link_sub_title');\n" +
+                                "            let link = artistClass ? artistClass.getAttribute('href') : null;\n" +
+
 
                                 "            function extractCredits(label) {\n" +
                                 "                return Array.from(document.querySelectorAll('div.item'))\n" +
@@ -44,13 +47,16 @@ public class LyricsSearchService {
                                 "                    .map(a => a.innerText.trim());\n" +
                                 "            }\n" +
 
+                                "            let vocalists = extractCredits('보컬');\n" +
                                 "            let lyricists = extractCredits('작사');\n" +
                                 "            let composers = extractCredits('작곡');\n" +
 
                                 "            if (!window._LYRICS_SENT && text.trim().length > 0 && typeof AndroidBridge !== 'undefined') {\n" +
                                 "                AndroidBridge.receiveMetadata(JSON.stringify({\n" +
                                 "                    title: title,\n" +
+                                "                    artistLink: link,\n" +
                                 "                    lyrics: text,\n" +
+                                "                    vocalists: vocalists,\n" +
                                 "                    lyricists: lyricists,\n" +
                                 "                    composers: composers\n" +
                                 "                }));\n" +
@@ -90,3 +96,18 @@ public class LyricsSearchService {
         webView.loadUrl(fullUrl);
     }
 }
+
+
+/*
+
+                         "            function extractCreditsWithLinks(label) {\n" +
+                                 "                return Array.from(document.querySelectorAll('div.item'))\n"+
+                                 "                    .filter(div => div.innerText.includes(label))\n" +
+                                 "                    .flatMap(div => Array.from(div.querySelectorAll('a.song_info_artist'))\n" +
+                                 "                        .map(a => [a.innerText.trim(), a.href])\n" +
+                                 "                    );\n" +
+                                 "            }\n" +
+
+
+
+ */

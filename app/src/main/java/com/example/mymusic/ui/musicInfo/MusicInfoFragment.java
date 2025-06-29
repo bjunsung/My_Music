@@ -1,15 +1,12 @@
 package com.example.mymusic.ui.musicInfo;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +14,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,7 +26,6 @@ import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
@@ -38,6 +33,7 @@ import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
+import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
 
 import java.time.LocalDate;
@@ -102,6 +98,9 @@ public class MusicInfoFragment extends Fragment {
             TextView lyricist = view.findViewById(R.id.lyricists);
             TextView composers = view.findViewById(R.id.composers);
             TextView lyrics = view.findViewById(R.id.metadata_lyrics);
+            LinearLayout vocalistsLayout = view.findViewById(R.id.vocalists_layout);
+            TextView vocalists = view.findViewById(R.id.vocalists);
+            TextView daysBetween = view.findViewById(R.id.days_between);
 
             trackTitle.setText(track.trackName);
             if (metadata != null && metadata.title != null){
@@ -123,6 +122,13 @@ public class MusicInfoFragment extends Fragment {
                 composers.setText(String.join(", ", metadata.composers));
                 composersLayout.setVisibility(TextView.VISIBLE);
             }
+
+            if (metadata != null && metadata.vocalists != null && !metadata.vocalists.isEmpty()){
+                //vocalists.setText(metadata.vocalistsToString());
+                vocalistsLayout.setVisibility(TextView.VISIBLE);
+            }
+
+            daysBetween.setText(String.valueOf(DateUtils.calculateDateDiffrence(track.releaseDate, DateUtils.today())));
 
 
             trackTitle.setOnClickListener(v -> {

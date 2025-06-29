@@ -1,37 +1,42 @@
 package com.example.mymusic.ui.setting;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Build;
+import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.mymusic.R;
 import com.example.mymusic.data.repository.SettingRepository;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 
 public class SettingFragment extends Fragment {
-    private EditText maxSearchedTracksEditText;
-    private EditText maxSearchedArtistEditText;
-    private EditText maxSearchedAlbumnsByArtistEditText;
+    private EditText maxSearchedTracksEditText, maxSearchedArtistEditText, maxSearchedAlbumnsByArtistEditText, perSonalColorEditText;
     private TextView cancelButton, confirmButton;
     private SettingRepository settingRepository;
     private int originalTracksLimit, originalArtistsLimit, originalAlbumsLimit;
     private SwitchCompat numericPadStateSwitch;
     private boolean numericPadState;
+    private ImageView colorCircleStrawberryPink, colorCircleManchesterCity, colorCircleNavy, colorCirclePantone;
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -43,21 +48,77 @@ public class SettingFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
+
+        viewBind(view);
+        loadInitialValues();
+        setViewInitialState();
+        setOnClickEvent(view);
+    }
+
+
+    private void viewBind(View view){
         maxSearchedTracksEditText = view.findViewById(R.id.max_search_tracks);
         maxSearchedArtistEditText = view.findViewById(R.id.max_searched_artists);
         maxSearchedAlbumnsByArtistEditText = view.findViewById(R.id.max_searched_albums_by_artist);
         cancelButton = view.findViewById(R.id.cancel_button);
         confirmButton = view.findViewById(R.id.confirm_button);
         numericPadStateSwitch = view.findViewById(R.id.number_pad_state_switch);
+        colorCircleStrawberryPink = view.findViewById(R.id.color_circle_strawberry_pink);
+        colorCircleManchesterCity  = view.findViewById(R.id.color_circle_manhester_city);
+        colorCirclePantone = view.findViewById(R.id.color_circle_color_pantone_712c);
+        colorCircleNavy = view.findViewById(R.id.color_circle_navy_blue);
+        perSonalColorEditText = view.findViewById(R.id.personal_color);
+    }
 
+    private void setViewInitialState(){
+        confirmButton.setVisibility(View.INVISIBLE);
+        cancelButton.setVisibility(View.INVISIBLE);
+    }
 
-        loadInitialValues();
-
+    @SuppressLint("ResourceAsColor")
+    private void setOnClickEvent(View view){
         confirmButton.setOnClickListener(v -> {
             this.saveIfValid();
-            loadInitialValues();
+           // loadInitialValues();
+            confirmButton.setVisibility(View.INVISIBLE);
+            cancelButton.setVisibility(View.INVISIBLE);
+            // 키보드 닫기
+            if(view != null){
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
         });
-        cancelButton.setOnClickListener(v -> this.restoreOriginalValues());
+        cancelButton.setOnClickListener(v -> {
+            perSonalColorEditText.setText("");
+            perSonalColorEditText.setSelection(perSonalColorEditText.getText().length());
+            this.restoreOriginalValues();
+            confirmButton.setVisibility(View.INVISIBLE);
+            cancelButton.setVisibility(View.INVISIBLE);
+        });
+
+        maxSearchedTracksEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (!maxSearchedTracksEditText.getText().toString().isEmpty()) {
+                confirmButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
+            }
+            return true;
+        });
+
+        maxSearchedArtistEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (!maxSearchedArtistEditText.getText().toString().isEmpty()) {
+                confirmButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
+            }
+            return true;
+        });
+
+        maxSearchedAlbumnsByArtistEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (!maxSearchedAlbumnsByArtistEditText.getText().toString().isEmpty()) {
+                confirmButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
+            }
+            return true;
+        });
 
         numericPadStateSwitch.setOnCheckedChangeListener(((buttonView, isChecked) -> {
             if (isChecked) {
@@ -72,7 +133,34 @@ public class SettingFragment extends Fragment {
             }
         }));
 
+        colorSetting();
+
+        perSonalColorEditText.setOnEditorActionListener((v, actionId, event) -> {
+           if (actionId == EditorInfo.IME_ACTION_DONE){
+
+
+               String input = perSonalColorEditText.getText().toString().trim();
+               int color = parseColorCode(input);
+               change_color(color);
+
+               InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+               imm.hideSoftInputFromWindow(perSonalColorEditText.getWindowToken(), 0);
+               return true;
+           }
+           return false;
+        });
+
+
+        perSonalColorEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && perSonalColorEditText.getText().toString().isEmpty()) {
+                perSonalColorEditText.setText("#");
+                perSonalColorEditText.setSelection(perSonalColorEditText.getText().length());
+            }
+        });
+
     }
+
+
 
     private void loadInitialValues() {
         // 백그라운드 쓰레드에서 Room 접근
@@ -87,12 +175,15 @@ public class SettingFragment extends Fragment {
     }
 
     private void setTextSync(){
-        maxSearchedTracksEditText.setText("");
-        maxSearchedAlbumnsByArtistEditText.setText("");
-        maxSearchedArtistEditText.setText("");
+
         maxSearchedTracksEditText.setHint(String.valueOf(originalTracksLimit));
         maxSearchedArtistEditText.setHint(String.valueOf(originalArtistsLimit));
         maxSearchedAlbumnsByArtistEditText.setHint(String.valueOf(originalAlbumsLimit));
+
+        maxSearchedTracksEditText.setText("");
+        maxSearchedAlbumnsByArtistEditText.setText("");
+        maxSearchedArtistEditText.setText("");
+
         numericPadStateSwitch.setChecked(numericPadState);
     }
 
@@ -104,10 +195,10 @@ public class SettingFragment extends Fragment {
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
         maxSearchedTracksEditText.setText("");
-        maxSearchedTracksEditText.setHint(String.valueOf(originalTracksLimit));
         maxSearchedArtistEditText.setText("");
-        maxSearchedArtistEditText.setHint(String.valueOf(originalArtistsLimit));
         maxSearchedAlbumnsByArtistEditText.setText("");
+        maxSearchedTracksEditText.setHint(String.valueOf(originalTracksLimit));
+        maxSearchedArtistEditText.setHint(String.valueOf(originalArtistsLimit));
         maxSearchedAlbumnsByArtistEditText.setHint(String.valueOf(originalAlbumsLimit));
 
         Window window = requireActivity().getWindow();
@@ -122,8 +213,10 @@ public class SettingFragment extends Fragment {
         String strTracks = maxSearchedTracksEditText.getText().toString().trim();
         String strArtists = maxSearchedArtistEditText.getText().toString().trim();
         String strAlbums = maxSearchedAlbumnsByArtistEditText.getText().toString().trim();
-        if (!(isValid(strTracks) && isValid(strArtists) && isValid(strAlbums) ))
+        if (!(isValid(strTracks) && isValid(strArtists) && isValid(strAlbums) )) {
             Toast.makeText(getContext(), "5이상 50이하의 숫자를 입력해주세요.", Toast.LENGTH_SHORT).show();
+            loadInitialValues();
+        }
 
         try {
             boolean maxTracksUpdate = true, maxArtistsUpdate = true, maxAlbumsUpdate = true;
@@ -185,8 +278,10 @@ public class SettingFragment extends Fragment {
                 }
 
                 if((finalMaxTrackUpdate || finalMaxAlbumUpdate || finalMaxArtistUpdate) && storeSuccess){
-                    requireActivity().runOnUiThread(() ->
-                            Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
+                    requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show();
+                            loadInitialValues();
+                    });
                 }
             }).start();
 
@@ -202,6 +297,50 @@ public class SettingFragment extends Fragment {
             return value >= 5 && value <= 50;
         } catch(NumberFormatException e){
             return true;
+        }
+    }
+
+
+    private void colorSetting() {
+        colorCircleStrawberryPink.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.apink_official_color)));
+        colorCircleNavy.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.navy_blue)));
+        colorCirclePantone.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.pantone)));
+        colorCircleManchesterCity.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.machester_city_official_color)));
+    }
+
+
+    private int parseColorCode(String hexCode) {
+        try {
+            return Color.parseColor(hexCode);
+        } catch (IllegalArgumentException e) {
+            // 기본값: 회색 반환
+            return Color.GRAY;
+        }
+    }
+
+    private void change_color(int color) {
+        BottomNavigationView bottomNav = getActivity().findViewById(R.id.nav_view);
+        if (bottomNav != null) {
+            int unselectedColor = Color.GRAY;
+
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_checked },
+                    new int[] { -android.R.attr.state_checked }
+            };
+
+            int[] colors = new int[] {
+                    color,
+                    unselectedColor
+            };
+
+            ColorStateList colorStateList = new ColorStateList(states, colors);
+
+            bottomNav.setItemIconTintList(colorStateList);
+            bottomNav.setItemTextColor(colorStateList);
+
+            // save color value
+            SharedPreferences prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+            prefs.edit().putInt("selected_color", color).apply();
         }
     }
 

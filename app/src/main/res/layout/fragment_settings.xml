@@ -35,109 +35,151 @@
         >
     </TextView>
 
-    <TextView
-        android:id="@+id/max_searched_tracks_statement"
-        android:layout_width="wrap_content"
+
+    <!-- 곡 수 -->
+    <LinearLayout
+        android:id="@+id/track_limit_container"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="@+id/max_search_tracks"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/confirm_button"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="8dp"
-        android:text="노래 검색 시 표시할 최대 곡 수"
-        android:textSize="16sp">
-    </TextView>
-    <EditText
-        android:id="@+id/max_search_tracks"
-        android:layout_width="30dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="@+id/confirm_button"
-        android:layout_marginTop="40dp"
-        android:layout_marginRight="14dp"
-        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:imeOptions="actionDone"
-        android:inputType="text"
-        android:hint="#"
-        >
-    </EditText>
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
 
-    <TextView
-        android:id="@+id/max_searched_artists_statement"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/max_searched_tracks_statement"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="노래 검색 시 표시할 최대 곡 수"
+            android:textSize="16sp"/>
+
+        <EditText
+            android:id="@+id/max_search_tracks"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="number"
+            android:hint="#"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
+    <!-- 아티스트 수 -->
+    <LinearLayout
+        android:id="@+id/artist_limit_container"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="@+id/max_searched_artists"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/track_limit_container"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="8dp"
-        android:text="아티스트 검색시 표시할 최대 아티스트 수"
-        android:textSize="16sp">
-    </TextView>
-    <EditText
-        android:id="@+id/max_searched_artists"
-        android:layout_width="30dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/max_search_tracks"
-        android:layout_marginTop="0dp"
-        android:layout_marginRight="14dp"
-        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:imeOptions="actionDone"
-        android:inputType="text"
-        android:hint="#"
-        >
-    </EditText>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
 
-    <TextView
-        android:id="@+id/max_searched_albums_by_artist_statement"
-        android:layout_width="wrap_content"
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="아티스트 검색시 표시할 최대 아티스트 수"
+            android:textSize="16sp"/>
+
+        <EditText
+            android:id="@+id/max_searched_artists"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="number"
+            android:hint="#"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
+    <!-- 앨범 수 -->
+    <LinearLayout
+        android:id="@+id/album_limit_container"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="@+id/max_searched_albums_by_artist"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/artist_limit_container"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="8dp"
-        android:text="Artist Information 에서 표시할 최대 앨범 수"
-        android:textSize="16sp">
-    </TextView>
-    <EditText
-        android:id="@+id/max_searched_albums_by_artist"
-        android:layout_width="30dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/max_searched_artists"
-        android:layout_marginTop="0dp"
-        android:layout_marginRight="14dp"
-        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:imeOptions="actionDone"
-        android:inputType="text"
-        android:hint="#"
-        >
-    </EditText>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
 
-    <TextView
-        android:id="@+id/number_pad_state"
-        android:layout_width="wrap_content"
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Artist Information 에서 표시할 최대 앨범 수"
+            android:textSize="16sp"/>
+
+        <EditText
+            android:id="@+id/max_searched_albums_by_artist"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:inputType="number"
+            android:hint="#"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/keyboard_mode_on_add_lyrics"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="@+id/color_palette"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/album_limit_container"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="8dp"
-        android:text="가사를 추가할때 키보드를 Number Pad Mode로 설정합니다."
-        android:textSize="16sp">
-    </TextView>
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/number_pad_state_switch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="8dp"
-        android:layout_marginTop="4dp"
-        app:layout_constraintTop_toBottomOf="@+id/max_searched_albums_by_artist"
         app:layout_constraintEnd_toEndOf="parent"
-        android:gravity="center"
-        android:checked="false"
-        tools:ignore="UseSwitchCompatOrMaterialXml" />
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="가사를 추가할때 키보드를 Number Pad Mode로 설정합니다."
+            android:textSize="16sp">
+        </TextView>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/number_pad_state_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="8dp"
+            android:checked="false"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+    </LinearLayout>
 
 
+    <LinearLayout
+        android:id="@+id/navigation_icon_color"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/keyboard_mode_on_add_lyrics"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:layout_constraintTop_toTopOf="@+id/number_pad_state_switch"
+            app:layout_constraintStart_toStartOf="parent"
+            android:text="하단 아이콘 색상 (사용자 지정 색상 코드 가능)"
+            android:textSize="16sp"/>
 
     <LinearLayout
         android:id="@+id/color_palette"
@@ -145,16 +187,14 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_gravity="center"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@+id/max_searched_albums_by_artist"
         app:layout_constraintEnd_toEndOf="parent"
         android:gravity="center"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <ImageView
-            android:id="@+id/color_circle_pantone_712c"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:id="@+id/color_circle_color_pantone_712c"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_margin="8dp"
             android:background="@drawable/color_circle_pantone_712c"
             android:clickable="true"
@@ -162,16 +202,16 @@
 
         <ImageView
             android:id="@+id/color_circle_strawberry_pink"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_margin="8dp"
             android:background="@drawable/color_circle_strawberry_pink"
             android:clickable="true"
             android:focusable="true"/>
         <ImageView
             android:id="@+id/color_circle_manhester_city"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_margin="8dp"
             android:background="@drawable/color_circle_manhester_city"
             android:clickable="true"
@@ -179,8 +219,8 @@
 
         <ImageView
             android:id="@+id/color_circle_navy_blue"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_margin="8dp"
             android:background="@drawable/color_circle_navy_blue"
             android:clickable="true"
@@ -200,6 +240,7 @@
         </EditText>
 
         <!-- 나머지 색상도 같은 방식으로 반복 -->
+    </LinearLayout>
     </LinearLayout>
 
 
