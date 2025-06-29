@@ -91,7 +91,7 @@ public class ArtistInfoFragment extends Fragment {
             genresTextView.setText(artist.getJoinedGenres());
             followersTextView.setText(NumberUtils.formatWithComma(artist.followers));
             ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext(), requireActivity());
-            apiHelper.searchAlbumsByArtist(artist.artistId, 0, albumList -> {
+            apiHelper.searchAlbumsByArtist(null, artist.artistId, 0, albumList -> {
                 SimpleAlbumAdapter albumAdapter = new SimpleAlbumAdapter(albumList);
                 albumRecyclerView.setAdapter(albumAdapter);
                 albumRecyclerView.setNestedScrollingEnabled(false);
@@ -99,7 +99,7 @@ public class ArtistInfoFragment extends Fragment {
 
             });
 
-            apiHelper.searchTrackByArtist(artist.artistId, tracks -> {
+            apiHelper.searchTrackByArtist(null, artist.artistId, tracks -> {
                 TrackAdapter trackAdapter = new TrackAdapter(tracks, getContext(), this::showTrackDetails, this::addFavoriteSong);
                 trackRecyclerView.setAdapter(trackAdapter);
                 trackRecyclerView.setNestedScrollingEnabled(false);

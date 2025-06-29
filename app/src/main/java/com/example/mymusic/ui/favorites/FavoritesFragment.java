@@ -534,6 +534,7 @@ public class FavoritesFragment extends Fragment {
                         @Override
                         public void onSuccess(TrackMetadata metadata) {
                             if (metadata.lyrics == null || metadata.getLyrics().trim().isEmpty()) {
+                                Log.d("FavoritesFragment", "Fail to fetch lyrics");
                                 if (getActivity() == null) return;
                                 getActivity().runOnUiThread(() -> {
                                     if(loadingDialog[0] != null) loadingDialog[0].dismiss();
@@ -541,6 +542,7 @@ public class FavoritesFragment extends Fragment {
                                 });
                                 return;
                             }
+                            Log.d("FavoritesFragment", "Success to fetch lyrics");
                             metadata.vibeTrackId = trackIdNaverVibe;
 
                             // --- 2단계: 아티스트 링크 가져오기 시작 ---
@@ -558,6 +560,7 @@ public class FavoritesFragment extends Fragment {
 
                                     long startTime = System.currentTimeMillis();
                                     // [수정] 디버깅 코드를 삭제하고, 원래 로직의 주석을 해제합니다.
+                                    Log.d("FavoritesFragment", "start to fetch members ids");
                                     ArtistVibeLinkService.fetchAllLinks(
                                             webView2, // 아티스트 링크 탐색에 사용할 두 번째 WebView
                                             metadata.vocalists,
@@ -612,6 +615,28 @@ public class FavoritesFragment extends Fragment {
                                             }
                                     );
                                 });
+                            }
+                            else{ // vocalist 정보 없는 경우
+                                if (loadingDialog[0] != null)
+                                    loadingDialog[0].dismiss();
+                                new AlertDialog.Builder(requireContext())
+                                        .setTitle("아래 정보를 저장하시겠습니까?")
+                                        .setMessage(metadata.toString())
+                                        .setPositiveButton("저장", (dialog, which) -> {
+                                            if (metadata.title != null && metadata.title.equals(trackName)) {
+                                                metadata.title = null;
+                                            }
+                                            favoritesViewModel.updateMetadata(trackIdDb, metadata, updated -> {
+                                                if (updated > 0) {
+                                                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
+                                                    loadFavoritesAndUpdateUI();
+                                                } else {
+                                                    requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되지 않았습니다.", Toast.LENGTH_SHORT).show());
+                                                }
+                                            });
+                                        })
+                                        .setNegativeButton("닫기", null)
+                                        .show();
                             }
                         }
 

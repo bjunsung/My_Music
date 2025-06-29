@@ -37,6 +37,7 @@ public class LyricsBridge {
         Log.d("LyricsBridge", "Received JSON: " + json);
 
         if (listener != null) {
+            Log.d("LyricsBridge", "starting parse metadata");
             try {
                 Gson gson = new Gson();
                 MetadataRaw raw = gson.fromJson(json, MetadataRaw.class);

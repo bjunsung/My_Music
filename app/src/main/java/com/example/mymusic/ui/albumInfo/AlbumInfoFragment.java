@@ -87,7 +87,7 @@ public class AlbumInfoFragment extends Fragment {
 
         apiHelper = new ArtistApiHelper(getContext(), requireActivity());
 
-        apiHelper.searchTrackByAlbum(album, 0, trackList -> {
+        apiHelper.searchTrackByAlbum(null, album, 0, trackList -> {
             trackAdapter = new TrackAdapter(trackList, getContext(), this::showTrackDetails, this::addFavoriteSong);
             trackAdapter.setShowImage(false);
             trackAdapter.setShowPosition(true);
@@ -100,7 +100,7 @@ public class AlbumInfoFragment extends Fragment {
     }
 
     public void artistClickEvent(String artistId){
-        apiHelper.getArtist(artistId, 0, artist -> {
+        apiHelper.getArtist(null, artistId, 0, artist -> {
             Bundle bundle = new Bundle();
             bundle.putParcelable("artist", artist);
             NavController navController = Navigation.findNavController(requireView());

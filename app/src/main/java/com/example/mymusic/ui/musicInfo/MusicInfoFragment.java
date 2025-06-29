@@ -170,7 +170,7 @@ public class MusicInfoFragment extends Fragment {
             artistName.setText(track.artistName);
             artistName.setOnClickListener(v -> {
                 ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
-                apiHelper.getArtist(track.artistId, 0, artist -> {
+                apiHelper.getArtist(null, track.artistId, 0, artist -> {
                     Bundle bundle = new Bundle();
                     bundle.putParcelable("artist", artist);
                     NavController navController = NavHostFragment.findNavController(this);
@@ -183,7 +183,7 @@ public class MusicInfoFragment extends Fragment {
             //music_info fragment to album_info fragment : shared element transition
             albumName.setOnClickListener(v -> {
                 ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
-                apiHelper.getAlbum(track.albumId, 0, album -> {
+                apiHelper.getAlbum(null, track.albumId, 0, album -> {
                     if (album != null) {
                         Bundle bundle = new Bundle();
                         artworkImage.setTransitionName("music_info_to_album_info");

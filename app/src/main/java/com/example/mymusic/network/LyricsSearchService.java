@@ -40,6 +40,7 @@ public class LyricsSearchService {
             @Override
             public void onSuccess(TrackMetadata metadata) {
                 if (!callbackInvoked[0]) {
+                    Log.d("LyricsSearchService", "first callback invoked");
                     callbackInvoked[0] = true;
                     timeoutHandler.removeCallbacks(timeoutRunnable);
                     callback.onSuccess(metadata);

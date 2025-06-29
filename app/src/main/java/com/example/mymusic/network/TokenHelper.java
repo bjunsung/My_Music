@@ -59,10 +59,10 @@ public class TokenHelper {
                 try {
                     JSONObject json = new JSONObject(response.body().string());
                     String accessToken = json.getString("access_token");
-                    callback.onSuccess(accessToken);
                     //DB 에 저장
                     TokenRepository repository = new TokenRepository(context.getApplicationContext());
                     repository.setAccessToken(accessToken);
+                    callback.onSuccess(accessToken);
                 } catch (Exception e) {
                     callback.onFailure("Parse error: " + e.getMessage());
                 }

@@ -89,6 +89,7 @@ public class SearchFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        retryRefreshTokenCount = 0;
         return inflater.inflate(R.layout.fragment_search, container, false);
     }
 
@@ -113,12 +114,12 @@ public class SearchFragment extends Fragment {
             ArtistAdapter adapter = new ArtistAdapter(searchViewModel.searchArtistResults, getContext(), this::showArtistDetails, this::addFavoriteArtist);
             recyclerView.setAdapter(adapter);
         }
-        retryRefreshTokenCount++;
         getTokenAndEnableSearch();
     }
 
     //토큰 재발급
     private void refreshToken(Consumer<String> callback){
+        retryRefreshTokenCount++;
         TokenHelper.refreshTokenWithUI(requireContext(), this, refreshed -> {
             if (refreshed != null){
                 callback.accept(refreshed);
@@ -255,7 +256,7 @@ public class SearchFragment extends Fragment {
                 int responseCode = conn.getResponseCode();
 
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
-                    if(retryRefreshTokenCount++ >= MAX_RETRY_REFRESH_TOKEN_COUNT){
+                    if(retryRefreshTokenCount >= MAX_RETRY_REFRESH_TOKEN_COUNT){
                         retryRefreshTokenCount = 0;
                         requireActivity().runOnUiThread(() -> {
                             new AlertDialog.Builder(getContext())
