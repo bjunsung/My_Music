@@ -38,7 +38,7 @@ public class TrackSearchService {
                 int responseCode = conn.getResponseCode();
                 Log.d("TrackSearchService", "API calls completed");
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
-                    onFailure.accept("ERROR,만료된 토큰입니다.");
+                    onFailure.accept("Error,만료된 토큰입니다.");
                     return;
                 }
                 else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) { //403
@@ -119,7 +119,7 @@ public class TrackSearchService {
                 int responseCode = conn.getResponseCode();
                 Log.d("TrackSearchService", "API calls completed");
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
-                    onFailure.accept("ERROR,만료된 토큰입니다.");
+                    onFailure.accept("Error,만료된 토큰입니다.");
                     return;
                 }
                 else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) { //403

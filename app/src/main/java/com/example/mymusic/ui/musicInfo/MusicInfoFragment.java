@@ -182,7 +182,7 @@ public class MusicInfoFragment extends Fragment {
                     }
                     else{
                         ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
-                        apiHelper.getArtist(null, track.artistId, 0, artist -> {
+                        apiHelper.getArtist(null, track.artistId,  artist -> {
                             FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
                             bundle.putParcelable("favorite_artist", favoriteArtist);
                             NavController navController = NavHostFragment.findNavController(this);
@@ -197,7 +197,7 @@ public class MusicInfoFragment extends Fragment {
             //music_info fragment to album_info fragment : shared element transition
             albumName.setOnClickListener(v -> {
                 ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
-                apiHelper.getAlbum(null, track.albumId, 0, album -> {
+                apiHelper.getAlbum(null, track.albumId, album -> {
                     if (album != null) {
                         Bundle bundle = new Bundle();
                         artworkImage.setTransitionName("music_info_to_album_info");

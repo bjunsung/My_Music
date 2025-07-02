@@ -753,7 +753,7 @@ public class FavoritesFragment extends Fragment {
 // .setNeutralButton... 등 나머지 체인은 그대로 이어집니다.
                 .setNeutralButton("편집", null)
                 .setNegativeButton("취소", (dialog, which)  ->{})
-                .show();
+                .create();
 
 
         dialog1.setOnShowListener(d -> {

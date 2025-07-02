@@ -32,7 +32,7 @@ public class ArtistSearchService {
                 Log.d("ArtistSearchService", "API calls completed");
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
                     Log.d("ArtistSearchService", "Access Token expired, token: " + accessToken);
-                    onFailure.accept("ERROR,만료된 토큰입니다.");
+                    onFailure.accept("Error,만료된 토큰입니다.");
                     return;
                 }
                 else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) { //403

@@ -261,7 +261,7 @@ public class ArtistInfoFragment extends Fragment {
 
         ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext(), requireActivity());
 
-        apiHelper.searchAlbumsByArtist(null, artist.artistId, 0, albumList -> {
+        apiHelper.searchAlbumsByArtist(null, artist.artistId, albumList -> {
             SimpleAlbumAdapter albumAdapter = new SimpleAlbumAdapter(albumList);
             albumRecyclerView.setAdapter(albumAdapter);
             albumRecyclerView.setNestedScrollingEnabled(false);
@@ -271,7 +271,7 @@ public class ArtistInfoFragment extends Fragment {
             TrackAdapter trackAdapter = new TrackAdapter(tracks, getContext(), this::showTrackDetails, this::addFavoriteSong);
             trackRecyclerView.setAdapter(trackAdapter);
             trackRecyclerView.setNestedScrollingEnabled(false);
-        }, 0);
+        });
 
 
         downloadBtn.setOnClickListener(v -> {
