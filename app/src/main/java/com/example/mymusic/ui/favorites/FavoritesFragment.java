@@ -5,8 +5,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,6 +15,7 @@ import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.WebView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
@@ -54,6 +53,7 @@ import android.widget.LinearLayout;
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
 public class FavoritesFragment extends Fragment {
+    private final String TAG = "FavoriteFragment";
     private RecyclerView recyclerView;
     private FavoritesViewModel favoritesViewModel;
     private FavoriteArtistViewModel favoriteArtistViewModel;
@@ -236,36 +236,99 @@ public class FavoritesFragment extends Fragment {
     }
 
 
-    void deleteFavoriteArtist(Artist artist){
+    public void deleteFavoriteArtist(Artist artist) {
+        // --- AlertDialog에 삽입할 커스텀 뷰를 Java 코드로 직접 생성 시작 ---
+        // 최상위 레이아웃 (수직 방향)
+        LinearLayout customLayout = new LinearLayout(getContext());
+        customLayout.setOrientation(LinearLayout.VERTICAL);
+
+        // 패딩 설정 (dp 값을 픽셀로 변환)
+        float density = getContext().getResources().getDisplayMetrics().density;
+        int paddingHorizontalPx = (int) (24 * density); // 좌우 24dp
+        int paddingVerticalPx = (int) (12 * density);   // 상하 12dp
+        customLayout.setPadding(paddingHorizontalPx, paddingVerticalPx, paddingHorizontalPx, paddingVerticalPx);
+
+        // 메시지 TextView 생성
+        TextView messageTextView = new TextView(getContext());
+        messageTextView.setText("정말 " + artist.artistName + " 을(를) 삭제하시겠습니까?");
+        // 텍스트 색상 설정 (예시: 기본 시스템 텍스트 색상)
+        messageTextView.setTextColor(getContext().getResources().getColor(android.R.color.tab_indicator_text, getContext().getTheme()));
+        messageTextView.setTextSize(16); // 텍스트 크기 16sp
+        // 메시지 TextView의 하단 패딩 (16dp)
+        int messageBottomPaddingPx = (int) (16 * density);
+        messageTextView.setPadding(0, 0, 0, messageBottomPaddingPx);
+
+        // 체크박스 생성
+        CheckBox deleteMetadataCheckBox = new CheckBox(getContext());
+        deleteMetadataCheckBox.setText("metadata와 함께 삭제");
+
+        // 체크박스를 오른쪽에 정렬하기 위한 LayoutParams 설정
+        LinearLayout.LayoutParams checkBoxParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        checkBoxParams.gravity = android.view.Gravity.END; // 오른쪽 정렬
+        deleteMetadataCheckBox.setLayoutParams(checkBoxParams);
+
+        // 생성된 뷰들을 레이아웃에 추가
+        customLayout.addView(messageTextView);
+        customLayout.addView(deleteMetadataCheckBox);
+        // --- AlertDialog에 삽입할 커스텀 뷰 생성 끝 ---
+
+
+        // AlertDialog 빌더를 사용하여 다이얼로그 생성
         new AlertDialog.Builder(getContext())
                 .setTitle("삭제")
-                .setMessage("정말 " + artist.artistName + " 을(를) 삭제하시겠습니까?")
-                .setNegativeButton("취소", null)
-                .setPositiveButton("확인", new DialogInterface.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int which){
-                        favoriteArtistViewModel.deleteFavoriteArtist(artist);
-                        Toast.makeText(getContext(),
-                                artist.artistName + " 이(가) Favorites List 에서 삭제되었습니다.",
-                                Toast.LENGTH_SHORT).show();
-                        favoriteArtistViewModel.loadFavorites(updatedList -> {
-                            if (updatedList.isEmpty()) {
-                                emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
-                                recyclerView.setVisibility(View.GONE);
-                            } else {
-                                emptyFavoriteSongTextView.setVisibility(View.GONE);
-                                recyclerView.setVisibility(View.VISIBLE);
+                .setView(customLayout) // Java 코드로 만든 커스텀 뷰를 다이얼로그에 설정
+                .setNegativeButton("취소", null) // 취소 버튼
+                .setPositiveButton("확인", (dialog, which) -> {
+                    // 사용자가 체크박스를 체크했는지 확인
+                    boolean shouldDeleteMetadata = deleteMetadataCheckBox.isChecked();
+
+                    if (shouldDeleteMetadata) {
+                        Log.d(TAG, "delete artist with metadata");
+                        // "metadata와 함께 삭제"가 체크된 경우의 로직
+                        // ViewModel에 해당 아티스트의 메타데이터도 함께 삭제하는 메서드를 호출 (이 메서드는 ViewModel에 새로 구현해야 함)
+                        favoriteArtistViewModel.deleteArtistMetadataBySpotifyId(artist.artistId, message -> {
+                            if (message.contains("Success")){
+                                Log.d(TAG, "delete metadata Success");
+                                Toast.makeText(getContext(),
+                                        artist.artistName + " 및 메타데이터가 삭제되었습니다",
+                                        Toast.LENGTH_SHORT).show();
                             }
-                            favoriteArtistAdapter.updateData(updatedList); // RecyclerView 새로고침
-                            updateEmptyState(updatedList.isEmpty());
-                            favoritesLoadedCountTextView.setText(String.valueOf(updatedList.size()));
+                            else{
+                                Log.d(TAG, "delete metadata Fail");
+                                Toast.makeText(getContext(),
+                                        artist.artistName + "의 메타데이터 삭제 실패",
+                                        Toast.LENGTH_SHORT).show();
+                            }
                         });
+
                     }
+                    // 체크되지 않은 경우 (기존 로직: 즐겨찾기 목록에서만 삭제)
+                    favoriteArtistViewModel.deleteFavoriteArtist(artist);
+                    Toast.makeText(getContext(),
+                            artist.artistName + " 이(가) Favorites List 에서 삭제되었습니다.",
+                            Toast.LENGTH_SHORT).show();
+
+
+                    // 삭제 후 즐겨찾기 목록 새로고침 (공통 로직)
+                    favoriteArtistViewModel.loadFavorites(updatedList -> {
+                        // 목록 상태에 따라 UI 업데이트 (empty/visible)
+                        if (updatedList.isEmpty()) {
+                            emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
+                            recyclerView.setVisibility(View.GONE);
+                        } else {
+                            emptyFavoriteSongTextView.setVisibility(View.GONE);
+                            recyclerView.setVisibility(View.VISIBLE);
+                        }
+                        favoriteArtistAdapter.updateData(updatedList); // RecyclerView 데이터 업데이트
+                        // updateEmptyState(updatedList.isEmpty()); // 이 메서드가 별도로 있다면 호출
+                        favoritesLoadedCountTextView.setText(String.valueOf(updatedList.size())); // 개수 업데이트
+                    });
                 })
-                .show();
+                .show(); // 다이얼로그 표시
     }
-
-
-
 
 
 
@@ -411,6 +474,38 @@ public class FavoritesFragment extends Fragment {
                                                 }
 
                                                 Log.d("FavoritesFragment", "수정된 metadata : " + metadata.toString());
+                                                favoriteArtistViewModel.addArtistMetadata(metadata, new FavoriteArtistViewModel.addMetadataCallback() {
+                                                    @Override
+                                                    public void onSuccess() {
+                                                        requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show());
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(ArtistMetadata metadata, String reason) {
+                                                        if (reason.contains("Spotify")) {
+                                                            requireActivity().runOnUiThread(() -> {
+                                                                new AlertDialog.Builder(getContext())
+                                                                        .setTitle("Artist 중복")
+                                                                        .setMessage("Metadata 정보가 이미 있습니다.\n삭제 후 다시 시도하세요.")
+                                                                        .setNegativeButton("확인", null)
+                                                                        .show();
+
+                                                            });
+                                                        }
+                                                        else if (reason.contains("Vibe")){
+                                                            favoriteArtistViewModel.getArtistNameById(metadata.spotifyArtistId, artistName -> {
+                                                                requireActivity().runOnUiThread(() -> {
+                                                                    new AlertDialog.Builder(getContext())
+                                                                            .setTitle("Metadata 중복")
+                                                                            .setMessage("Metadata 정보가 " + artistName +  " 에 연결되어있습니다.\n삭제 후 다시 시도하세요.")
+                                                                            .setNegativeButton("확인", null)
+                                                                            .show();
+                                                                });
+                                                            });
+                                                        }
+                                                    }
+                                                });
+
                                             })
                                             .setNegativeButton("닫기", null)
                                             .show();

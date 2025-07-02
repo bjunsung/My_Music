@@ -12,6 +12,11 @@ public class FavoriteArtist implements Parcelable {
     public FavoriteArtist(Artist artist){
         this.artist = artist;
     }
+    public FavoriteArtist(Artist artist, String addedDate){
+        this.artist = artist;
+        this.addedDate = addedDate;
+    }
+
     public FavoriteArtist(Artist artist, String addedDate, ArtistMetadata metadata){
         this.artist = artist;
         this.addedDate = addedDate;

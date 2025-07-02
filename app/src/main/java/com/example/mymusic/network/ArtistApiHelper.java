@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ArtistApiHelper {
+    private final String TAG = "ArtistApiHelper";
 
     private Context context;
     private Activity activity; //Ui 작업 actvity.runOnUiThread()
@@ -80,6 +81,7 @@ public class ArtistApiHelper {
 
     public void searchAlbumsByArtist(String refreshedToken ,String artistId, int refreshCount, Consumer<List<Album>> callback) {
         if (refreshCount >= 3) {
+            Log.d(TAG, "searchAlbumsByArtist - 토큰 재발급 회수 초과");
             new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
             return;
         }
@@ -87,10 +89,13 @@ public class ArtistApiHelper {
             AlbumSearchService.searchAlbumByArtist(artistId, context, refreshedToken, callback, this::alertError);
         }
         else {
+            Log.d(TAG, "searchAlbumsByArtist - try fetch access token to db");
             getAccessToken(token -> {
+                Log.d(TAG, "searchAlbumsByArtist - success to fetch access token\nstarting to search album by artist id...");
                 AlbumSearchService.searchAlbumByArtist(artistId, context, token, callback, this::alertError);
             }, error -> {
                 // 실패 시 재발급 후 다시 검색
+                Log.d(TAG, "searchAlbumsByArtist - fail to fetch access token\nretrying to fetch access token...");
                 refreshToken(refreshedToken_ -> {
                     if (refreshedToken_ != null)
                         new Handler(Looper.getMainLooper()).post(() -> searchAlbumsByArtist(refreshedToken_, artistId, refreshCount + 1, callback));
@@ -103,6 +108,7 @@ public class ArtistApiHelper {
 
     public void searchTrackByArtist(String refreshedToken, String artistId, Consumer<List<Track>> callback, int refreshCount){
         if (refreshCount >= 3) {
+            Log.d(TAG, "searchTrackByArtist - 토큰 재발급 회수 초과");
             new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
             return;
         }
@@ -110,10 +116,13 @@ public class ArtistApiHelper {
             TrackSearchService.searchTrackByArtist(artistId, refreshedToken, callback, this::alertError);
         }
         else {
+            Log.d(TAG, "searchTrackByArtist - try fetch access token to db");
             getAccessToken(token -> {
+                Log.d(TAG, "searchTrackByArtist - success to fetch access token\nstarting to search album by artist id...");
                 TrackSearchService.searchTrackByArtist(artistId, token, callback, this::alertError);
             }, error -> {
                 // 실패 시 재발급 후 다시 검색
+                Log.d(TAG, "searchTrackByArtist - fail to fetch access token\nretrying to fetch access token...");
                 refreshToken(refreshedToken_ -> {
                     if (refreshedToken_ != null)
                         new Handler(Looper.getMainLooper()).post(() -> searchTrackByArtist(refreshedToken_, artistId, callback, refreshCount + 1));
@@ -126,6 +135,7 @@ public class ArtistApiHelper {
 
     public void searchTrackByAlbum(String refreshedToken, Album album,int refreshCount, Consumer<List<Track>> callback){
         if (refreshCount >= 3) {
+            Log.d(TAG, "searchTrackByAlbum - 토큰 재발급 회수 초과");
             new Handler(Looper.getMainLooper()).post(() -> callback.accept((new ArrayList<>())));
             return;
         }
@@ -133,10 +143,13 @@ public class ArtistApiHelper {
             TrackSearchService.searchTrackByAlbum(album, refreshedToken, callback, this::alertError);
         }
         else {
+            Log.d(TAG, "searchTrackByAlbum - try fetch access token to db");
             getAccessToken(token -> {
+                Log.d(TAG, "searchTrackByAlbum - success to fetch access token\nstarting to search album by artist id...");
                 TrackSearchService.searchTrackByAlbum(album, token, callback, this::alertError);
             }, error -> {
                 // 실패 시 재발급 후 다시 검색
+                Log.d(TAG, "searchTrackByAlbum - fail to fetch access token\nretrying to fetch access token...");
                 refreshToken(refreshedToken_ -> {
                     if (refreshedToken_ != null)
                         new Handler(Looper.getMainLooper()).post(() -> searchTrackByAlbum(refreshedToken_, album, refreshCount + 1, callback));

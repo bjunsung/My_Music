@@ -5,15 +5,17 @@ import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
-import androidx.core.util.Consumer;
 import androidx.lifecycle.AndroidViewModel;
 
+import com.example.mymusic.data.repository.ArtistMetadataRepository;
 import com.example.mymusic.data.repository.FavoriteSongRepository;
+import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class FavoritesViewModel extends AndroidViewModel {
     private final FavoriteSongRepository repository;
@@ -21,6 +23,7 @@ public class FavoritesViewModel extends AndroidViewModel {
     public FavoritesViewModel(@NonNull Application application) {
         super(application);
         repository = new FavoriteSongRepository(application);
+
     }
 
     /**
@@ -54,10 +57,8 @@ public class FavoritesViewModel extends AndroidViewModel {
 
     public void updateMetadata(String trackId, TrackMetadata metadata, Consumer<Integer> callback){
         new Thread(() -> {
-            repository.updateFavoriteSong(trackId, metadata, callback);
+            repository.updateFavoriteSong(trackId, metadata, callback::accept);
         }).start();
     }
-
-
 
 }

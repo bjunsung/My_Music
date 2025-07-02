@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,8 +34,10 @@ import com.example.mymusic.R;
 import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.model.Album;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.ArtistApiHelper;
+import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
 
@@ -48,6 +51,7 @@ public class AlbumInfoFragment extends Fragment {
     private ArtistApiHelper apiHelper;
     private TrackAdapter trackAdapter;
     private FavoritesViewModel favoritesViewModel;
+    private FavoriteArtistViewModel favoriteArtistViewModel;
 
 
 
@@ -62,6 +66,7 @@ public class AlbumInfoFragment extends Fragment {
         super.onCreate(savedInstatceState);
 
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+        favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
     }
 
     @Override
@@ -100,13 +105,23 @@ public class AlbumInfoFragment extends Fragment {
     }
 
     public void artistClickEvent(String artistId){
-        apiHelper.getArtist(null, artistId, 0, artist -> {
-            Bundle bundle = new Bundle();
-            bundle.putParcelable("artist", artist);
-            NavController navController = Navigation.findNavController(requireView());
-            navController.navigate(R.id.action_albumInfoFragment_to_artist_infoFragment, bundle);
+        Bundle bundle = new Bundle();
+        favoriteArtistViewModel.loadFavoriteArtistByArtistId(artistId, loaded -> {
+            if (loaded != null){
+                bundle.putParcelable("favorite_artist", loaded);
+                NavController navController = NavHostFragment.findNavController(this);
+                navController.navigate(R.id.action_albumInfoFragment_to_artist_infoFragment, bundle);
+            }
+            else{
+                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+                apiHelper.getArtist(null, artistId, 0, artist -> {
+                    FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
+                    bundle.putParcelable("favorite_artist", favoriteArtist);
+                    NavController navController = NavHostFragment.findNavController(this);
+                    navController.navigate(R.id.action_albumInfoFragment_to_artist_infoFragment, bundle);
+                });
+            }
         });
-
     }
 
     public void trackItemClickEvent(Favorite favorite){
@@ -171,20 +186,28 @@ public class AlbumInfoFragment extends Fragment {
                 .setNegativeButton("취소", null)
                 .setPositiveButton("확인", new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int which) {
-                        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                        new Thread(() -> {
-                            try {
-                                favoritesViewModel.insert(track, today);
-                                requireActivity().runOnUiThread(() -> {
-                                    Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
-                                });
-                            } catch (SQLiteConstraintException e) {
+                        favoritesViewModel.loadFavoriteItem(track.trackId, loaded -> {
+                            if (loaded != null){
                                 requireActivity().runOnUiThread(() -> {
                                     Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
                                 });
                             }
-                        }).start();
-
+                            else{
+                                String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                                new Thread(() -> {
+                                    try {
+                                        favoritesViewModel.insert(track, today);
+                                        requireActivity().runOnUiThread(() -> {
+                                            Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                        });
+                                    } catch (SQLiteConstraintException e) {
+                                        requireActivity().runOnUiThread(() -> {
+                                            Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                                        });
+                                    }
+                                }).start();
+                            }
+                        });
                     }
                 })
                 .show();

@@ -2,6 +2,7 @@ package com.example.mymusic.network;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.core.util.Consumer;
 
@@ -28,12 +29,14 @@ public class ArtistSearchService {
                 conn.setRequestProperty("Authorization", "Bearer " + accessToken);
 
                 int responseCode = conn.getResponseCode();
-
+                Log.d("ArtistSearchService", "API calls completed");
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
+                    Log.d("ArtistSearchService", "Access Token expired, token: " + accessToken);
                     onFailure.accept("ERROR,만료된 토큰입니다.");
                     return;
                 }
                 else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) { //403
+                    Log.d("ArtistSearchService", "접근 제한됨,이 요청에 대한 권한이 없습니다, token: " + accessToken);
                     onFailure.accept("접근 제한됨,이 요청에 대한 권한이 없습니다.");
                     return;
                 }
@@ -59,6 +62,7 @@ public class ArtistSearchService {
                 int popularity = obj.getInt("popularity");
 
                 new Handler(Looper.getMainLooper()).post(() -> {
+                    Log.d("ArtistSearchService", "Success to fetch Artist by artist id");
                     callback.accept(new Artist(
                             artistId,
                             name,
@@ -74,6 +78,7 @@ public class ArtistSearchService {
             }catch (Exception e) {
                 e.printStackTrace();
                 new Handler(Looper.getMainLooper()).post(() -> {
+                    Log.d("ArtistSearchService", "ERROR,API 호출 중 예외 발생:" + e.getMessage());
                     onFailure.accept("ERROR,API 호출 중 예외 발생: " + e.getMessage());
                 });
                 return;

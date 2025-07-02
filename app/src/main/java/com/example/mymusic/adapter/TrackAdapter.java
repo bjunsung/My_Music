@@ -75,6 +75,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         }
 
         Track track = tracks.get(position);
+
         holder.title.setText(track.trackName);
         holder.artist.setText(track.artistName);
 

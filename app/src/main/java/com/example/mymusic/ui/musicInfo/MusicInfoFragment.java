@@ -29,9 +29,11 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistApiHelper;
+import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
@@ -43,6 +45,7 @@ public class MusicInfoFragment extends Fragment {
     private Favorite favorite;
     private Track track;
     FavoritesViewModel favoritesViewModel;
+    FavoriteArtistViewModel favoriteArtistViewModel;
     TextView trackTitle, trackTitleKr, addedDate;
     LinearLayout addedDateLayout;
     private boolean savedInDb;
@@ -52,6 +55,7 @@ public class MusicInfoFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+        favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
     }
 
     @Override
@@ -169,12 +173,22 @@ public class MusicInfoFragment extends Fragment {
 
             artistName.setText(track.artistName);
             artistName.setOnClickListener(v -> {
-                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
-                apiHelper.getArtist(null, track.artistId, 0, artist -> {
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable("artist", artist);
-                    NavController navController = NavHostFragment.findNavController(this);
-                    navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);
+                Bundle bundle = new Bundle();
+                favoriteArtistViewModel.loadFavoriteArtistByArtistId(track.artistId, loaded -> {
+                    if (loaded != null){
+                        bundle.putParcelable("favorite_artist", loaded);
+                        NavController navController = NavHostFragment.findNavController(this);
+                        navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);
+                    }
+                    else{
+                        ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+                        apiHelper.getArtist(null, track.artistId, 0, artist -> {
+                            FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
+                            bundle.putParcelable("favorite_artist", favoriteArtist);
+                            NavController navController = NavHostFragment.findNavController(this);
+                            navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);
+                        });
+                    }
                 });
             });
 

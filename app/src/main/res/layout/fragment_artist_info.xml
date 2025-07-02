@@ -14,7 +14,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true">
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -22,8 +21,7 @@
                 android:padding="8dp">
 
                 <!-- 🔽 기존 내용 전부 그대로 유지 -->
-                <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-                    xmlns:app="http://schemas.android.com/apk/res-auto"
+                <androidx.core.widget.NestedScrollView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:fillViewport="true">
@@ -41,12 +39,38 @@
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
 
-                            <ImageView
-                                android:id="@+id/artworkImage"
-                                android:layout_width="400dp"
-                                android:layout_height="400dp"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/ic_image_not_found_foreground" />
+                            <LinearLayout
+                                android:id="@+id/linear_layout_2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+                                <androidx.viewpager2.widget.ViewPager2
+                                    android:id="@+id/image_pager"
+                                    android:layout_width="400dp"
+                                    android:layout_height="400dp"
+                                    android:scaleType="centerCrop"
+                                    android:clipToPadding="false"
+                                    android:clipChildren="false"
+                                    android:overScrollMode="never" />
+
+                                <ImageView
+                                    android:id="@+id/focused_image"
+                                    android:layout_width="440dp"
+                                    android:layout_height="440dp"
+                                    android:visibility="gone"
+                                    android:layout_gravity="center"
+                                    android:scaleType="centerCrop" />
+
+                                <TextView
+                                    android:id="@+id/download_button"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="다운로드"
+                                    android:textColor="@android:color/white"
+                                    android:layout_gravity="right|bottom" />
+
+                            </LinearLayout>
+
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -65,11 +89,10 @@
                                         android:layout_width="0dp"
                                         android:layout_height="wrap_content"
                                         android:layout_weight="1"
-                                        android:paddingTop="50dp"
+                                        android:paddingTop="10dp"
                                         android:text="Apink"
                                         android:textSize="30sp"
-                                        android:textStyle="bold"
-                                        android:textIsSelectable="true" />
+                                        android:textStyle="bold" />
 
                                     <ImageButton
                                         android:id="@+id/add_button"
@@ -81,7 +104,9 @@
                                         android:background="?attr/selectableItemBackgroundBorderless" />
                                 </LinearLayout>
 
+
                                 <LinearLayout
+                                    android:id="@+id/debut_layout"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
@@ -90,22 +115,149 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="장르: "
-                                        android:textSize="24sp"
-                                        android:maxLines="1"
+                                        android:text="데뷔일: "
+                                        android:textSize="@dimen/text_size_basic" />
+
+                                    <TextView
+                                        android:id="@+id/debut_date"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="2011-04-19"
+                                        android:textSize="@dimen/text_size_basic"  />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/activity_years_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="연대: "
+                                        android:textSize="@dimen/text_size_basic"  />
+
+                                    <TextView
+                                        android:id="@+id/activity_years"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="2010, 2020"
+                                        android:textSize="@dimen/text_size_basic"  />
+                                </LinearLayout>
+
+
+                                <LinearLayout
+                                    android:id="@+id/members_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="멤버: "
+                                        android:textSize="@dimen/text_size_basic"  />
+
+                                    <TextView
+                                        android:id="@+id/members"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="박초롱, 정은지, 윤보미, 김남주, 오하영"
+                                        android:textSize="@dimen/text_size_basic"
+                                        android:textStyle="italic"/>
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/agency_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="소속사: "
+                                        android:textSize="@dimen/text_size_basic"  />
+
+                                    <TextView
+                                        android:id="@+id/agency"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="아이에스티엔터테인먼트"
+                                        android:textSize="@dimen/text_size_basic"  />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/activity_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="활동: "
+                                        android:textSize="@dimen/text_size_basic"  />
+
+                                    <TextView
+                                        android:id="@+id/activity"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="에이핑크"
+                                        android:textSize="@dimen/text_size_basic" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/added_date_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="추가한 날짜: "
+                                        android:textSize="@dimen/text_size_basic"  />
+
+                                    <TextView
+                                        android:id="@+id/added_date"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="2025-04-19"
+                                        android:textSize="@dimen/text_size_basic" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/genres_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
                                         android:ellipsize="end"
-                                        android:textIsSelectable="true" />
+                                        android:maxLines="1"
+                                        android:text="장르: "
+                                        android:textSize="@dimen/text_size_basic" />
 
                                     <TextView
                                         android:id="@+id/genres"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="[k-pop]"
-                                        android:textSize="24sp"
-                                        android:textIsSelectable="true" />
+                                        android:textSize="@dimen/text_size_basic"  />
                                 </LinearLayout>
 
                                 <LinearLayout
+                                    android:id="@+id/followers_layout"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
@@ -115,17 +267,18 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="followers: "
-                                        android:textSize="24sp"
-                                        android:textIsSelectable="true" />
+                                        android:textSize="@dimen/text_size_basic" />
 
                                     <TextView
                                         android:id="@+id/followers"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="1,303,633"
-                                        android:textSize="24sp"
-                                        android:textIsSelectable="true" />
+                                        android:textSize="@dimen/text_size_basic"
+                                        />
                                 </LinearLayout>
+
+
                             </LinearLayout>
                         </LinearLayout>
 
@@ -140,13 +293,14 @@
                             android:textStyle="bold" />
 
                         <!-- 앨범 RecyclerView -->
+
+                        <!-- 곡 타이틀 -->
                         <androidx.recyclerview.widget.RecyclerView
                             android:id="@+id/album_result_recycler_view"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:nestedScrollingEnabled="false" />
 
-                        <!-- 곡 타이틀 -->
                         <TextView
                             android:id="@+id/track_text"
                             android:layout_width="match_parent"
@@ -161,20 +315,45 @@
                             android:id="@+id/track_result_recycler_view"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            android:layout_marginBottom="20dp"/>
+
+
+                        <LinearLayout
+                            android:id="@+id/biography_layout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
                             android:paddingBottom="@dimen/navigation_bar_margin"
-                            android:nestedScrollingEnabled="false" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="30dp"
+                                android:text="Biography"
+                                android:textSize="30sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/biography_text"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:padding="10dp"
+                                android:layout_marginRight="100dp"
+                                android:text="statement"
+                                android:textSize="20sp" />
+
+                        </LinearLayout>
 
                     </LinearLayout>
                 </androidx.core.widget.NestedScrollView>
 
-                <!-- 아티스트 정보 -->
-                <!-- 앨범 RecyclerView -->
-                <!-- 트랙 RecyclerView -->
-                <!-- 생략된 부분은 그대로 유지하세요 -->
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </LinearLayout>
+
+
 
     <!-- ✅ 제스처 감지용 오버레이 -->
     <View

@@ -15,6 +15,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.squareup.picasso.Picasso;
@@ -88,9 +89,11 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
             detailClickListener.onClickItem(artist);
         });
         holder.addButton.setOnClickListener(v -> addClickListener.onClickItem(artist));
+
+
         holder.itemView.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
-            bundle.putParcelable("artist", artist);
+            bundle.putParcelable("favorite_artist", new FavoriteArtist(artist));
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.artist_info, bundle);
         });

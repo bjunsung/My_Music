@@ -1,10 +1,11 @@
 package com.example.mymusic.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ArtistMetadata {
-    public String spotifyArtistId;
     public String vibeArtistId;
+    public String spotifyArtistId;
     public String debutDate;
     public List<String> yearsOfActivity;
     public List<String> agency;
@@ -14,7 +15,19 @@ public class ArtistMetadata {
     public List<List<String>> activity;
 
     public ArtistMetadata(){}
-    public ArtistMetadata(String spotifyArtistId, String vibeArtistId){
+    public ArtistMetadata(String vibeArtistId, String spotifyArtistId, String debutDate, List<String> yearsOfActivity, List<String> agency, String biography, List<String> images, List<List<String>> members, List<List<String>> activity){
+        this.spotifyArtistId = spotifyArtistId;
+        this.vibeArtistId = vibeArtistId;
+        this.debutDate = debutDate;
+        this.yearsOfActivity = yearsOfActivity;
+        this.agency = agency;
+        this.biography = biography;
+        this.images = images;
+        this.members = members;
+        this.activity = activity;
+    }
+
+    public ArtistMetadata(String vibeArtistId, String spotifyArtistId){
         this.spotifyArtistId = spotifyArtistId;
         this.vibeArtistId = vibeArtistId;
     }
@@ -57,15 +70,14 @@ public class ArtistMetadata {
 
     public String activityToString(){
         if (activity.isEmpty()) return null;
-        StringBuilder result = new StringBuilder();
+        List<String> name = new ArrayList<>();
         for(List<String> pair : activity){
-            result.append(pair.get(0));
-            result.append(", ");
+            name.add(pair.get(0));
         }
-        return result.substring(0, result.length()-2);
+        return String.join(", ", name);
     }
 
-    public String activityToString2(){
+    public String activityIdsToString(){
         if (activity.isEmpty()) return null;
         StringBuilder result = new StringBuilder();
         for(List<String> pair : activity){
@@ -75,7 +87,7 @@ public class ArtistMetadata {
         return result.substring(0, result.length()-2);
     }
 
-
+/*
     @Override
     public String toString(){
         return "spotify id: " + spotifyArtistId +
@@ -89,8 +101,42 @@ public class ArtistMetadata {
                 "\nids: " + memberIdsToString() +
                 "\n썸네일: " + memberTumbnailToString() +
                 "\n활동: " + activityToString() +
-                "\n활동2: " + activityToString2() ;
+                "\n활동2: " + activityIdsToString() ;
      }
+*/
+@Override
+public String toString(){
+    StringBuilder result = new StringBuilder();
+    /*
+    if (spotifyArtistId != null && !spotifyArtistId.isEmpty())
+        result.append("Spotify id: " + spotifyArtistId);
+
+    if (vibeArtistId != null && !vibeArtistId.isEmpty())
+        result.append("\nVibe id: " + vibeArtistId);
+
+     */
+
+    if (debutDate != null && !debutDate.isEmpty())
+        result.append("데뷔일: " + debutDate);
+
+    if (yearsOfActivity != null && !yearsOfActivity.isEmpty())
+        result.append("\n연대: " + String.join(", ", yearsOfActivity));
+
+    if (agency != null && !agency.isEmpty())
+        result.append("\n소속사: " + String.join(", ", agency));
+
+    if (members != null && !members.isEmpty())
+        result.append("\n\nmembers: " + membersToString());
+
+    if (activity != null && !activity.isEmpty())
+        result.append("\n활동: " + activityToString());
+
+    if (biography != null && !biography.isEmpty())
+        result.append("\n\nbiography: " + biography);
+
+    return result.toString();
+
+}
 
      public boolean isFetched(){
          return (debutDate != null && !debutDate.isEmpty()) ||

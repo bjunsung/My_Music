@@ -2,6 +2,7 @@ package com.example.mymusic.network;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.core.util.Consumer;
 
@@ -35,7 +36,7 @@ public class TrackSearchService {
                 conn.setRequestProperty("Authorization", "Bearer " + accessToken);
 
                 int responseCode = conn.getResponseCode();
-
+                Log.d("TrackSearchService", "API calls completed");
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
                     onFailure.accept("ERROR,만료된 토큰입니다.");
                     return;
@@ -116,7 +117,7 @@ public class TrackSearchService {
                 conn.setRequestProperty("Authorization", "Bearer " + accessToken);
 
                 int responseCode = conn.getResponseCode();
-
+                Log.d("TrackSearchService", "API calls completed");
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
                     onFailure.accept("ERROR,만료된 토큰입니다.");
                     return;

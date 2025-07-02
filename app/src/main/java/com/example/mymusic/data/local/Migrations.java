@@ -6,6 +6,25 @@ import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 public class Migrations {
+
+    static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS artist_metadata_table (" +
+                            "vibeArtistId TEXT NOT NULL PRIMARY KEY, " +
+                            "spotifyArtistId TEXT, " +
+                            "debutDate TEXT, " +
+                            "yearsOfActivity TEXT, " +
+                            "agency TEXT, " +
+                            "biography TEXT, " +
+                            "images TEXT, " +
+                            "members TEXT, " +
+                            "activity TEXT)"
+            );
+        }
+    };
+
     public static final Migration MIGRATION_3_4 = new Migration(3, 4) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase db) {

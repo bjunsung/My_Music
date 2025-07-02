@@ -14,6 +14,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
@@ -67,12 +68,17 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     @Override
     public void onBindViewHolder(@NonNull FavoriteArtistViewHolder holder, int position){
         Artist artist = artistList.get(position);
+        FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
+
         holder.artistName.setText(artist.artistName);
         holder.followers.setText(NumberUtils.formatWithComma(artist.followers));
         //String addedDate = viewModel.getAddedDateAsync(artist.artistId);
 
         // 비동기로 날짜 가져오기
-        viewModel.getAddedDateAsync(artist.artistId, addedDate -> holder.addedDate.setText(addedDate != null ? addedDate : "날짜 없음"));
+        viewModel.getAddedDateAsync(artist.artistId, addedDate -> {
+            holder.addedDate.setText(addedDate != null ? addedDate : "날짜 없음");
+            favoriteArtist.addedDate = addedDate;
+        });
 
         Picasso.get()
                 .load(artist.artworkUrl)
@@ -83,7 +89,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
         holder.itemView.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
-            bundle.putParcelable("artist", artist);
+            bundle.putParcelable("favorite_artist", favoriteArtist);
             NavController navController = Navigation.findNavController(v);
             navController.navigate(R.id.artist_info, bundle);
         });

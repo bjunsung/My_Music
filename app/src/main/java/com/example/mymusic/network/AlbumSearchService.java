@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.core.util.Consumer;
 
@@ -35,6 +36,7 @@ public class AlbumSearchService {
                 conn.setRequestProperty("Authorization", "Bearer " + accessToken);
 
                 int responseCode = conn.getResponseCode();
+                Log.d("AlbumSearchService", "API calls completed");
 
                 if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED){ //401 accessToken expired
                     onFailure.accept("ERROR,만료된 토큰입니다.");

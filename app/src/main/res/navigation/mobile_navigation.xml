@@ -78,8 +78,8 @@
             app:destination="@id/album_info" />
 
         <argument
-            android:name="artist"
-            app:argType="com.example.mymusic.model.Artist" />
+            android:name="favorite_artist"
+            app:argType="com.example.mymusic.model.FavoriteArtist" />
     </fragment>
 
     <fragment
