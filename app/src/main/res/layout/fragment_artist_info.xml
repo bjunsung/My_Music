@@ -3,9 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <!-- ✅ 이동 대상 -->
     <LinearLayout
-        android:id="@+id/swipe_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -14,6 +14,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true">
+            <FrameLayout
+                android:id="@+id/swipe_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -328,6 +332,14 @@
 
 
             </LinearLayout>
+                <!-- ✅ 이미지 확대 버튼 -->
+                <ImageView
+                    android:id="@+id/enlarge_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_enlargement_white"/>
+            </FrameLayout>
         </androidx.core.widget.NestedScrollView>
     </LinearLayout>
 

@@ -1,38 +1,24 @@
 package com.example.mymusic;
 
-import static com.spotify.sdk.android.auth.AccountsQueryParameters.CLIENT_ID;
-import static com.spotify.sdk.android.auth.AccountsQueryParameters.REDIRECT_URI;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
-import android.view.WindowManager;
+import android.view.View;
 
-import com.example.mymusic.data.repository.SettingRepository;
-import com.example.mymusic.ui.favorites.FavoritesFragment;
-import com.example.mymusic.ui.musicInfo.MusicInfoFragment;
-import com.example.mymusic.ui.search.SearchFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.mymusic.databinding.ActivityMainBinding;
-
-import kotlin._Assertions;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -111,6 +97,24 @@ public class MainActivity extends AppCompatActivity {
 
         setColor();
 
+        // ✅ 목적지가 바뀔 때마다 호출되는 리스너 추가
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            // imageDetailFragment로 이동할 때는 하단 바를 숨김
+            if (destination.getId() == R.id.fragment_image_detail) {
+                navView.setVisibility(View.GONE);
+            }
+            // 다른 주요 프래그먼트들로 돌아올 때는 다시 보이게 함
+            else {
+                navView.setVisibility(View.VISIBLE);
+            }
+
+            if (destination.getId() == R.id.navigation_favorites || destination.getId()  == R.id.navigation_settings || destination.getId() == R.id.navigation_searches  || destination.getId() == R.id.navigation_home){
+                setColor();
+            }
+
+        });
+
+
     }
 
     private void setColor(){
@@ -132,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.nav_view);
         bottomNav.setItemIconTintList(colorStateList);
         bottomNav.setItemTextColor(colorStateList);
+        bottomNav.setBackgroundColor(Color.WHITE);
     }
     @Override
     public boolean onSupportNavigateUp() {

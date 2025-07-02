@@ -19,8 +19,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.FragmentNavigator;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -64,11 +68,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private List<String> imageUrls;
     private List<List<String>> activities;
     private ImagePagerAdapter pageAdapter;
-    private String focusedUrl;
-    private FrameLayout overlayContainer;
-    private View dimView;
-    private TextView downloadButtonOverlay;
-    private ImageView overlayImageClone;
+    private ImageView enlargeButton;
     private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavView;
     private android.graphics.drawable.Drawable originalBottomNavBackground;
     private ImageOverlayManager imageOverlayManager;
@@ -261,6 +261,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         biographyTextView = view.findViewById(R.id.biography_text);
         activityTextView = view.findViewById(R.id.activity);
         addedDateTextView = view.findViewById(R.id.added_date);
+        enlargeButton = view.findViewById(R.id.enlarge_button);
         //layout
         debutLayout = view.findViewById(R.id.debut_layout);
         activityYearsLayout = view.findViewById(R.id.activity_years_layout);
@@ -299,7 +300,68 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
         pager.post(() -> {
             imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth()/6.5f), pager.getWidth()/14);
+
+            int[] pagerLocation = new int[2];
+            pager.getLocationOnScreen(pagerLocation);
+            int pagerRightX = pagerLocation[0] + pager.getWidth();    // Pager의 오른쪽 끝 X 좌표
+            int pagerBottomY = pagerLocation[1] + pager.getHeight();
+
+            // 2. 버튼의 크기를 고려하여 위치 계산
+            // (버튼의 너비와 높이를 알아야 정확한 위치에 놓을 수 있습니다)
+            int buttonWidth = enlargeButton.getWidth();
+            int buttonHeight = enlargeButton.getHeight();
+
+            // 만약 버튼 크기가 0으로 나온다면, 임시로 크기를 지정해줍니다 (dp를 px로 변환)
+            final float density = getResources().getDisplayMetrics().density;
+            if (buttonWidth == 0) buttonWidth = (int)(24 * density);
+            if (buttonHeight == 0) buttonHeight = (int)(24 * density);
+
+            int padding = (int)(6 * density); // 우측, 하단 여백
+
+            // 3. LayoutParams에 적용
+            FrameLayout.LayoutParams enlargeParams = (FrameLayout.LayoutParams) enlargeButton.getLayoutParams();
+            enlargeParams.leftMargin = pagerRightX - buttonWidth - padding;
+            enlargeParams.topMargin = pagerBottomY - buttonHeight - padding;
+
+            enlargeButton.setLayoutParams(enlargeParams);
+            enlargeButton.setVisibility(View.VISIBLE);
         });
+
+        // ArtistInfoFragment.java 의 onViewCreated 또는 setView 내부
+
+        enlargeButton.setOnClickListener(v -> {
+            int currentPosition = pager.getCurrentItem();
+
+            // 2. 현재 페이지의 ViewHolder를 찾아, 그 안의 ImageView를 가져오기
+            RecyclerView recyclerView = (RecyclerView) pager.getChildAt(0);
+            ImagePagerAdapter.ImageViewHolder holder = (ImagePagerAdapter.ImageViewHolder) recyclerView.findViewHolderForAdapterPosition(currentPosition);
+
+            // ViewHolder를 찾지 못하는 예외 상황 방지
+            if (holder == null) {
+                Toast.makeText(getContext(), "잠시 후 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ImageView currentImageView = holder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
+
+            // 3. 전환할 뷰(currentImageView)에 고유한 transitionName 설정
+            String transitionName = "image_detail_" + imageUrls.get(currentPosition);
+            ViewCompat.setTransitionName(currentImageView, transitionName);
+
+            // 4. 전달할 데이터 준비 (전체 URL 리스트, 현재 위치)
+            Bundle args = new Bundle();
+            args.putStringArrayList("image_urls", (ArrayList<String>) imageUrls);
+            args.putInt("start_position", currentPosition);
+
+            // 5. 전환 애니메이션 정보(Extras) 생성
+            FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                    .addSharedElement(currentImageView, transitionName)
+                    .build();
+
+            // 6. NavController로 데이터와 애니메이션 정보를 함께 전달하며 이동
+            NavController navController = NavHostFragment.findNavController(this);
+            navController.navigate(R.id.action_artistInfoFragment_to_imageDetailFragment, args, null, extras);
+        });
+
     }
 
     public void onLongClick(ImageView imageView, MotionEvent event, String imageUrl){
@@ -311,21 +373,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
 
-
-
-    private void setupOverlayListeners() {
-        // 리스너 콜백 람다식
-        View.OnClickListener dismissListener = v -> {
-            overlayContainer.setVisibility(View.GONE);
-
-            // ✅ BottomNavigationView 배경 원래대로 복구
-            if (bottomNavView != null) {
-                bottomNavView.setBackground(originalBottomNavBackground);
-            }
-        };
-        // 어두운 배경(dimView) 클릭 시 오버레이 숨기기
-        dimView.setOnClickListener(dismissListener);
-    }
 
     private void addFavoriteSong(Track track){
         new AlertDialog.Builder(getContext())

@@ -61,6 +61,9 @@ public class ImageOverlayManager {
     private double scale = 1.025f;
     private int downloadButton_delta_x = 0;
     private int downloadButton_delta_y = 0;
+    private int primaryColor = 0;
+    private int selectedColor = 0;
+    private int unselectedColor = 0;
     private StrokePulseView strokePulseView;
     public ImageOverlayManager (Activity activity, View rootView){
         this.activity = activity;
@@ -75,6 +78,12 @@ public class ImageOverlayManager {
         }
 
         setupDismissListeners();
+    }
+
+    public void setNavBarColor(int primaryColor, int selectedColor, int unselectedColor){
+        this.primaryColor = primaryColor;
+        this.selectedColor = selectedColor;
+        this.unselectedColor = unselectedColor;
     }
 
     public void showOverlay(ImageView originalImageView, String imageUrl, float touchX, float touchY){
@@ -120,7 +129,31 @@ public class ImageOverlayManager {
 
     private void dismissOverlay(){
          overlayContainer.setVisibility(View.GONE);
-         if (bottomNavView != null){
+         if (bottomNavView != null && primaryColor != 0 && selectedColor != 0 && unselectedColor != 0){
+             bottomNavView.setBackgroundColor(primaryColor);
+             int[] colors = new int[] {
+                     selectedColor,   // 선택됐을 때의 텍스트 색
+                     unselectedColor  // 선택되지 않았을 때의 텍스트 색
+             };
+             int[][] states = new int[][] {
+                     new int[] { android.R.attr.state_checked },  // 선택된 상태
+                     new int[] { -android.R.attr.state_checked }  // 선택되지 않은 상태
+             };
+
+             android.content.res.ColorStateList textColorStateList = new android.content.res.ColorStateList(states, colors);
+             android.content.res.ColorStateList iconColorStateList = new android.content.res.ColorStateList(states, colors);
+
+             // 4. BottomNavigationView에 최종 적용합니다.
+             // BottomNavigationView 타입으로 캐스팅해야 관련 메서드를 쓸 수 있습니다.
+             if (bottomNavView != null) {
+                 com.google.android.material.bottomnavigation.BottomNavigationView bnv =
+                         (com.google.android.material.bottomnavigation.BottomNavigationView) bottomNavView;
+
+                 bnv.setItemTextColor(textColorStateList);
+                 bnv.setItemIconTintList(iconColorStateList);
+             }
+         }
+         else if (bottomNavView != null){
              bottomNavView.setBackground(originalBottomNavBackground);
          }
     }

@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,10 +22,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -47,6 +50,8 @@ import com.example.mymusic.util.ImageOverlayManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+
 
 public class AlbumInfoFragment extends Fragment {
 
@@ -64,6 +69,7 @@ public class AlbumInfoFragment extends Fragment {
     private TextView albumNameTextView, artistNameTextView, releaseDateTextView, totalTracksTextView;
     private RecyclerView trackRecyclerView;
     private ImageOverlayManager imageOverlayManager;
+    private ImageView enlargeButton;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstatceState){
@@ -146,6 +152,7 @@ public class AlbumInfoFragment extends Fragment {
         albumImageView.setTransitionName("music_info_to_album_info");
 
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
+        enlargeButton = view.findViewById(R.id.enlarge_button);
 
     }
 
@@ -177,16 +184,13 @@ public class AlbumInfoFragment extends Fragment {
                     }
                 });
 
+
         albumNameTextView.setText(album.albumName);
         artistNameTextView.setText(album.artistName);
         releaseDateTextView.setText(album.releaseDate);
         totalTracksTextView.setText(String.valueOf(album.totalTracks));
 
         artistNameTextView.setOnClickListener(v -> this.artistClickEvent(album.artistId));
-
-        albumImageView.post(() -> {
-            imageOverlayManager.setDownloadButtonLocation(- (int)(albumImageView.getWidth()/6.5f), albumImageView.getWidth()/14);
-        });
 
 
         // 1. 롱클릭을 감지할 GestureDetector 생성
@@ -207,10 +211,42 @@ public class AlbumInfoFragment extends Fragment {
         albumImageView.setOnTouchListener((v, motionEvent) -> {
             // 모든 터치 이벤트를 GestureDetector에 전달합니다.
             gestureDetector.onTouchEvent(motionEvent);
+            imageOverlayManager.setDownloadButtonLocation(- (int)(albumImageView.getWidth()/6.5f), albumImageView.getWidth()/14);
 
             // true를 반환하여 이 이벤트가 여기서 처리되었음을 시스템에 알립니다.
             return true;
         });
+
+
+        enlargeButton.setOnClickListener(v -> {
+            // 1. 전환할 뷰(albumImageView)에 고유한 transitionName 설정
+            // 이 이름은 도착 프래그먼트의 이미지 뷰도 동일하게 사용하게 됩니다.
+            String transitionName = "image_detail_" + album.artworkUrl; // 앨범마다 고유한 이름으로 설정
+            ViewCompat.setTransitionName(albumImageView, transitionName);
+
+            // 2. ImageDetailFragment에 전달할 데이터 준비
+            // ViewPager2가 아니므로, 이미지는 현재 앨범 아트 하나
+            ArrayList<String> imageUrls = new ArrayList<>();
+            imageUrls.add(album.artworkUrl);
+            int startPosition = 0;
+
+            Bundle args = new Bundle();
+            args.putStringArrayList("image_urls", imageUrls);
+            args.putInt("start_position", startPosition);
+            // 참고: ImageDetailFragment는 이 key값들("image_urls", "start_position")로 데이터를 꺼내 씀
+
+            // 3. 전환 애니메이션 정보(Extras) 생성
+            // 어떤 뷰를(albumImageView), 어떤 이름으로(transitionName) 보낼지 지정
+            FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                    .addSharedElement(albumImageView, transitionName)
+                    .build();
+
+            // 4. NavController로 데이터(args)와 애니메이션 정보(extras)를 함께 전달하며 이동
+            NavController navController = NavHostFragment.findNavController(this);
+            // action_albumInfoFragment_to_imageDetailFragment는 navigation graph에 정의된 action id입니다.
+            navController.navigate(R.id.action_albumInfoFragment_to_imageDetailFragment, args, null, extras);
+        });
+
 
     }
 

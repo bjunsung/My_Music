@@ -15,6 +15,7 @@ kotlin = "1.9.24"
 benchmark = "1.2.4"
 runner = "1.5.2"
 benchmarkJunit4 = "1.2.4"
+palette = "1.0.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -30,6 +31,7 @@ navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version
 room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.ref = "roomCommonJvm" }
 runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
 benchmark-junit4 = { group = "androidx.benchmark", name = "benchmark-junit4", version.ref = "benchmarkJunit4" }
+palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

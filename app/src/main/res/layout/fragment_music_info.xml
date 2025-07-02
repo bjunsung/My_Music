@@ -277,7 +277,17 @@
                 <!-- 생략: 지금까지 올리신 내부 내용 그대로 복붙 -->
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- ✅ 이미지 확대 버튼 -->
+            <ImageView
+                android:id="@+id/enlarge_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_enlargement_white"/>
+
         </FrameLayout>
+
+
 
         <!-- ✅ 스와이프 감지를 위한 오버레이 -->
         <View

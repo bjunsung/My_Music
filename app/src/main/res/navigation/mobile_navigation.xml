@@ -42,16 +42,19 @@
         android:name="com.example.mymusic.ui.musicInfo.MusicInfoFragment"
         android:label="Music Information"
         tools:layout="@layout/fragment_music_info">
-
+        <argument
+            android:name="favorite"
+            app:argType="com.example.mymusic.model.Favorite" />
         <action
             android:id="@+id/action_musicInfoFragment_to_albumInfoFragment"
             app:destination="@id/album_info" />
         <action
             android:id="@+id/action_musicInfoFragment_to_artistInfoFragment"
             app:destination="@id/artist_info" />
-         <argument
-             android:name="favorite"
-             app:argType="com.example.mymusic.model.Favorite" />
+        <action
+            android:id="@+id/action_musicInfoFragment_to_imageDetailFragment"
+            app:destination="@id/fragment_image_detail" />
+
     </fragment>
 
     <fragment
@@ -76,7 +79,9 @@
         <action
             android:id="@+id/action_artistInfoFragment_to_albumInfoFragment"
             app:destination="@id/album_info" />
-
+        <action
+            android:id="@+id/action_artistInfoFragment_to_imageDetailFragment"
+            app:destination="@id/fragment_image_detail" />
         <argument
             android:name="favorite_artist"
             app:argType="com.example.mymusic.model.FavoriteArtist" />
@@ -96,6 +101,10 @@
         <action
             android:id="@+id/action_albumInfoFragment_to_artist_infoFragment"
             app:destination="@id/artist_info" />
+        <action
+            android:id="@+id/action_albumInfoFragment_to_imageDetailFragment"
+            app:destination="@id/fragment_image_detail" />
+
     </fragment>
 
     <fragment
@@ -104,6 +113,13 @@
         android:label="Settings"
         tools:layout="@layout/fragment_settings" >
     </fragment>
+
+
+    <fragment
+        android:id="@+id/fragment_image_detail"
+        android:name="com.example.mymusic.ui.imageDetail.ImageDetailFragment"
+        android:label="Image Detail"
+        tools:layout="@layout/fragment_image_detail" />
 
 
 </navigation>

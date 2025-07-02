@@ -7,6 +7,9 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -14,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -22,6 +26,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -40,12 +48,15 @@ import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
+import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.ImageOverlayManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 public class MusicInfoFragment extends Fragment {
+    private final String TAG = "MusicInfoFragment";
     private Favorite favorite;
     private Track track;
     FavoritesViewModel favoritesViewModel;
@@ -55,6 +66,9 @@ public class MusicInfoFragment extends Fragment {
     private boolean savedInDb;
     private ImageOverlayManager imageOverlayManager;
     private int artworkSize;
+    private View bottomNavView;
+    private int primaryColor, selectedColor, unselectedColor;
+
 
     //ViewModel 연결
     @Override
@@ -88,6 +102,8 @@ public class MusicInfoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+       bottomNavView = requireActivity().findViewById(R.id.nav_view);
 
         //사진 다운로드를 위한 매니저 객체 설정
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
@@ -125,6 +141,7 @@ public class MusicInfoFragment extends Fragment {
             TextView daysBetween = view.findViewById(R.id.days_between);
             addedDateLayout = view.findViewById(R.id.added_date_layout);
             addedDate = view.findViewById(R.id.added_date);
+            ImageView enlargeButton = view.findViewById(R.id.enlarge_button);
 
 
             trackTitle.setText(track.trackName);
@@ -187,6 +204,120 @@ public class MusicInfoFragment extends Fragment {
 
             }
 
+            artworkImage.post(()->{
+                int[] pagerLocation = new int[2];
+                artworkImage.getLocationOnScreen(pagerLocation);
+                int pagerRightX = pagerLocation[0] + artworkImage.getWidth();    // Pager의 오른쪽 끝 X 좌표
+                int pagerBottomY = pagerLocation[1] + artworkImage.getHeight();
+
+                // 2. 버튼의 크기를 고려하여 위치 계산
+                // (버튼의 너비와 높이를 알아야 정확한 위치에 놓을 수 있습니다)
+                int buttonWidth = enlargeButton.getWidth();
+                int buttonHeight = enlargeButton.getHeight();
+
+                // 만약 버튼 크기가 0으로 나온다면, 임시로 크기를 지정해줍니다 (dp를 px로 변환)
+                final float density = getResources().getDisplayMetrics().density;
+                if (buttonWidth == 0) buttonWidth = (int)(24 * density);
+                if (buttonHeight == 0) buttonHeight = (int)(24 * density);
+
+                int padding = (int)(6 * density); // 우측, 하단 여백
+
+                // 3. LayoutParams에 적용
+                FrameLayout.LayoutParams enlargeParams = (FrameLayout.LayoutParams) enlargeButton.getLayoutParams();
+                enlargeParams.leftMargin = pagerRightX - buttonWidth - padding;
+                enlargeParams.topMargin = pagerBottomY - buttonHeight - padding;
+
+                enlargeButton.setLayoutParams(enlargeParams);
+                enlargeButton.setVisibility(View.VISIBLE);
+            });
+
+            ImageColorAnalyzer.analyzeBottomRightColor(requireContext(), track.artworkUrl, new ImageColorAnalyzer.OnColorAnalyzedListener(){
+
+                @Override
+                public void onSuccess(int dominantColor, boolean isLight) {
+                    if (isLight)
+                        enlargeButton.setColorFilter(R.drawable.color_circle_navy_blue);
+                }
+
+                @Override
+                public void onFailure() {
+                    Log.d(TAG, "Fail to Analyze Image Color");
+                }
+            });
+
+            ImageColorAnalyzer.analyzePrimaryColor(requireContext(), track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
+                @Override
+                public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                    MusicInfoFragment.this.primaryColor = primaryColor;
+                    MusicInfoFragment.this.selectedColor = selectedColor;
+                    MusicInfoFragment.this.unselectedColor = unselectedColor;
+
+                    Log.d(TAG, "Success to Analyze a Primary Color of Image");
+                    android.view.Window window = requireActivity().getWindow();
+
+
+                    bottomNavView.setBackgroundColor(primaryColor);
+
+                    // 3. 상태에 따른 색상 목록(ColorStateList)을 생성합니다.
+                    int[][] states = new int[][] {
+                            new int[] { android.R.attr.state_checked },  // 선택된 상태
+                            new int[] { -android.R.attr.state_checked }  // 선택되지 않은 상태
+                    };
+
+                    int[] colors = new int[] {
+                            selectedColor,   // 선택됐을 때의 텍스트 색
+                            unselectedColor  // 선택되지 않았을 때의 텍스트 색
+                    };
+
+                    android.content.res.ColorStateList textColorStateList = new android.content.res.ColorStateList(states, colors);
+                    android.content.res.ColorStateList iconColorStateList = new android.content.res.ColorStateList(states, colors);
+
+                    // 4. BottomNavigationView에 최종 적용합니다.
+                    // BottomNavigationView 타입으로 캐스팅해야 관련 메서드를 쓸 수 있습니다.
+                    if (bottomNavView instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
+                        com.google.android.material.bottomnavigation.BottomNavigationView bnv =
+                                (com.google.android.material.bottomnavigation.BottomNavigationView) bottomNavView;
+
+                        bnv.setItemTextColor(textColorStateList);
+                        bnv.setItemIconTintList(iconColorStateList);
+                    }
+                }
+
+                @Override
+                public void onFailure() {
+                    Log.d(TAG, "Fail to Analyze a Primary Color of Image");
+                }
+            });
+
+
+            enlargeButton.setOnClickListener(v -> {
+                // 1. 전환할 뷰(albumImageView)에 고유한 transitionName 설정
+                // 이 이름은 도착 프래그먼트의 이미지 뷰도 동일하게 사용하게 됩니다.
+                String transitionName = "image_detail_" + track.artworkUrl; // 앨범마다 고유한 이름으로 설정
+                ViewCompat.setTransitionName(artworkImage, transitionName);
+
+                // 2. ImageDetailFragment에 전달할 데이터 준비
+                // ViewPager2가 아니므로, 이미지는 현재 앨범 아트 하나
+                ArrayList<String> imageUrls = new ArrayList<>();
+                imageUrls.add(track.artworkUrl);
+                int startPosition = 0;
+
+                Bundle args = new Bundle();
+                args.putStringArrayList("image_urls", imageUrls);
+                args.putInt("start_position", startPosition);
+                // 참고: ImageDetailFragment는 이 key값들("image_urls", "start_position")로 데이터를 꺼내 씀
+
+                // 3. 전환 애니메이션 정보(Extras) 생성
+                // 어떤 뷰를(albumImageView), 어떤 이름으로(transitionName) 보낼지 지정
+                FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                        .addSharedElement(artworkImage, transitionName)
+                        .build();
+
+                // 4. NavController로 데이터(args)와 애니메이션 정보(extras)를 함께 전달하며 이동
+                NavController navController = NavHostFragment.findNavController(this);
+                // action_albumInfoFragment_to_imageDetailFragment는 navigation graph에 정의된 action id입니다.
+                navController.navigate(R.id.action_musicInfoFragment_to_imageDetailFragment, args, null, extras);
+            });
 
 
             // 1. 롱클릭을 감지할 GestureDetector 생성
@@ -200,6 +331,7 @@ public class MusicInfoFragment extends Fragment {
 
                     // 매니저를 호출하여 오버레이와 애니메이션을 표시합니다.
                     imageOverlayManager.showOverlay(artworkImage, track.artworkUrl, touchX, touchY);
+                    imageOverlayManager.setNavBarColor(MusicInfoFragment.this.primaryColor, MusicInfoFragment.this.selectedColor, MusicInfoFragment.this.unselectedColor);
                 }
             });
 

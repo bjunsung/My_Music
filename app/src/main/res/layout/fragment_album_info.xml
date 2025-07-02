@@ -4,159 +4,163 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- ✅ 이동 대상: swipe_content 포함한 NestedScrollView -->
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/swipe_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:padding="8dp">
 
-            <!-- 👇 이하 내용은 그대로 유지 -->
-            <!-- 아티스트 정보 -->
-            <LinearLayout
-                android:id="@+id/linear_layout_1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+            <ImageView
+                android:id="@+id/artwork_image"
+                android:layout_width="400dp"
+                android:layout_height="400dp"
+                android:layout_marginTop="12dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_image_not_found_foreground"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <ImageView
-                    android:id="@+id/artwork_image"
-                    android:layout_width="400dp"
-                    android:layout_height="400dp"
-                    android:layout_marginLeft="0dp"
-                    android:layout_marginTop="12dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_image_not_found_foreground" />
+            <ImageView
+                android:id="@+id/enlarge_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="6dp"
+                android:elevation="2dp"
+                android:src="@drawable/ic_enlargement_white"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="@id/artwork_image"
+                app:layout_constraintEnd_toEndOf="@id/artwork_image" />
+
+            <LinearLayout
+                android:id="@+id/metadata_container"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingTop="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/artwork_image"
+                app:layout_constraintTop_toTopOf="@id/artwork_image"
+                app:layout_constrainedWidth="true">
 
                 <LinearLayout
-                    android:id="@+id/metadata_container"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingLeft="16dp"
-                    android:paddingTop="4dp">
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
 
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/album_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:id="@+id/album_name"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:paddingTop="10dp"
-                            android:text="HORN"
-                            android:textSize="30sp"
-                            android:textStyle="bold"
-                            android:textIsSelectable="true" />
+                        android:paddingTop="10dp"
+                        android:text="HORN"
+                        android:textSize="30sp"
+                        android:textStyle="bold"
+                        android:textIsSelectable="true" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=" - "
-                            android:textStyle="bold"
-                            android:textSize="24sp"
-                            />
-
-                        <TextView
-                            android:id="@+id/artist_name"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Apink"
-                            android:textStyle="bold|italic"
-                            android:textSize="22sp"
-                            />
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
+                        android:text=" - "
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="발매일: "
-                            android:textSize="24sp"
-                            android:textIsSelectable="true" />
-
-                        <TextView
-                            android:id="@+id/release_date"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="2022-02-14"
-                            android:textSize="24sp"
-                            android:textIsSelectable="true" />
-                    </LinearLayout>
-
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/artist_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="수록곡: "
-                            android:textSize="24sp"
-                            android:textIsSelectable="true" />
-
-                        <TextView
-                            android:id="@+id/total_tracks"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="6"
-                            android:textSize="24sp"
-                            />
-                    </LinearLayout>
-
-
+                        android:text="Apink"
+                        android:textSize="22sp"
+                        android:textStyle="bold|italic" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="발매일: "
+                        android:textSize="24sp"
+                        android:textIsSelectable="true" />
+
+                    <TextView
+                        android:id="@+id/release_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2022-02-14"
+                        android:textSize="24sp"
+                        android:textIsSelectable="true" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="수록곡: "
+                        android:textSize="24sp"
+                        android:textIsSelectable="true" />
+
+                    <TextView
+                        android:id="@+id/total_tracks"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="6"
+                        android:textSize="24sp" />
+                </LinearLayout>
+
             </LinearLayout>
 
-            <!-- 곡 타이틀 -->
             <TextView
                 android:id="@+id/track_text"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
                 android:layout_marginTop="30dp"
                 android:layout_marginBottom="10dp"
-                android:layout_marginLeft="4dp"
                 android:text="Songs"
                 android:textSize="30sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/artwork_image" />
 
-            <!-- 트랙 RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/track_result_recycler_view"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
                 android:paddingBottom="@dimen/navigation_bar_margin"
-                android:nestedScrollingEnabled="false" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/track_text" />
 
-
-            <!-- 곡 텍스트 -->
-            <!-- RecyclerView -->
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- ✅ 스와이프 감지를 위한 투명 오버레이: 반드시 바깥에서 덮어야 함 -->
+
     <View
         android:id="@+id/gesture_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/transparent" />
 
-    <!-- ✅ 화면 디밍용 오버레이 -->
     <FrameLayout
         android:id="@+id/overlay_container"
         android:layout_width="match_parent"
@@ -181,10 +185,10 @@
             android:id="@+id/download_button_overlay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="DOWNLOAD"
-            android:textColor="@android:color/white"
+            android:elevation="4dp"
             android:padding="6dp"
-            android:elevation="4dp" />
+            android:text="DOWNLOAD"
+            android:textColor="@android:color/white" />
 
         <com.example.mymusic.animation.StrokePulseView
             android:id="@+id/stroke_pulse_view"

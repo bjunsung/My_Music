@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -81,7 +82,7 @@ public class TokenHelper {
             @Override
             public void onSuccess(String accessToken) {
                 Runnable runTask = () -> {
-                    Toast.makeText(context, "SUCCESS to get new Access Token: " + accessToken, Toast.LENGTH_SHORT).show();
+                    Log.d("TokenHelper", "SUCCESS to get new Access Token: " + accessToken);
                     new Handler(Looper.getMainLooper()).post(() -> {
                         if (onSuccess != null){
                             onSuccess.accept(accessToken);
