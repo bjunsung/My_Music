@@ -1,12 +1,15 @@
 package com.example.mymusic.ui.albumInfo;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.transition.ChangeBounds;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -40,6 +43,7 @@ import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
+import com.example.mymusic.util.ImageOverlayManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -59,7 +63,7 @@ public class AlbumInfoFragment extends Fragment {
     private ImageView albumImageView;
     private TextView albumNameTextView, artistNameTextView, releaseDateTextView, totalTracksTextView;
     private RecyclerView trackRecyclerView;
-
+    private ImageOverlayManager imageOverlayManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstatceState){
@@ -81,7 +85,6 @@ public class AlbumInfoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
-
 
         LinearLayout metadata_container = view.findViewById(R.id.metadata_container);
         Animation anim = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_in_bottom);
@@ -141,8 +144,12 @@ public class AlbumInfoFragment extends Fragment {
         album = getArguments().getParcelable("album");
         albumImageView = view.findViewById(R.id.artwork_image);
         albumImageView.setTransitionName("music_info_to_album_info");
+
+        imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
+
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setView(){
 
         postponeEnterTransition();
@@ -176,6 +183,34 @@ public class AlbumInfoFragment extends Fragment {
         totalTracksTextView.setText(String.valueOf(album.totalTracks));
 
         artistNameTextView.setOnClickListener(v -> this.artistClickEvent(album.artistId));
+
+        albumImageView.post(() -> {
+            imageOverlayManager.setDownloadButtonLocation(- (int)(albumImageView.getWidth()/6.5f), albumImageView.getWidth()/14);
+        });
+
+
+        // 1. 롱클릭을 감지할 GestureDetector 생성
+        GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public void onLongPress(MotionEvent event) {
+                // 롱클릭이 감지되었을 때 실행될 코드
+                // event 객체에서 화면 절대 좌표를 가져옵니다.
+                float touchX = event.getRawX();
+                float touchY = event.getRawY();
+
+                // 매니저를 호출하여 오버레이와 애니메이션을 표시합니다.
+                imageOverlayManager.showOverlay(albumImageView, album.artworkUrl, touchX, touchY);
+            }
+        });
+
+        // 2. ImageView에 OnTouchListener 설정
+        albumImageView.setOnTouchListener((v, motionEvent) -> {
+            // 모든 터치 이벤트를 GestureDetector에 전달합니다.
+            gestureDetector.onTouchEvent(motionEvent);
+
+            // true를 반환하여 이 이벤트가 여기서 처리되었음을 시스템에 알립니다.
+            return true;
+        });
 
     }
 

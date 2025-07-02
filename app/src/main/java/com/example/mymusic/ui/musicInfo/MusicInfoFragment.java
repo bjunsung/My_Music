@@ -1,5 +1,6 @@
 package com.example.mymusic.ui.musicInfo;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -8,7 +9,9 @@ import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -37,6 +40,7 @@ import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
+import com.example.mymusic.util.ImageOverlayManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -49,6 +53,8 @@ public class MusicInfoFragment extends Fragment {
     TextView trackTitle, trackTitleKr, addedDate;
     LinearLayout addedDateLayout;
     private boolean savedInDb;
+    private ImageOverlayManager imageOverlayManager;
+    private int artworkSize;
 
     //ViewModel 연결
     @Override
@@ -78,9 +84,15 @@ public class MusicInfoFragment extends Fragment {
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        //사진 다운로드를 위한 매니저 객체 설정
+        imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
+        imageOverlayManager.setScale(0);
+
 
         favorite = getArguments().getParcelable("favorite");
 
@@ -89,13 +101,18 @@ public class MusicInfoFragment extends Fragment {
             TrackMetadata metadata = favorite.metadata;
 
             ImageView artworkImage = view.findViewById(R.id.artworkImage);
+            artworkImage.post(() -> {
+                artworkSize = artworkImage.getWidth();
+                imageOverlayManager.setDownloadButtonLocation(0, - (int)((0.2)* artworkSize));
+
+            });
+
+
             trackTitle = view.findViewById(R.id.trackTitle);
             TextView artistName = view.findViewById(R.id.artistName);
             TextView albumName = view.findViewById(R.id.albumName);
             TextView releaseDate = view.findViewById(R.id.releaseDate);
             TextView durationMs = view.findViewById(R.id.durationMs);
-            //ScrollView scrollView = view.findViewById(R.id.infoScroll);
-            //scrollView.setNestedScrollingEnabled(false);
 
             trackTitleKr = view.findViewById(R.id.trackTitleKr);
             LinearLayout lyricistLayout = view.findViewById(R.id.lyricists_layout);
@@ -164,12 +181,36 @@ public class MusicInfoFragment extends Fragment {
                 //com.squareup.picasso.Picasso.get().load(track.artworkUrl).into(artworkImage);
                 Glide.with(requireContext())
                         .load(track.artworkUrl)
-                        .transition(DrawableTransitionOptions.withCrossFade(550))
                         .error(R.drawable.ic_image_not_found_foreground) // 실패 시 이미지
                         .centerCrop()
                         .into(artworkImage);
 
             }
+
+
+
+            // 1. 롱클릭을 감지할 GestureDetector 생성
+            GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public void onLongPress(MotionEvent event) {
+                    // 롱클릭이 감지되었을 때 실행될 코드
+                    // event 객체에서 화면 절대 좌표를 가져옵니다.
+                    float touchX = event.getRawX();
+                    float touchY = event.getRawY();
+
+                    // 매니저를 호출하여 오버레이와 애니메이션을 표시합니다.
+                    imageOverlayManager.showOverlay(artworkImage, track.artworkUrl, touchX, touchY);
+                }
+            });
+
+            // 2. ImageView에 OnTouchListener 설정
+            artworkImage.setOnTouchListener((v, motionEvent) -> {
+                // 모든 터치 이벤트를 GestureDetector에 전달합니다.
+                gestureDetector.onTouchEvent(motionEvent);
+
+                // true를 반환하여 이 이벤트가 여기서 처리되었음을 시스템에 알립니다.
+                return true;
+            });
 
             artistName.setText(track.artistName);
             artistName.setOnClickListener(v -> {
@@ -285,6 +326,8 @@ public class MusicInfoFragment extends Fragment {
                 return true;
             }
         });
+
+
 
 
     }

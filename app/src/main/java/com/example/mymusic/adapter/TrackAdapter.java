@@ -113,7 +113,10 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
     @Override
     public int getItemCount() {
-        return tracks.size();
+        if (tracks != null)
+            return tracks.size();
+        else
+            return 0;
     }
 
 

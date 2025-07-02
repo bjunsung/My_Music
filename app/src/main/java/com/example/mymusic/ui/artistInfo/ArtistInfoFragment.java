@@ -5,9 +5,12 @@ import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -28,6 +31,7 @@ import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
+import com.example.mymusic.util.ImageOverlayManager;
 import com.example.mymusic.util.ImageSaveUtil;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
@@ -42,7 +46,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArtistInfoFragment extends Fragment {
+public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.OnImageLongClickListener{
 
     private FavoriteArtistViewModel favoriteArtistViewModel;
     private FavoritesViewModel favoritesViewModel;
@@ -54,16 +58,20 @@ public class ArtistInfoFragment extends Fragment {
     private ImageButton addArtistButton;
     private LinearLayout debutLayout, activityYearsLayout, membersLayout, agencyLayout, activityLayout, genresLayout, followersLayout, biographyLayout, addedDataLayout;
     private TextView debutTextView, activityYearsTextView, membersTextView, agencyTextView, activityTextView, biographyTextView, addedDateTextView;
-    private com.example.mymusic.model.ArtistMetadata metadata;
-    private TextView downloadBtn;
     private final String TAG = "ArtistInfoFragment";
 
     private ViewPager2 pager;
-    private ImageView focusedImage;
     private List<String> imageUrls;
     private List<List<String>> activities;
     private ImagePagerAdapter pageAdapter;
     private String focusedUrl;
+    private FrameLayout overlayContainer;
+    private View dimView;
+    private TextView downloadButtonOverlay;
+    private ImageView overlayImageClone;
+    private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavView;
+    private android.graphics.drawable.Drawable originalBottomNavBackground;
+    private ImageOverlayManager imageOverlayManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
@@ -82,7 +90,18 @@ public class ArtistInfoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
+
+        imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
+
+        // ✅ BottomNavigationView를 액티비티에서 찾아와 원래 배경을 저장
+        bottomNavView = requireActivity().findViewById(R.id.nav_view);
+        if (bottomNavView != null) {
+            originalBottomNavBackground = bottomNavView.getBackground();
+        }
+
+
         bindView(view);
+        //setupOverlayListeners();
 
         //Artist images list for ViewPager2
         imageUrls = new ArrayList<>();
@@ -113,7 +132,8 @@ public class ArtistInfoFragment extends Fragment {
                     if (metadata.images != null && !metadata.images.isEmpty()){
                         imageUrls.addAll(metadata.images);
                     }
-                    pageAdapter = new ImagePagerAdapter(getContext(), imageUrls);
+                    pageAdapter = new ImagePagerAdapter(requireContext(), imageUrls, ArtistInfoFragment.this);
+
                     pager.setAdapter(pageAdapter);
                     pager.setOffscreenPageLimit(3);
 
@@ -170,7 +190,7 @@ public class ArtistInfoFragment extends Fragment {
             @Override
             public void onFailure(String reason) {
                 requireActivity().runOnUiThread(() -> {
-                    pageAdapter = new ImagePagerAdapter(getContext(), imageUrls);
+                    pageAdapter = new ImagePagerAdapter(requireContext(), imageUrls, ArtistInfoFragment.this);
                     pager.setAdapter(pageAdapter);
                     trackRecyclerView.setPadding(0,0,0,48);
                     Log.d(TAG, reason);
@@ -182,7 +202,12 @@ public class ArtistInfoFragment extends Fragment {
                     biographyLayout.setVisibility(View.GONE);
                     addedDataLayout.setVisibility(View.GONE);
 
-                    genresTextView.setText(artist.getJoinedGenres());
+                    if (artist.genres != null && !artist.genres.isEmpty()) {
+                        genresTextView.setText(artist.getJoinedGenres());
+                    }
+                    else{
+                        genresLayout.setVisibility(View.GONE);
+                    }
                     followersTextView.setText(NumberUtils.formatWithComma(artist.followers));
                     viewSetting();
                 });
@@ -246,8 +271,6 @@ public class ArtistInfoFragment extends Fragment {
         followersLayout = view.findViewById(R.id.followers_layout);
         biographyLayout = view.findViewById(R.id.biography_layout);
         addedDataLayout = view.findViewById(R.id.added_date_layout);
-        focusedImage = view.findViewById(R.id.focused_image);
-        downloadBtn = view.findViewById(R.id.download_button);
     }
 
 
@@ -274,20 +297,35 @@ public class ArtistInfoFragment extends Fragment {
         });
 
 
-        downloadBtn.setOnClickListener(v -> {
-            focusedImage.setVisibility(View.GONE);
-            downloadBtn.setVisibility(View.GONE);
-            pager.setVisibility(View.VISIBLE);
-            // 이미지 저장 로직 호출 (예: Picasso, Glide에서 Bitmap 저장)
-            ImageSaveUtil.saveImageFromUrl(getContext(), focusedUrl);
-            Toast.makeText(getContext(), "Image Downloading", Toast.LENGTH_SHORT).show();
+        pager.post(() -> {
+            imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth()/6.5f), pager.getWidth()/14);
         });
-
-
-
-
     }
 
+    public void onLongClick(ImageView imageView, MotionEvent event, String imageUrl){
+        float touchX = event.getRawX();
+        float touchY = event.getRawY();
+
+        // 매니저의 showOverlay 메서드 호출 시 좌표 전달
+        imageOverlayManager.showOverlay((ImageView) imageView, imageUrl, touchX, touchY);
+    }
+
+
+
+
+    private void setupOverlayListeners() {
+        // 리스너 콜백 람다식
+        View.OnClickListener dismissListener = v -> {
+            overlayContainer.setVisibility(View.GONE);
+
+            // ✅ BottomNavigationView 배경 원래대로 복구
+            if (bottomNavView != null) {
+                bottomNavView.setBackground(originalBottomNavBackground);
+            }
+        };
+        // 어두운 배경(dimView) 클릭 시 오버레이 숨기기
+        dimView.setOnClickListener(dismissListener);
+    }
 
     private void addFavoriteSong(Track track){
         new AlertDialog.Builder(getContext())

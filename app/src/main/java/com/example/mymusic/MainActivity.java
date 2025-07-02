@@ -57,24 +57,6 @@ public class MainActivity extends AppCompatActivity {
         );
         */
 
-/*
-        setContentView(R.layout.activity_main);
-        // ️중복 추가 방지: 처음 실행일 때만 추가
-        if (savedInstanceState == null){
-            // 1. 뒤에 깔릴 Fragment (예: FavoritesFragment)
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.background_fragment_container_main, new FavoritesFragment())
-                    .commit();
-
-            // 2. 현재 화면 Fragment (예: MusicInfoFragment)
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.foreground_fragment_container_main, new MusicInfoFragment())
-                    .commit();
-
-        }
-
-
-*/
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());

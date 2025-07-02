@@ -1,7 +1,10 @@
 package com.example.mymusic.ui.artistInfo;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -20,16 +23,14 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     private OnImageLongClickListener longClickListener;
 
     public interface OnImageLongClickListener {
-        void onLongClick(ImageView imageView, String imageUrl);
+        void onLongClick(ImageView imageView, MotionEvent event, String imageUrl);
     }
 
-    public void setOnImageLongClickListener(OnImageLongClickListener longClickListener) {
-        this.longClickListener = longClickListener;
-    }
 
-    public ImagePagerAdapter(Context context, List<String> urls) {
+    public ImagePagerAdapter(Context context, List<String> urls, OnImageLongClickListener longClickListener) {
         this.context = context;
         this.imageUrls = urls;
+        this.longClickListener = longClickListener;
     }
 
     @NonNull
@@ -43,6 +44,7 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
         return new ImageViewHolder(imageView);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
         Glide.with(context)
@@ -51,11 +53,24 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
                 .into(holder.imageView);
 
         String url = imageUrls.get(position);
-        holder.imageView.setOnLongClickListener(v -> {
-            if (longClickListener != null) {
-                longClickListener.onLongClick(holder.imageView, url);
+
+
+        // ✅ 2. 롱클릭을 감지할 GestureDetector 생성
+        GestureDetector gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public void onLongPress(MotionEvent e) {
+                if (longClickListener != null) {
+                    // 롱클릭이 발생하면 인터페이스를 통해 이벤트와 이미지 URL 전달
+                    longClickListener.onLongClick(holder.imageView, e, url);
+                }
             }
-            return true; // 이벤트 소비
+        });
+
+        // ✅ 3. OnLongClickListener 대신 OnTouchListener 설정
+        holder.imageView.setOnTouchListener((v, event) -> {
+            // 터치 이벤트를 GestureDetector에 전달하여 롱클릭 감지
+            gestureDetector.onTouchEvent(event);
+            return true; // 이벤트를 소비했음을 알림
         });
 
     }

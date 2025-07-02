@@ -29,7 +29,7 @@
                     android:scaleType="centerCrop"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintDimensionRatio="1:1"/>
+                    app:layout_constraintDimensionRatio="1:1" />
 
                 <ImageButton
                     android:id="@+id/shadow_add_button"
@@ -347,6 +347,43 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/overlay_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/dim_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#99000000"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <ImageView
+                android:id="@+id/overlay_image_clone"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:id="@+id/download_button_overlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DOWNLOAD"
+                android:textColor="@android:color/white"
+                android:padding="6dp"
+                android:elevation="4dp" />
+
+            <com.example.mymusic.animation.StrokePulseView
+                android:id="@+id/stroke_pulse_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </FrameLayout>
+
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
