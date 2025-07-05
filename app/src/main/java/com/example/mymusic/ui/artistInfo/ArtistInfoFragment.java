@@ -1,15 +1,16 @@
 package com.example.mymusic.ui.artistInfo;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -24,7 +25,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
-import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,24 +34,23 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
+import com.example.mymusic.databinding.FragmentArtistInfoBinding;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
-import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
 import com.example.mymusic.util.ImageOverlayManager;
-import com.example.mymusic.util.ImageSaveUtil;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
-import com.squareup.picasso.Picasso;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.OnImageLongClickListener{
 
@@ -75,26 +74,55 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavView;
     private android.graphics.drawable.Drawable originalBottomNavBackground;
     private ImageOverlayManager imageOverlayManager;
+    private ArtistInfoViewModel viewModel;
+    private FragmentArtistInfoBinding binding;
+    private boolean isArtistImageReady = false, isTrackImageReady = false, isAlbumImageReady = false;
+    private TrackAdapter trackAdapter;
+    private SimpleAlbumAdapter albumAdapter;
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
+        viewModel = new ViewModelProvider(this).get(ArtistInfoViewModel.class);
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
-        View view = inflater.inflate(R.layout.fragment_artist_info, container, false);
-        new EdgeSwipeBackGestureHelper().attachToView(view.findViewById(R.id.gesture_overlay), view.findViewById(R.id.swipe_content),this);
-        return view;
+        binding = FragmentArtistInfoBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
 
+        albumRecyclerView = binding.albumResultRecyclerView;
+        albumRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        trackRecyclerView = binding.trackResultRecyclerView;
+        trackRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+//adapter 정의
+        trackAdapter = new TrackAdapter(new ArrayList<>(), getContext(), this::showTrackDetails, this::addFavoriteSong, this::onTrackClick, this::onImageLoadListener);
+        trackRecyclerView.setAdapter(trackAdapter);
+        Log.d(TAG, "Empty Track adapter setting Done");
+        trackRecyclerView.setNestedScrollingEnabled(false);
+
+        albumAdapter = new SimpleAlbumAdapter(new ArrayList<>());
+        albumRecyclerView.setAdapter(albumAdapter);
+        Log.d(TAG, "Empty Album adapter setting Done");
+        albumRecyclerView.setNestedScrollingEnabled(false);
+
+
+
+
+        postponeEnterTransition();
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
+
+
 
         // ✅ BottomNavigationView를 액티비티에서 찾아와 원래 배경을 저장
         bottomNavView = requireActivity().findViewById(R.id.nav_view);
@@ -104,7 +132,10 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
 
         bindView(view);
-        //setupOverlayListeners();
+
+
+
+
 
         //Artist images list for ViewPager2
         imageUrls = new ArrayList<>();
@@ -115,8 +146,16 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             Log.e(TAG, "Artist is null");
             return;
         }
-
         artist = favoriteArtist.artist;
+
+        if (viewModel.getInitialTransitionName() == null){
+            String initialTransitionName = getArguments().getString("transitionName");
+            ViewCompat.setTransitionName(binding.imagePager, initialTransitionName);
+            viewModel.setInitialTransitionName(initialTransitionName);
+        } else{
+            String currentTransitionName = viewModel.getCurrentTransitionName();
+            ViewCompat.setTransitionName(binding.imagePager, currentTransitionName);
+        }
 
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
@@ -135,7 +174,10 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     if (metadata.images != null && !metadata.images.isEmpty()){
                         imageUrls.addAll(metadata.images);
                     }
-                    pageAdapter = new ImagePagerAdapter(requireContext(), imageUrls, ArtistInfoFragment.this);
+
+                    Context context = getContext();
+                    if (context != null)
+                        pageAdapter = new ImagePagerAdapter(context, imageUrls, ArtistInfoFragment.this);
 
                     pager.setAdapter(pageAdapter);
                     pager.setOffscreenPageLimit(3);
@@ -248,14 +290,12 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
     private void bindView(View view){
-        pager = view.findViewById(R.id.image_pager);
+        //pager = view.findViewById(R.id.image_pager);
+        pager = binding.imagePager;
         artistNameTextView = view.findViewById(R.id.artist_name);
         genresTextView = view.findViewById(R.id.genres);
         followersTextView = view.findViewById(R.id.followers);
-        albumRecyclerView = view.findViewById(R.id.album_result_recycler_view);
-        albumRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        trackRecyclerView = view.findViewById(R.id.track_result_recycler_view);
-        trackRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
         addArtistButton = view.findViewById(R.id.add_button);
         debutTextView = view.findViewById(R.id.debut_date);
         activityYearsTextView = view.findViewById(R.id.activity_years);
@@ -279,27 +319,23 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
 
     private void viewSetting(){
-
-
-
         artistNameTextView.setText(artist.artistName);
-
-
-
         ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext(), requireActivity());
 
-        apiHelper.searchAlbumsByArtist(null, artist.artistId, albumList -> {
-            SimpleAlbumAdapter albumAdapter = new SimpleAlbumAdapter(albumList);
-            albumRecyclerView.setAdapter(albumAdapter);
-            albumRecyclerView.setNestedScrollingEnabled(false);
-        });
 
         apiHelper.searchTrackByArtist(null, artist.artistId, tracks -> {
-            TrackAdapter trackAdapter = new TrackAdapter(tracks, getContext(), this::showTrackDetails, this::addFavoriteSong, this::onTrackClick);
-            trackRecyclerView.setAdapter(trackAdapter);
-            trackRecyclerView.setNestedScrollingEnabled(false);
+            trackAdapter.updateData(tracks);
+            binding.trackResultRecyclerView.post(() ->  handleReenterTransitionTrack());
+
         });
 
+        apiHelper.searchAlbumsByArtist(null, artist.artistId, albumList -> {
+            albumAdapter.updateData(albumList);
+            binding.albumResultRecyclerView.post(() -> handleReenterTransitionAlbum());
+
+
+
+        });
 
         pager.post(() -> {
             imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth()/6.5f), pager.getWidth()/14);
@@ -328,7 +364,28 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
             enlargeButton.setLayoutParams(enlargeParams);
             enlargeButton.setVisibility(View.VISIBLE);
+            isArtistImageReady =  true;
+
         });
+
+        pager.postDelayed(() -> {
+            if (!((viewModel.getTrackPosition() != -1 && !isTrackImageReady) || (viewModel.getAlbumPosition() != -1 && !isArtistImageReady))) {
+                startPostponedEnterTransition();
+                Log.d(TAG, "startPostponedEnterTransition()");
+                Log.d(TAG, "track position: " + viewModel.getTrackPosition());
+                Log.d(TAG, "is Track Ready: " + isTrackImageReady);
+                Log.d(TAG, "album position: " + viewModel.getAlbumPosition());
+                Log.d(TAG, "is album Ready: " + isAlbumImageReady);
+            }
+
+        }, 100);
+
+        pager.postDelayed(() -> {
+            ViewCompat.setTransitionName(binding.imagePager, viewModel.getInitialTransitionName());
+            Log.d(TAG, "set initial transitionName to: " + viewModel.getInitialTransitionName());
+        }, 200);
+
+
 
         // ArtistInfoFragment.java 의 onViewCreated 또는 setView 내부
 
@@ -347,11 +404,13 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             ImageView currentImageView = holder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
 
             // 3. 전환할 뷰(currentImageView)에 고유한 transitionName 설정
-            String transitionName = "Transition_" + imageUrls.get(currentPosition);
+            String transitionName = "Transition_artist_to_image_detail" + imageUrls.get(currentPosition) + currentPosition;
             ViewCompat.setTransitionName(currentImageView, transitionName);
+            viewModel.setCurrentTransitionName(transitionName);
 
             // 4. 전달할 데이터 준비 (전체 URL 리스트, 현재 위치)
             Bundle args = new Bundle();
+            args.putString("transitionName", transitionName);
             args.putStringArrayList("image_urls", (ArrayList<String>) imageUrls);
             args.putInt("start_position", currentPosition);
 
@@ -365,8 +424,135 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             navController.navigate(R.id.action_artistInfoFragment_to_imageDetailFragment, args, null, extras);
         });
 
+
     }
 
+    /*
+
+    private void handleReenterTransitionTrack() {
+        if (viewModel.getTrackPosition() == -1) {
+            Log.d(TAG, "trackPosition 없음 -> 바로 startPostponedEnterTransition()");
+            startPostponedEnterTransition();
+            return;
+        }
+
+        Log.d(TAG, "handleReenterTransition for track recycler view 호출됨");
+        int position = viewModel.getTrackPosition();
+        RecyclerView recyclerView = binding.trackResultRecyclerView;
+
+        recyclerView.scrollToPosition(position);
+
+        recyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
+                if (holder == null || holder.itemView.findViewById(R.id.imageView) == null) {
+                    Log.d(TAG, "ViewHolder 아직 안 붙음. 대기 중...");
+                    return false; // 계속 기다림
+                }
+
+                // transitionName 확인 (optional debug)
+                ImageView imageView = holder.itemView.findViewById(R.id.imageView);
+                String actualName = ViewCompat.getTransitionName(imageView);
+                Log.d(TAG, "🎯 ViewHolder attach됨, transitionName = " + actualName);
+
+                recyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+
+                // transitionName 매칭 확인 후 시작
+                if (viewModel.getTrackTransitionName() != null && viewModel.getTrackTransitionName().equals(actualName)) {
+                    Log.d(TAG, "Transition name 일치!");
+                    isTrackImageReady = true;
+                    if (isArtistImageReady) {
+                        startPostponedEnterTransition();
+                        Log.d(TAG, "✅ 모든 준비 완료: startPostponedEnterTransition()");
+                    } else {
+                        Log.d(TAG, "아티스트 이미지 아직 준비 안됨. 대기...");
+                        // artist image 준비되면 호출하도록 다른 곳에서 관리
+                    }
+                    // 상태 초기화
+                    viewModel.setTrackPosition(-1);
+                    return true;
+                }
+                else {
+                    Log.d(TAG, "Transition name 일치하지 않음..");
+                    return false;
+                }
+            }
+        });
+    }
+
+     */
+
+    private void handleReenterTransitionTrack() {
+
+        if (viewModel.getTrackPosition() == -1) {
+            Log.d(TAG, "trackPosition 없음 -> 바로 startPostponedEnterTransition()");
+            startPostponedEnterTransition();
+            return;
+        }
+
+        Log.d(TAG, "handleReenterTransition for track recycler view 호출됨");
+        int position = viewModel.getTrackPosition();
+        RecyclerView recyclerView = binding.trackResultRecyclerView;
+
+        recyclerView.scrollToPosition(position);
+
+        recyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                RecyclerView.ViewHolder holder = recyclerView.findViewHolderForAdapterPosition(position);
+                if (holder == null || holder.itemView.findViewById(R.id.imageView) == null) {
+                    Log.d(TAG, "ViewHolder 아직 안 붙음. 대기 중...");
+                    return false; // 계속 기다림
+                }
+
+                // transitionName 확인 (optional debug)
+                ImageView imageView = holder.itemView.findViewById(R.id.imageView);
+                String actualName = ViewCompat.getTransitionName(imageView);
+                Log.d(TAG, "🎯 ViewHolder attach됨, transitionName = " + actualName);
+
+                recyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+
+                // transitionName 매칭 확인 후 시작
+                if (isArtistImageReady) {
+                    startPostponedEnterTransition();
+                    Log.d(TAG, "✅ 모든 준비 완료: startPostponedEnterTransition()");
+                } else {
+                    Log.d(TAG, "아티스트 이미지 아직 준비 안됨. 대기...");
+                    // artist image 준비되면 호출하도록 다른 곳에서 관리
+                }
+
+                // 상태 초기화
+                viewModel.setTrackPosition(-1);
+                return true;
+            }
+        });
+
+
+    }
+
+    private void handleReenterTransitionAlbum(){
+     if (viewModel.getAlbumPosition() != -1){
+            Log.d(TAG, "handleReenterTransition for album recycler view 호출됨");
+            int position = viewModel.getAlbumPosition();
+            binding.albumResultRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    binding.albumResultRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                    binding.albumResultRecyclerView.scrollToPosition(position);
+                    isAlbumImageReady = true;
+                    if (isArtistImageReady) {
+                        startPostponedEnterTransition();
+                        Log.d(TAG, "artist image & album image ready : start postponed enter transition with album image");
+                    }
+                    return true;
+                }
+            });
+        }
+        else{
+            startPostponedEnterTransition();
+        }
+    }
     public void onLongClick(ImageView imageView, MotionEvent event, String imageUrl){
         float touchX = event.getRawX();
         float touchY = event.getRawY();
@@ -422,11 +608,14 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 .show();
     }
 
-    public void onTrackClick(Track track, ImageView sharedImageView){
+    public void onTrackClick(Track track, ImageView sharedImageView, int position){
+        Log.d(TAG, "onTrackClick() 호출됨");
         Bundle bundle = new Bundle();
         Favorite favorite = new Favorite(track);
         bundle.putParcelable("favorite", favorite);
-        String transitionName = "Transition_artist_to_music" + track.artworkUrl;
+        String transitionName = ViewCompat.getTransitionName(sharedImageView);
+        viewModel.setTrackPosition(position);
+        viewModel.setTrackTransitionName(transitionName);
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                 .addSharedElement(sharedImageView, transitionName)
@@ -435,12 +624,19 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         bundle.putString("transitionName", transitionName);
 
         NavController navController = NavHostFragment.findNavController(this);
-        NavDestination currentDestination = navController.getCurrentDestination();
-        assert currentDestination != null;
-        if (currentDestination.getId() == R.id.artist_info)
-            navController.navigate(R.id.musicInfoFragment, bundle, null, extras);
+        navController.navigate(R.id.musicInfoFragment, bundle, null, extras);
 
     }
+
+
+    public void onImageLoadListener(int position, String transitionName){
+        if (position == viewModel.getTrackPosition() && transitionName.equals(viewModel.getTrackTransitionName())){
+            //isTrackImageReady = true;
+            //if (isArtistImageReady)
+                //startPostponedEnterTransition();
+        }
+    }
+
 
 
 

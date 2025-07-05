@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
 import com.example.mymusic.model.Album;
+import com.example.mymusic.model.Track;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -66,6 +67,12 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
     @Override
     public int getItemCount() {
         return albumList.size();
+    }
+
+
+    public void updateData(List<Album> newList){
+        this.albumList = newList;
+        notifyDataSetChanged();
     }
 
 }

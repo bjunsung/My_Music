@@ -9,11 +9,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
@@ -28,6 +30,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     OnDeleteClickListener deleteClickListener;
     OnMetadataClickListener metadataClickListener;
     FavoriteArtistViewModel viewModel;
+    OnItemNavigateClickListener navigateClickListener;
 
     public interface OnDeleteClickListener{
         void onItemClick(Artist artist);
@@ -37,11 +40,16 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         void onItemClick(String artistId);
     }
 
-    public FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, OnMetadataClickListener metadataClickListener, FavoriteArtistViewModel viewModel){
+    public interface OnItemNavigateClickListener {
+        void onNavigateClick(FavoriteArtist favorite, ImageView sharedImageView, int position);
+    }
+
+    public FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, OnMetadataClickListener metadataClickListener, FavoriteArtistViewModel viewModel, OnItemNavigateClickListener navigateClickListener){
         this.artistList = artistList;
         this.deleteClickListener = deleteClickListener;
         this.metadataClickListener = metadataClickListener;
         this.viewModel = viewModel;
+        this.navigateClickListener = navigateClickListener;
     }
     public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
@@ -70,6 +78,13 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         Artist artist = artistList.get(position);
         FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
 
+        if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
+            String transitionName = "Transition_favorite_artist_adapter_to_artist_"  + artist.artworkUrl + "_" + artist.artistId  + "_" + artist.followers;
+            ViewCompat.setTransitionName(holder.image, transitionName);
+        } else {
+            ViewCompat.setTransitionName(holder.image, null);
+        }
+
         holder.artistName.setText(artist.artistName);
         holder.followers.setText(NumberUtils.formatWithComma(artist.followers));
         //String addedDate = viewModel.getAddedDateAsync(artist.artistId);
@@ -88,10 +103,13 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(artist));
 
         holder.itemView.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putParcelable("favorite_artist", favoriteArtist);
-            NavController navController = Navigation.findNavController(v);
-            navController.navigate(R.id.artist_info, bundle);
+            if (navigateClickListener != null && ViewCompat.getTransitionName(holder.image) != null){
+                navigateClickListener.onNavigateClick(
+                        favoriteArtist,
+                        holder.image,
+                        holder.getAdapterPosition()
+                );
+            }
         });
 
         holder.addButton.setOnClickListener(v -> metadataClickListener.onItemClick(artist.artistId));

@@ -2,6 +2,7 @@ package com.example.mymusic.ui.imageDetail;
 
 import androidx.fragment.app.Fragment;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import androidx.transition.Explode;
 import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.mymusic.R; // 자신의 R 클래스 경로
+import com.example.mymusic.databinding.FragmentImageDetailBinding;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
 
@@ -35,7 +37,9 @@ public class ImageDetailFragment extends Fragment {
     private ImageButton closeButton;
     private FrameLayout detailContainer;
     private boolean isLightMode = false;
-
+    ImageButton backButtonImageButton, emptySpaceImageButton;
+    private FragmentImageDetailBinding binding;
+    private String transitionName;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,15 +62,15 @@ public class ImageDetailFragment extends Fragment {
         setSharedElementReturnTransition(new MaterialContainerTransform());
 
 
-        setEnterTransition(new Explode());
+        //setEnterTransition(new Explode());
 
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.fragment_image_detail, container, false);
-        return view;
+        binding = FragmentImageDetailBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -83,6 +87,7 @@ public class ImageDetailFragment extends Fragment {
         if (getArguments() != null) {
             imageUrls = getArguments().getStringArrayList("image_urls");
             startPosition = getArguments().getInt("start_position");
+            transitionName = getArguments().getString("transitionName");
         }
 
         bindView(view);
@@ -93,6 +98,8 @@ public class ImageDetailFragment extends Fragment {
         viewPager.setAdapter(adapter);
         // 시작 위치로 바로 이동 (애니메이션 없이)
         viewPager.setCurrentItem(startPosition, false);
+        if (transitionName != null)
+            viewPager.setTransitionName(transitionName);
 
         // ViewPager2가 해당 페이지를 그릴 준비가 될 때까지 기다린 후 애니메이션 시작
         viewPager.getViewTreeObserver().addOnPreDrawListener(
@@ -113,6 +120,11 @@ public class ImageDetailFragment extends Fragment {
         viewPager = view.findViewById(R.id.detail_view_pager);
         closeButton = view.findViewById(R.id.close_button);
         detailContainer = view.findViewById(R.id.detail_container);
+        Activity activity = requireActivity();
+        if (activity != null){
+            backButtonImageButton = activity.findViewById(R.id.back_button);
+            emptySpaceImageButton = activity.findViewById(R.id.empty_space);
+        }
     }
 
     private void setView(){
@@ -124,6 +136,8 @@ public class ImageDetailFragment extends Fragment {
         super.onResume();
         // 전체 화면 모드 설정 (상태 바, 내비게이션 바 숨기기)
         if (getActivity() != null && getActivity().getWindow() != null) {
+            backButtonImageButton.setVisibility(View.GONE);
+            emptySpaceImageButton.setVisibility(View.GONE);
             insetsController = WindowCompat.getInsetsController(getActivity().getWindow(), getActivity().getWindow().getDecorView());
             if (insetsController != null) {
                 insetsController.hide(WindowInsetsCompat.Type.systemBars());
@@ -139,6 +153,8 @@ public class ImageDetailFragment extends Fragment {
         if (insetsController != null) {
             insetsController.show(WindowInsetsCompat.Type.systemBars());
         }
+        backButtonImageButton.setVisibility(View.VISIBLE);
+        emptySpaceImageButton.setVisibility(View.VISIBLE);
     }
 
     private void toggleUiMode(){

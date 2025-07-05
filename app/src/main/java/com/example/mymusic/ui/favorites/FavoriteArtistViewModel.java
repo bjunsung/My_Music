@@ -1,6 +1,7 @@
 package com.example.mymusic.ui.favorites;
 
 import android.app.Application;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -22,6 +23,7 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
 
     private final FavoriteArtistRepository repository;
     private final ArtistMetadataRepository artistMetadataRepository;
+    public Bundle reenterState = null;
 
     public FavoriteArtistViewModel(@NonNull Application application) {
         super(application);

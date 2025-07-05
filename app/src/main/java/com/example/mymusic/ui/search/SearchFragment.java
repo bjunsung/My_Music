@@ -110,7 +110,8 @@ public class SearchFragment extends Fragment {
                     getContext(),
                     this::showTrackDetails,
                     this::addFavoriteSong,
-                    this::onTrackClick);
+                    this::onTrackClick,
+                    this::onImageLoadListener);
 
             recyclerView.setAdapter(trackAdapter);
         } else if (searchViewModel.selectedOption == 1 && !searchViewModel.searchArtistResults.isEmpty()) {
@@ -328,7 +329,12 @@ public class SearchFragment extends Fragment {
 
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
-                        TrackAdapter adapter = new TrackAdapter(tracks, getContext(), track -> showTrackDetails(track), track -> addFavoriteSong(track), this::onTrackClick);
+                        TrackAdapter adapter = new TrackAdapter(tracks,
+                                getContext(),
+                                this::showTrackDetails,
+                                this::addFavoriteSong,
+                                this::onTrackClick,
+                                this::onImageLoadListener);
                         RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
                         recyclerView.setAdapter(adapter);
                     });
@@ -483,7 +489,7 @@ public class SearchFragment extends Fragment {
                 .show();
     }
 
-    public void onTrackClick(Track track, ImageView sharedImageView){
+    public void onTrackClick(Track track, ImageView sharedImageView, int position){
         Bundle bundle = new Bundle();
         Favorite favorite = new Favorite(track);
         bundle.putParcelable("favorite", favorite);
@@ -503,6 +509,8 @@ public class SearchFragment extends Fragment {
 
     }
 
-
+    public void onImageLoadListener(int position, String transitionName){
+        //todo
+    }
 
 }

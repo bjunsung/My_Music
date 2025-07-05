@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
@@ -32,6 +33,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     OnLyricClickListener lyricClickListener;
     OnLyricLongClickListener lyricLongClickListener;
     OnItemLongClickListener itemLongClickListener;
+    OnItemNavigateClickListener navigateClickListener;
     long lastClickTime = 0;
     public interface OnDeleteClickListener{
         void onItemClick(Favorite favorite);
@@ -49,16 +51,21 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         void onItemClick();
     }
 
+    public interface OnItemNavigateClickListener {
+        void onNavigateClick(Favorite favorite, ImageView sharedImageView, int position);
+    }
     public FavoritesAdapter(List<Favorite> favoritesList,
                             OnDeleteClickListener deleteClickListener,
                             OnLyricClickListener lyricClickListener,
                             OnLyricLongClickListener lyricLongClickListener,
-                            OnItemLongClickListener itemLongClickListener){
+                            OnItemLongClickListener itemLongClickListener,
+                            OnItemNavigateClickListener navigateClickListener){
         this.favoritesList = favoritesList;
         this.deleteClickListener = deleteClickListener;
         this.lyricClickListener = lyricClickListener;
         this.lyricLongClickListener = lyricLongClickListener;
         this.itemLongClickListener = itemLongClickListener;
+        this.navigateClickListener = navigateClickListener;
     }
 
     public class FavoriteViewHolder extends RecyclerView.ViewHolder{
@@ -95,8 +102,13 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         Favorite favorite = favoritesList.get(position);
         favorite.recyclerViewPosition = holder.getAdapterPosition();
         Track track = favorite.track;
-        String transitionName = "Transition_favorite_adapter_to_music" + track.artworkUrl + track.trackId + track.durationMs + track.releaseDate;
-        holder.image.setTransitionName(transitionName);
+        if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
+            String transitionName = "Transition_favorite_adapter_to_music_"  + track.artworkUrl + "_" + track.trackId + "_" + track.durationMs + "_" + track.releaseDate + "_" + position;
+            ViewCompat.setTransitionName(holder.image, transitionName);
+        } else {
+            ViewCompat.setTransitionName(holder.image, null);
+        }
+
         Picasso.get().load(track.artworkUrl).into(holder.image);
         holder.title.setText(track.trackName);
         if (favorite.metadata != null && favorite.metadata.title != null){
@@ -147,16 +159,13 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
                 itemLongClickListener.onItemClick();
             }
             else {
-                Bundle bundle = new Bundle();
-                bundle.putParcelable("favorite", favorite);
-                bundle.putString("transitionName", transitionName);
-
-                FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
-                        .addSharedElement(holder.image, transitionName)
-                        .build();
-
-                NavController navController = Navigation.findNavController(v);
-                navController.navigate(R.id.action_favoritesFragment_to_musicInfoFragment, bundle, null, extras);
+                if (navigateClickListener != null && ViewCompat.getTransitionName(holder.image) != null){
+                    navigateClickListener.onNavigateClick(
+                            favorite,
+                            holder.image,
+                            holder.getAdapterPosition()
+                    );
+                }
             }
         });
 

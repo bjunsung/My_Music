@@ -8,11 +8,8 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
-import android.transition.ChangeBounds;
 
 import androidx.navigation.NavDestination;
 import androidx.transition.Explode;
@@ -31,10 +28,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.lifecycle.ViewModelProvider;
@@ -56,7 +50,6 @@ import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.DateUtils;
-import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.ImageOverlayManager;
 import com.google.android.material.transition.MaterialArcMotion;
@@ -78,15 +71,20 @@ public class MusicInfoFragment extends Fragment {
     private ImageOverlayManager imageOverlayManager;
     private int artworkSize;
     private View bottomNavView;
+    ImageButton backButton;
     private int primaryColor, selectedColor, unselectedColor;
     // ✅ ViewBinding 사용을 권장합니다
     private FragmentMusicInfoBinding binding;
+    private MusicInfoViewModel viewModel;
 
 
     //ViewModel 연결
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+
+
+        viewModel = new ViewModelProvider(this).get(MusicInfoViewModel.class);
 
         // ✅ 1. 전환 애니메이션 종류를 여기서 설정합니다.
         MaterialContainerTransform transform = new MaterialContainerTransform();
@@ -113,19 +111,27 @@ public class MusicInfoFragment extends Fragment {
     }
 
 
+    /*
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState){
+        super.onSaveInstanceState(outState);
+        if (getView() != null){
+            String currentTransitionName = ViewCompat.getTransitionName(binding.artworkImage);
+            outState.putString(KEY_TRANSITION_NAME, currentTransitionName);
+            Log.d("TransitionDebug", "MusicInfoFragment: onSaveInstanceState 저장, name=" + currentTransitionName);
+        }
+    }
+
+    */
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        //스와이프로 뒤로가기 구현
-        View swipeContent =  binding.swipeContent;
-        View gestureOverlay = binding.gestureOverlay;
-
-        new EdgeSwipeBackGestureHelper().attachToView(gestureOverlay, this);
 
         bottomNavView = requireActivity().findViewById(R.id.nav_view);
-
+        backButton = requireActivity().findViewById(R.id.back_button);
 
         //사진 다운로드를 위한 매니저 객체 설정
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
@@ -144,8 +150,19 @@ public class MusicInfoFragment extends Fragment {
 
             //ImageView artworkImage = view.findViewById(R.id.artworkImage);
             ImageView artworkImage = binding.artworkImage;
-            String recievedTransitionName = getArguments().getString("transitionName");
-            artworkImage.setTransitionName(recievedTransitionName);
+
+
+            if (viewModel.getInitialTransitionName() == null){
+                String receivedTransitionName = getArguments().getString("transitionName");
+                viewModel.setInitialTransitionName(receivedTransitionName);
+                ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
+                Log.d(TAG, "onViewCreated 에서 '전달받은' 이름 설정, name=" + receivedTransitionName);
+            }else{
+                String savedName = viewModel.getCurrentTransitionName();
+                ViewCompat.setTransitionName(binding.artworkImage, savedName);
+                Log.d(TAG, "MusicInfoFragment: viewModel 에 '저장된' current 이름 복원, name=" + savedName);
+            }
+
 
             artworkImage.post(() -> {
                 artworkSize = artworkImage.getWidth();
@@ -239,10 +256,16 @@ public class MusicInfoFragment extends Fragment {
                                 public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                                     artworkImage.setImageDrawable(resource);
                                     startPostponedEnterTransition();
+                                    artworkImage.postDelayed(() -> {
+                                        artworkImage.setTransitionName(viewModel.getInitialTransitionName());
+                                        Log.d(TAG, "TransitionName set to initial transName: " + viewModel.getInitialTransitionName() );
+                                    }, 100);
+
                                 }
 
                                 @Override
                                 public void onLoadCleared(@Nullable Drawable placeholder) {
+
                                     // 필요하면 placeholder 정리
                                 }
 
@@ -259,20 +282,6 @@ public class MusicInfoFragment extends Fragment {
             }else{
                 Log.d(TAG, "artworkUrl is empty");
             }
-
-        /*
-            // 이미지 표시: Picasso 등 사용
-            if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
-                //com.squareup.picasso.Picasso.get().load(track.artworkUrl).into(artworkImage);
-                Glide.with(requireContext())
-                        .load(track.artworkUrl)
-                        .error(R.drawable.ic_image_not_found_foreground) // 실패 시 이미지
-                        .centerCrop()
-                        .into(artworkImage);
-
-            }
-
-         */
 
             artworkImage.post(()->{
                 Context context = getContext();
@@ -322,8 +331,13 @@ public class MusicInfoFragment extends Fragment {
                     if (bottomNavView == null) {
                         bottomNavView = requireActivity().findViewById(R.id.nav_view);
                     }
-                    if (bottomNavView != null)
+                    if (bottomNavView != null) {
                         bottomNavView.setBackgroundColor(primaryColor);
+                        backButton.setBackgroundColor(primaryColor);
+                        backButton.setColorFilter(selectedColor);
+                        ImageButton emptySpace = requireActivity().findViewById(R.id.empty_space);
+                        emptySpace.setBackgroundColor(primaryColor);
+                    }
 
                     // 3. 상태에 따른 색상 목록(ColorStateList)을 생성합니다.
                     int[][] states = new int[][] {
@@ -360,14 +374,17 @@ public class MusicInfoFragment extends Fragment {
             enlargeButton.setOnClickListener(v -> {
                 //Shared Element Transition
 
-                String transitionName = "Transition_" + track.artworkUrl; // 앨범마다 고유한 이름으로 설정
+                String transitionName = "Transition_music_to_image_detail_" + track.artworkUrl;
+
                 ViewCompat.setTransitionName(artworkImage, transitionName);
+                viewModel.setCurrentTransitionName(transitionName);
 
                 ArrayList<String> imageUrls = new ArrayList<>();
                 imageUrls.add(track.artworkUrl);
                 int startPosition = 0;
 
                 Bundle args = new Bundle();
+                args.putString("transitionName", transitionName);
                 args.putStringArrayList("image_urls", imageUrls);
                 args.putInt("start_position", startPosition);
 
@@ -448,6 +465,7 @@ public class MusicInfoFragment extends Fragment {
                     if (album != null) {
                         Bundle bundle = new Bundle();
                         String transitionName = "Transition_music_to_album" + track.artworkUrl;
+                        viewModel.setCurrentTransitionName(transitionName);
                         artworkImage.setTransitionName(transitionName);
                         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                                 .addSharedElement(artworkImage, artworkImage.getTransitionName())

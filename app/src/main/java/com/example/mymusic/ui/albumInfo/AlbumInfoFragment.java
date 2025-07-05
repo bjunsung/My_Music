@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.transition.ChangeBounds;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -60,7 +61,7 @@ import java.util.ArrayList;
 
 
 public class AlbumInfoFragment extends Fragment {
-
+    private final String TAG = "AlbumInfoFragment";
     private Album album;
 
     private ArtistApiHelper apiHelper;
@@ -80,7 +81,7 @@ public class AlbumInfoFragment extends Fragment {
 
     private boolean isImageReady = false;
     private boolean isListReady = false;
-
+    private AlbumInfoViewModel viewModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstatceState){
@@ -90,10 +91,12 @@ public class AlbumInfoFragment extends Fragment {
         MaterialContainerTransform transform = new MaterialContainerTransform();
         transform.setPathMotion(new MaterialArcMotion());
         setSharedElementEnterTransition(transform);
-        setSharedElementReturnTransition(new MaterialContainerTransform());
+        setSharedElementReturnTransition(transform);
 
 
         setEnterTransition(new Explode());
+
+        viewModel = new ViewModelProvider(this).get(AlbumInfoViewModel.class);
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
     }
@@ -101,9 +104,9 @@ public class AlbumInfoFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, @Nullable Bundle savedInstanceState){
         binding = FragmentAlbumInfoBinding.inflate(inflater, container, false);
-        new EdgeSwipeBackGestureHelper().attachToView(binding.gestureOverlay, this);
         return binding.getRoot();
     }
+
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
@@ -111,6 +114,10 @@ public class AlbumInfoFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         binding.trackResultRecyclerView.setTransitionGroup(false);
         bindView(view);
+
+        if (albumImageView != null && albumImageView.getTransitionName() != null){
+            Log.d(TAG, "현재 album transition name: " + albumImageView.getTransitionName());
+        }
         Glide.with(requireContext())
                 .load(album.artworkUrl)
                 .error(R.drawable.ic_image_not_found_foreground)
@@ -121,11 +128,25 @@ public class AlbumInfoFragment extends Fragment {
         metadata_container.startAnimation(anim);
 
 
+        if (viewModel.getInitialTransitionName() == null){
+            String receivedTransitionName = getArguments().getString("transitionName");
+            viewModel.setInitialTransitionName(receivedTransitionName);
+            ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
+            Log.d(TAG, "onViewCreated 에서 '전달받은' 이름 설정, name=" + receivedTransitionName);
+        }else{
+            String currentTransitionName = viewModel.getCurrentTransitionName();
+            ViewCompat.setTransitionName(binding.artworkImage, currentTransitionName);
+            Log.d(TAG, "MusicInfoFragment: viewModel 에 '저장된' current 이름 복원, name=" + currentTransitionName);
+        }
+
+
+
+
         // 3. 트랙 목록을 비동기로 가져옵니다.
         apiHelper = new ArtistApiHelper(getContext(), requireActivity());
         apiHelper.searchTrackByAlbum(null, album,  trackList -> {
             // 4. 데이터를 받으면 어댑터를 설정합니다.
-            trackAdapter = new TrackAdapter(trackList, getContext(), this::showTrackDetails, this::addFavoriteSong, this::onTrackClick);
+            trackAdapter = new TrackAdapter(trackList, getContext(), this::showTrackDetails, this::addFavoriteSong, this::onTrackClick, this::onImageLoadListener);
             trackAdapter.setShowImage(false);
             trackAdapter.setShowPosition(true);
             trackRecyclerView.setAdapter(trackAdapter);
@@ -186,9 +207,6 @@ public class AlbumInfoFragment extends Fragment {
         trackRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         album = getArguments().getParcelable("album");
         albumImageView = view.findViewById(R.id.artwork_image);
-        String received = getArguments().getString("transitionName");
-        albumImageView.setTransitionName(received);
-
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
         enlargeButton = view.findViewById(R.id.enlarge_button);
 
@@ -205,8 +223,12 @@ public class AlbumInfoFragment extends Fragment {
                     public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                         albumImageView.setImageDrawable(resource);
                         isImageReady = true;
-                        if (isListReady)
+                        if (isListReady) {
                             startPostponedEnterTransition(); // ✅ 성공 시 전환 시작
+                            albumImageView.postDelayed(() -> {
+                                ViewCompat.setTransitionName(binding.artworkImage, viewModel.getInitialTransitionName());
+                            }, 100);
+                        }
                     }
 
                     @Override
@@ -256,31 +278,25 @@ public class AlbumInfoFragment extends Fragment {
 
 
         enlargeButton.setOnClickListener(v -> {
-            // 1. 전환할 뷰(albumImageView)에 고유한 transitionName 설정
-            // 이 이름은 도착 프래그먼트의 이미지 뷰도 동일하게 사용하게 됩니다.
-            String transitionName = "Transition_" + album.artworkUrl; // 앨범마다 고유한 이름으로 설정
-            ViewCompat.setTransitionName(albumImageView, transitionName);
+            String transitionName = "Transition_album_to_image_detail_" + album.artworkUrl;
 
-            // 2. ImageDetailFragment에 전달할 데이터 준비
-            // ViewPager2가 아니므로, 이미지는 현재 앨범 아트 하나
+            ViewCompat.setTransitionName(albumImageView, transitionName);
+            viewModel.setCurrentTransitionName(transitionName);
+
             ArrayList<String> imageUrls = new ArrayList<>();
             imageUrls.add(album.artworkUrl);
             int startPosition = 0;
 
             Bundle args = new Bundle();
+            args.putString("transitionName", transitionName);
             args.putStringArrayList("image_urls", imageUrls);
             args.putInt("start_position", startPosition);
-            // 참고: ImageDetailFragment는 이 key값들("image_urls", "start_position")로 데이터를 꺼내 씀
 
-            // 3. 전환 애니메이션 정보(Extras) 생성
-            // 어떤 뷰를(albumImageView), 어떤 이름으로(transitionName) 보낼지 지정
             FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                     .addSharedElement(albumImageView, transitionName)
                     .build();
 
-            // 4. NavController로 데이터(args)와 애니메이션 정보(extras)를 함께 전달하며 이동
             NavController navController = NavHostFragment.findNavController(this);
-            // action_albumInfoFragment_to_imageDetailFragment는 navigation graph에 정의된 action id입니다.
             navController.navigate(R.id.action_albumInfoFragment_to_imageDetailFragment, args, null, extras);
         });
 
@@ -333,17 +349,18 @@ public class AlbumInfoFragment extends Fragment {
     }
 
 
-    public void onTrackClick(Track track, ImageView sharedImageView){
+    public void onTrackClick(Track track, ImageView sharedImageView, int position){
         Bundle bundle = new Bundle();
         Favorite favorite = new Favorite(track);
         bundle.putParcelable("favorite", favorite);
-        String transitionName = "Transition_album_to_music" + album.artworkUrl;
+        String transitionName = "Transition_album_to_music_" + album.artworkUrl;
+        viewModel.setCurrentTransitionName(transitionName);
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                 .addSharedElement(albumImageView, transitionName)
                 .build();
 
-        //sharedImageView.setTransitionName(transitionName);
+        ViewCompat.setTransitionName(binding.artworkImage, transitionName);
         bundle.putString("transitionName", transitionName);
         NavController navController = NavHostFragment.findNavController(this);
         NavDestination currentDestination = navController.getCurrentDestination();
@@ -353,7 +370,9 @@ public class AlbumInfoFragment extends Fragment {
 
     }
 
-
+    public void onImageLoadListener(int position, String transitionName){
+        //todo
+    }
 
 
 }

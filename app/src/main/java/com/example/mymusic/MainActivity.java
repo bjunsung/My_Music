@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -47,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+
+
         ActionBar actionBar = getSupportActionBar();
         actionBar.hide();
 
@@ -60,6 +63,12 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+
+        ImageButton backButton = binding.backButton;
+        backButton.setOnClickListener(view -> {
+            getOnBackPressedDispatcher().onBackPressed();
+        });
 
         binding.navView.setOnItemSelectedListener(item -> {
             // 항상 클릭한 탭만 강조
@@ -137,6 +146,13 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setItemIconTintList(colorStateList);
         bottomNav.setItemTextColor(colorStateList);
         bottomNav.setBackgroundColor(Color.WHITE);
+
+        ImageButton backButton = binding.backButton;
+        backButton.setBackgroundColor(Color.WHITE);
+        backButton.setColorFilter(Color.DKGRAY);
+        ImageButton emptySpace = binding.emptySpace;
+        emptySpace.setBackgroundColor(Color.WHITE);
+
     }
     @Override
     public boolean onSupportNavigateUp() {

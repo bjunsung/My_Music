@@ -131,7 +131,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_margin="8dp"
-                android:paddingBottom="@dimen/navigation_bar_margin"
+                android:paddingBottom="40dp"
                 android:visibility="visible"
                 app:layout_constraintTop_toBottomOf="@id/filter_button"
                 app:layout_constraintBottom_toBottomOf="parent"
