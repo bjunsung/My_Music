@@ -1,6 +1,7 @@
 package com.example.mymusic.ui.musicInfo;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -11,6 +12,10 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.transition.ChangeBounds;
+
+import androidx.navigation.NavDestination;
+import androidx.transition.Explode;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -31,6 +36,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.FragmentNavigator;
@@ -38,7 +44,10 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
+import com.example.mymusic.databinding.FragmentMusicInfoBinding;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
@@ -50,6 +59,8 @@ import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.ImageOverlayManager;
+import com.google.android.material.transition.MaterialArcMotion;
+import com.google.android.material.transition.MaterialContainerTransform;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -68,33 +79,37 @@ public class MusicInfoFragment extends Fragment {
     private int artworkSize;
     private View bottomNavView;
     private int primaryColor, selectedColor, unselectedColor;
+    // ✅ ViewBinding 사용을 권장합니다
+    private FragmentMusicInfoBinding binding;
 
 
     //ViewModel 연결
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+
+        // ✅ 1. 전환 애니메이션 종류를 여기서 설정합니다.
+        MaterialContainerTransform transform = new MaterialContainerTransform();
+        transform.setPathMotion(new MaterialArcMotion());
+        transform.setDuration(500);
+        transform.setInterpolator(new FastOutSlowInInterpolator());
+        setSharedElementEnterTransition(transform);
+        setSharedElementReturnTransition(transform);
+
+        // ✅ 2. 나머지 뷰(텍스트 등)를 위한 전환 설정
+        setEnterTransition(new Explode());
+
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_music_info, container, false);
+        binding = FragmentMusicInfoBinding.inflate(inflater, container, false);
 
         savedInDb = false;
 
-        //스와이프로 뒤로가기 구현
-        View swipeContent =  rootView.findViewById(R.id.swipe_content);
-        View gestureOverlay = rootView.findViewById(R.id.gesture_overlay);
-        View backgroundView = requireActivity().findViewById(R.id.background_fragment_container);
-
-        new EdgeSwipeBackGestureHelper().attachToView(
-                gestureOverlay,
-                swipeContent,
-                this
-        );
-        return rootView;
+        return binding.getRoot();
     }
 
 
@@ -103,7 +118,14 @@ public class MusicInfoFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-       bottomNavView = requireActivity().findViewById(R.id.nav_view);
+        //스와이프로 뒤로가기 구현
+        View swipeContent =  binding.swipeContent;
+        View gestureOverlay = binding.gestureOverlay;
+
+        new EdgeSwipeBackGestureHelper().attachToView(gestureOverlay, this);
+
+        bottomNavView = requireActivity().findViewById(R.id.nav_view);
+
 
         //사진 다운로드를 위한 매니저 객체 설정
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
@@ -112,11 +134,19 @@ public class MusicInfoFragment extends Fragment {
 
         favorite = getArguments().getParcelable("favorite");
 
+
+        if (favorite == null)
+            Log.d(TAG, "get Empty Favorite element");
+
         if (favorite != null && favorite.track != null) {
             track = favorite.track;
             TrackMetadata metadata = favorite.metadata;
 
-            ImageView artworkImage = view.findViewById(R.id.artworkImage);
+            //ImageView artworkImage = view.findViewById(R.id.artworkImage);
+            ImageView artworkImage = binding.artworkImage;
+            String recievedTransitionName = getArguments().getString("transitionName");
+            artworkImage.setTransitionName(recievedTransitionName);
+
             artworkImage.post(() -> {
                 artworkSize = artworkImage.getWidth();
                 imageOverlayManager.setDownloadButtonLocation(0, - (int)((0.2)* artworkSize));
@@ -193,6 +223,44 @@ public class MusicInfoFragment extends Fragment {
             });
             trackTitleKr.setOnClickListener(v -> switchTitleLanguage());
 
+
+
+            if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
+                postponeEnterTransition();
+                Context context = getContext();
+                if (context != null) {
+                    Glide.with(context)
+                            .load(track.artworkUrl)
+                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .error(R.drawable.ic_image_not_found_foreground) // 실패 시 이미지
+                            .centerCrop()
+                            .into(new CustomTarget<Drawable>() {
+                                @Override
+                                public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                                    artworkImage.setImageDrawable(resource);
+                                    startPostponedEnterTransition();
+                                }
+
+                                @Override
+                                public void onLoadCleared(@Nullable Drawable placeholder) {
+                                    // 필요하면 placeholder 정리
+                                }
+
+                                @Override
+                                public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                                    super.onLoadFailed(errorDrawable);
+                                    artworkImage.setImageResource(R.drawable.ic_image_not_found_foreground);
+                                    startPostponedEnterTransition(); // ✅ 실패해도 전환 시작
+                                }
+
+                            });
+                }
+
+            }else{
+                Log.d(TAG, "artworkUrl is empty");
+            }
+
+        /*
             // 이미지 표시: Picasso 등 사용
             if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
                 //com.squareup.picasso.Picasso.get().load(track.artworkUrl).into(artworkImage);
@@ -204,46 +272,39 @@ public class MusicInfoFragment extends Fragment {
 
             }
 
+         */
+
             artworkImage.post(()->{
-                int[] pagerLocation = new int[2];
-                artworkImage.getLocationOnScreen(pagerLocation);
-                int pagerRightX = pagerLocation[0] + artworkImage.getWidth();    // Pager의 오른쪽 끝 X 좌표
-                int pagerBottomY = pagerLocation[1] + artworkImage.getHeight();
+                Context context = getContext();
+                if (context!=null){
+                    int[] pagerLocation = new int[2];
+                    artworkImage.getLocationOnScreen(pagerLocation);
+                    int pagerRightX = pagerLocation[0] + artworkImage.getWidth();    // Pager의 오른쪽 끝 X 좌표
+                    int pagerBottomY = pagerLocation[1] + artworkImage.getHeight();
 
-                // 2. 버튼의 크기를 고려하여 위치 계산
-                // (버튼의 너비와 높이를 알아야 정확한 위치에 놓을 수 있습니다)
-                int buttonWidth = enlargeButton.getWidth();
-                int buttonHeight = enlargeButton.getHeight();
+                    // 2. 버튼의 크기를 고려하여 위치 계산
+                    // (버튼의 너비와 높이를 알아야 정확한 위치에 놓을 수 있습니다)
+                    int buttonWidth = enlargeButton.getWidth();
+                    int buttonHeight = enlargeButton.getHeight();
 
-                // 만약 버튼 크기가 0으로 나온다면, 임시로 크기를 지정해줍니다 (dp를 px로 변환)
-                final float density = getResources().getDisplayMetrics().density;
-                if (buttonWidth == 0) buttonWidth = (int)(24 * density);
-                if (buttonHeight == 0) buttonHeight = (int)(24 * density);
+                    // 만약 버튼 크기가 0으로 나온다면, 임시로 크기를 지정해줍니다 (dp를 px로 변환)
 
-                int padding = (int)(6 * density); // 우측, 하단 여백
+                    final float density = getResources().getDisplayMetrics().density; //여기에서 팅김
+                    if (buttonWidth == 0) buttonWidth = (int)(24 * density);
+                    if (buttonHeight == 0) buttonHeight = (int)(24 * density);
 
-                // 3. LayoutParams에 적용
-                FrameLayout.LayoutParams enlargeParams = (FrameLayout.LayoutParams) enlargeButton.getLayoutParams();
-                enlargeParams.leftMargin = pagerRightX - buttonWidth - padding;
-                enlargeParams.topMargin = pagerBottomY - buttonHeight - padding;
+                    int padding = (int)(6 * density); // 우측, 하단 여백
 
-                enlargeButton.setLayoutParams(enlargeParams);
-                enlargeButton.setVisibility(View.VISIBLE);
-            });
+                    // 3. LayoutParams에 적용
+                    FrameLayout.LayoutParams enlargeParams = (FrameLayout.LayoutParams) enlargeButton.getLayoutParams();
+                    enlargeParams.leftMargin = pagerRightX - buttonWidth - padding;
+                    enlargeParams.topMargin = pagerBottomY - buttonHeight - padding;
 
-            ImageColorAnalyzer.analyzeBottomRightColor(requireContext(), track.artworkUrl, new ImageColorAnalyzer.OnColorAnalyzedListener(){
-
-                @Override
-                public void onSuccess(int dominantColor, boolean isLight) {
-                    if (isLight)
-                        enlargeButton.setColorFilter(R.drawable.color_circle_navy_blue);
-                }
-
-                @Override
-                public void onFailure() {
-                    Log.d(TAG, "Fail to Analyze Image Color");
+                    enlargeButton.setLayoutParams(enlargeParams);
+                    enlargeButton.setVisibility(View.VISIBLE);
                 }
             });
+
 
             ImageColorAnalyzer.analyzePrimaryColor(requireContext(), track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
                 @Override
@@ -253,10 +314,16 @@ public class MusicInfoFragment extends Fragment {
                     MusicInfoFragment.this.unselectedColor = unselectedColor;
 
                     Log.d(TAG, "Success to Analyze a Primary Color of Image");
-                    android.view.Window window = requireActivity().getWindow();
+                    Activity activity = getActivity();
+                    if (activity != null) {
+                        android.view.Window window = activity.getWindow();
+                    }
 
-
-                    bottomNavView.setBackgroundColor(primaryColor);
+                    if (bottomNavView == null) {
+                        bottomNavView = requireActivity().findViewById(R.id.nav_view);
+                    }
+                    if (bottomNavView != null)
+                        bottomNavView.setBackgroundColor(primaryColor);
 
                     // 3. 상태에 따른 색상 목록(ColorStateList)을 생성합니다.
                     int[][] states = new int[][] {
@@ -291,13 +358,11 @@ public class MusicInfoFragment extends Fragment {
 
 
             enlargeButton.setOnClickListener(v -> {
-                // 1. 전환할 뷰(albumImageView)에 고유한 transitionName 설정
-                // 이 이름은 도착 프래그먼트의 이미지 뷰도 동일하게 사용하게 됩니다.
-                String transitionName = "image_detail_" + track.artworkUrl; // 앨범마다 고유한 이름으로 설정
+                //Shared Element Transition
+
+                String transitionName = "Transition_" + track.artworkUrl; // 앨범마다 고유한 이름으로 설정
                 ViewCompat.setTransitionName(artworkImage, transitionName);
 
-                // 2. ImageDetailFragment에 전달할 데이터 준비
-                // ViewPager2가 아니므로, 이미지는 현재 앨범 아트 하나
                 ArrayList<String> imageUrls = new ArrayList<>();
                 imageUrls.add(track.artworkUrl);
                 int startPosition = 0;
@@ -305,17 +370,11 @@ public class MusicInfoFragment extends Fragment {
                 Bundle args = new Bundle();
                 args.putStringArrayList("image_urls", imageUrls);
                 args.putInt("start_position", startPosition);
-                // 참고: ImageDetailFragment는 이 key값들("image_urls", "start_position")로 데이터를 꺼내 씀
 
-                // 3. 전환 애니메이션 정보(Extras) 생성
-                // 어떤 뷰를(albumImageView), 어떤 이름으로(transitionName) 보낼지 지정
                 FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                         .addSharedElement(artworkImage, transitionName)
                         .build();
-
-                // 4. NavController로 데이터(args)와 애니메이션 정보(extras)를 함께 전달하며 이동
                 NavController navController = NavHostFragment.findNavController(this);
-                // action_albumInfoFragment_to_imageDetailFragment는 navigation graph에 정의된 action id입니다.
                 navController.navigate(R.id.action_musicInfoFragment_to_imageDetailFragment, args, null, extras);
             });
 
@@ -351,7 +410,15 @@ public class MusicInfoFragment extends Fragment {
                     if (loaded != null){
                         bundle.putParcelable("favorite_artist", loaded);
                         NavController navController = NavHostFragment.findNavController(this);
-                        navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);
+
+                        //✅ 1. navigate() 호출 전에 현재 destination이 맞는지 검사
+                        NavDestination currentDestination = navController.getCurrentDestination();
+                        if (currentDestination != null && currentDestination.getId() == R.id.musicInfoFragment) {
+                            navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);;
+                        } else {
+                            Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨");
+                        }
+
                     }
                     else{
                         ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
@@ -359,7 +426,14 @@ public class MusicInfoFragment extends Fragment {
                             FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
                             bundle.putParcelable("favorite_artist", favoriteArtist);
                             NavController navController = NavHostFragment.findNavController(this);
-                            navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);
+
+                            //✅ 1. navigate() 호출 전에 현재 destination이 맞는지 검사
+                            NavDestination currentDestination = navController.getCurrentDestination();
+                            if (currentDestination != null && currentDestination.getId() == R.id.musicInfoFragment) {
+                                navController.navigate(R.id.action_musicInfoFragment_to_artistInfoFragment, bundle);;
+                            } else {
+                                Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨");
+                            }
                         });
                     }
                 });
@@ -373,14 +447,24 @@ public class MusicInfoFragment extends Fragment {
                 apiHelper.getAlbum(null, track.albumId, album -> {
                     if (album != null) {
                         Bundle bundle = new Bundle();
-                        artworkImage.setTransitionName("music_info_to_album_info");
+                        String transitionName = "Transition_music_to_album" + track.artworkUrl;
+                        artworkImage.setTransitionName(transitionName);
                         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                                 .addSharedElement(artworkImage, artworkImage.getTransitionName())
                                         .build();
+                        bundle.putString("transitionName", transitionName);
 
                         bundle.putParcelable("album", album);
                         NavController navController = NavHostFragment.findNavController(this);
-                        navController.navigate(R.id.action_musicInfoFragment_to_albumInfoFragment, bundle, null, extras);
+
+                        //✅ 1. navigate() 호출 전에 현재 destination이 맞는지 검사
+                        NavDestination currentDestination = navController.getCurrentDestination();
+                        if (currentDestination != null && currentDestination.getId() == R.id.musicInfoFragment) {
+                            navController.navigate(R.id.action_musicInfoFragment_to_albumInfoFragment, bundle, null, extras);
+                        } else {
+                            Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨");
+                        }
+                        //navController.navigate(R.id.action_musicInfoFragment_to_albumInfoFragment, bundle, null, extras);
                     }
                 });
             });

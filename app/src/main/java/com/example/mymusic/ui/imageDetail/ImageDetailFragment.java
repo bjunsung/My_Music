@@ -2,6 +2,7 @@ package com.example.mymusic.ui.imageDetail;
 
 import androidx.fragment.app.Fragment;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.transition.ChangeBounds;
@@ -16,9 +17,12 @@ import androidx.annotation.Nullable;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.transition.Explode;
 import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.mymusic.R; // 자신의 R 클래스 경로
+import com.google.android.material.transition.MaterialArcMotion;
+import com.google.android.material.transition.MaterialContainerTransform;
 
 import java.util.ArrayList;
 
@@ -37,16 +41,31 @@ public class ImageDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // 애니메이션 설정
-        setSharedElementEnterTransition(TransitionInflater.from(requireContext())
-                .inflateTransition(android.R.transition.move));
+
+        /*
+        Context context = getContext();
+        if (context != null){
+            setSharedElementEnterTransition(TransitionInflater.from(context)
+                    .inflateTransition(android.R.transition.move));
+        }
+
+         */
+
+        //앨범 이미지 트랜지션 설정
+        MaterialContainerTransform transform = new MaterialContainerTransform();
+        transform.setPathMotion(new MaterialArcMotion());
+        setSharedElementEnterTransition(transform);
+        setSharedElementReturnTransition(new MaterialContainerTransform());
+
+
+        setEnterTransition(new Explode());
+
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view =  inflater.inflate(R.layout.fragment_image_detail, container, false);
-        setSharedElementEnterTransition(new ChangeBounds().setDuration(300));
-        setSharedElementReturnTransition(new ChangeBounds().setDuration(300));
         return view;
     }
 

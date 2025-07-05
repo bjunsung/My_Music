@@ -19,6 +19,8 @@ public interface FavoritesDao {
     @Query("DELETE FROM favorites_table WHERE trackId = :trackId")
     void deleteFavoritesSong(String trackId);
 
+    @Query("DELETE FROM favorites_table WHERE trackId IN (:trackIds)")
+    int deleteFavoritesByIds(List<String> trackIds);
 
     //save favorite song
     @Insert(onConflict = OnConflictStrategy.REPLACE)

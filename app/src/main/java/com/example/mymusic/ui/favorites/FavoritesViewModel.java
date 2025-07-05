@@ -6,10 +6,10 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
-import com.example.mymusic.data.repository.ArtistMetadataRepository;
 import com.example.mymusic.data.repository.FavoriteSongRepository;
-import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
@@ -19,6 +19,25 @@ import java.util.function.Consumer;
 
 public class FavoritesViewModel extends AndroidViewModel {
     private final FavoriteSongRepository repository;
+    private final MutableLiveData<Favorite> focusedTrack = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> isLyricsMode = new MutableLiveData<>(false);
+
+    public void setLyricsMode(boolean value) {
+        isLyricsMode.setValue(value);
+    }
+
+    public LiveData<Boolean> getLyricsMode() {
+        return isLyricsMode;
+    }
+
+
+    public void setFocusedTrack(Favorite favorite) {
+        focusedTrack.setValue(favorite);
+    }
+
+    public LiveData<Favorite> getFocusedTrack() {
+        return focusedTrack;
+    }
 
     public FavoritesViewModel(@NonNull Application application) {
         super(application);
@@ -60,5 +79,20 @@ public class FavoritesViewModel extends AndroidViewModel {
             repository.updateFavoriteSong(trackId, metadata, callback::accept);
         }).start();
     }
+
+    public void deleteFavoritesByIds(List<String> trackIds, Consumer<Integer> callback){
+        new Thread(() -> {
+            int result = repository.deleteFavoritesByIds(trackIds);
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(result));
+        }).start();
+    }
+
+    public void getFavoritesCount(Consumer<Integer> callback){
+        new Thread(() -> {
+            int result = repository.getFavoritesCount();
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(result));
+        }).start();
+    }
+
 
 }

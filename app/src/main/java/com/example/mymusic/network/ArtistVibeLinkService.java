@@ -53,7 +53,7 @@ public class ArtistVibeLinkService {
         }
 
         if (namesToFindQueue.isEmpty()) {
-            Log.d(TAG, "No vocalists need a link update.");
+            Log.d(TAG, "There is No vocalist.");
             callback.onComplete(masterVocalistList);
             return;
         }

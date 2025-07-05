@@ -29,19 +29,25 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     private OnAddClickListener addClickListener;
     private boolean showImage = true;
     private boolean showPosition = false;
+    private OnTrackClickListener trackClickListener;
+
     public interface OnDetailClickListener {
         void onItemClick(Track track);
     }
 
+    public interface OnTrackClickListener{
+        void onItemClick(Track track, ImageView  sharedImageView);
+    }
     public interface OnAddClickListener{
         void onItemClick(Track track);
     }
 
-    public TrackAdapter(List<Track> tracks, Context context, OnDetailClickListener detailClickListener, OnAddClickListener addClickListener) {
+    public TrackAdapter(List<Track> tracks, Context context, OnDetailClickListener detailClickListener, OnAddClickListener addClickListener, OnTrackClickListener trackClickListener) {
         this.tracks = tracks;
         this.context = context;
         this.detailClickListener = detailClickListener;
         this.addClickListener = addClickListener;
+        this.trackClickListener = trackClickListener;
     }
 
     public static class TrackViewHolder extends RecyclerView.ViewHolder {
@@ -94,13 +100,13 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             holder.image.setVisibility(TextView.GONE);
 
 
+
         holder.itemView.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            Favorite favorite = new Favorite(track);
-            bundle.putParcelable("favorite", favorite);
-            NavController navController = Navigation.findNavController(v);
-            navController.navigate(R.id.musicInfoFragment, bundle);
+            trackClickListener.onItemClick(track, holder.image);
         });
+
+
+
 
 
         //detailButton 클릭 event

@@ -5,6 +5,8 @@ import android.os.Looper;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import com.example.mymusic.model.TrackMetadata;
@@ -23,8 +25,10 @@ public class LyricsSearchService {
 
         // [추가됨] 타임아웃 핸들러
         final Handler timeoutHandler = new Handler(Looper.getMainLooper());
+
         // final 변수로 만들어 콜백에서 접근 가능하게 함
         final boolean[] callbackInvoked = {false};
+
         final Runnable timeoutRunnable = () -> {
             if (!callbackInvoked[0]) {
                 callbackInvoked[0] = true;
@@ -68,8 +72,8 @@ public class LyricsSearchService {
                 public void onPageFinished(WebView view, String url) {
                     // [수정됨] 실패 보고 로직이 추가된 Javascript
                     // 보내주신 Javascript 코드 기반으로 수정
-                    String jsCode = "(function waitForLyrics(retries = 100) {\n" +
-                            "    const check = () => {\n" +
+                    String jsCode = "(function waitForLyrics() {\n" +
+                            "    const check = (retries = 100) => {\n" +
                             "        let paragraphs = document.querySelectorAll('div.lyrics p');\n" +
                             "        if (paragraphs.length > 0 && paragraphs[0].innerText.trim() !== '') {\n" +
                             "            let text = Array.from(paragraphs).map(p => p.innerText).join('\\n');\n" +
@@ -98,7 +102,7 @@ public class LyricsSearchService {
                             "                }));\n" +
                             "            }\n" +
                             "        } else if (retries > 0) {\n" +
-                            "            setTimeout(() => check(), 100);\n" + // 자기 자신(check)을 다시 호출
+                            "            setTimeout(() => check(retries-1), 100);\n" + // 자기 자신(check)을 다시 호출
                             "        } else {\n" +
                             "            // [추가됨] 재시도 모두 실패 시, 명시적으로 실패 보고\n" +
                             "            if (typeof AndroidBridge !== 'undefined') {\n" +
@@ -112,13 +116,17 @@ public class LyricsSearchService {
                 }
 
                 @Override
-                public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                     if (!callbackInvoked[0]) {
                         callbackInvoked[0] = true;
                         timeoutHandler.removeCallbacks(timeoutRunnable);
-                        callback.onFailure(description);
+
+                        String errorMessage = error.getDescription().toString();
+                        callback.onFailure(errorMessage);
                     }
                 }
+
+
             });
 
             webView.setWebChromeClient(new WebChromeClient() {

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 그림자 -->
+    <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#33000000" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+
+    <!-- 실제 배경 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFFFF"/>
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+</layer-list>

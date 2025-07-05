@@ -5,12 +5,16 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
 
 public class Favorite implements Parcelable {
     public Track track;
     public String addedDate;
     public TrackMetadata metadata;
+
+
+    public Boolean isSelected = false;
+
+    public int recyclerViewPosition = -1;
     public Favorite(Track track){
         this.track = track;
     }
@@ -24,6 +28,7 @@ public class Favorite implements Parcelable {
         track = in.readParcelable(Track.class.getClassLoader());
         addedDate = in.readString();
     }
+
 
     public static final Creator<Favorite> CREATOR = new Creator<Favorite>() {
         @Override

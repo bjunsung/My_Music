@@ -93,4 +93,11 @@ public class FavoriteSongRepository {
         callback.accept(result);
     }
 
+
+    public int deleteFavoritesByIds(List<String> trackIds){
+        return favoritesDao.deleteFavoritesByIds(trackIds);
+    }
 }
+
+
+

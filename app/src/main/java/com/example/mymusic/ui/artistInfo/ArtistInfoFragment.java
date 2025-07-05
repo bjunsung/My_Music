@@ -23,6 +23,8 @@ import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
+import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,6 +35,7 @@ import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.model.ArtistMetadata;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.util.EdgeSwipeBackGestureHelper;
 import com.example.mymusic.util.ImageOverlayManager;
@@ -292,7 +295,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         });
 
         apiHelper.searchTrackByArtist(null, artist.artistId, tracks -> {
-            TrackAdapter trackAdapter = new TrackAdapter(tracks, getContext(), this::showTrackDetails, this::addFavoriteSong);
+            TrackAdapter trackAdapter = new TrackAdapter(tracks, getContext(), this::showTrackDetails, this::addFavoriteSong, this::onTrackClick);
             trackRecyclerView.setAdapter(trackAdapter);
             trackRecyclerView.setNestedScrollingEnabled(false);
         });
@@ -344,7 +347,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             ImageView currentImageView = holder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
 
             // 3. 전환할 뷰(currentImageView)에 고유한 transitionName 설정
-            String transitionName = "image_detail_" + imageUrls.get(currentPosition);
+            String transitionName = "Transition_" + imageUrls.get(currentPosition);
             ViewCompat.setTransitionName(currentImageView, transitionName);
 
             // 4. 전달할 데이터 준비 (전체 URL 리스트, 현재 위치)
@@ -418,6 +421,27 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 .setPositiveButton("닫기", null)
                 .show();
     }
+
+    public void onTrackClick(Track track, ImageView sharedImageView){
+        Bundle bundle = new Bundle();
+        Favorite favorite = new Favorite(track);
+        bundle.putParcelable("favorite", favorite);
+        String transitionName = "Transition_artist_to_music" + track.artworkUrl;
+
+        FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                .addSharedElement(sharedImageView, transitionName)
+                .build();
+        sharedImageView.setTransitionName(transitionName);
+        bundle.putString("transitionName", transitionName);
+
+        NavController navController = NavHostFragment.findNavController(this);
+        NavDestination currentDestination = navController.getCurrentDestination();
+        assert currentDestination != null;
+        if (currentDestination.getId() == R.id.artist_info)
+            navController.navigate(R.id.musicInfoFragment, bundle, null, extras);
+
+    }
+
 
 
 }

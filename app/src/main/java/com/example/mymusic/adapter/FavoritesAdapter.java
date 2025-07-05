@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.FragmentNavigator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
@@ -20,14 +22,17 @@ import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoriteViewHolder> {
+    private boolean isSelectionMode = false;
     List<Favorite> favoritesList;
     OnDeleteClickListener deleteClickListener;
     OnLyricClickListener lyricClickListener;
     OnLyricLongClickListener lyricLongClickListener;
-
+    OnItemLongClickListener itemLongClickListener;
+    long lastClickTime = 0;
     public interface OnDeleteClickListener{
         void onItemClick(Favorite favorite);
     }
@@ -40,20 +45,27 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         void onItemClick(String trackId, String trackName);
     }
 
+    public interface OnItemLongClickListener{
+        void onItemClick();
+    }
+
     public FavoritesAdapter(List<Favorite> favoritesList,
                             OnDeleteClickListener deleteClickListener,
                             OnLyricClickListener lyricClickListener,
-                            OnLyricLongClickListener lyricLongClickListener){
+                            OnLyricLongClickListener lyricLongClickListener,
+                            OnItemLongClickListener itemLongClickListener){
         this.favoritesList = favoritesList;
         this.deleteClickListener = deleteClickListener;
         this.lyricClickListener = lyricClickListener;
         this.lyricLongClickListener = lyricLongClickListener;
+        this.itemLongClickListener = itemLongClickListener;
     }
 
     public class FavoriteViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView title, titleKr, artist, album, duration, releasedDate, addedDate;
         ImageButton deleteButton, lyricButton;
+        CheckBox selectCheckBox;
         public FavoriteViewHolder(@NonNull View itemView){
             super(itemView);
             image = itemView.findViewById(R.id.imageView);
@@ -66,6 +78,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             addedDate = itemView.findViewById(R.id.addedDateTextView);
             deleteButton = itemView.findViewById(R.id.deleteButton);
             lyricButton = itemView.findViewById(R.id.lyric_button);
+            selectCheckBox = itemView.findViewById(R.id.select_checkbox);
         }
     }
 
@@ -78,8 +91,12 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     @Override
     public void onBindViewHolder(@NonNull FavoriteViewHolder holder, int position){
+
         Favorite favorite = favoritesList.get(position);
+        favorite.recyclerViewPosition = holder.getAdapterPosition();
         Track track = favorite.track;
+        String transitionName = "Transition_favorite_adapter_to_music" + track.artworkUrl + track.trackId + track.durationMs + track.releaseDate;
+        holder.image.setTransitionName(transitionName);
         Picasso.get().load(track.artworkUrl).into(holder.image);
         holder.title.setText(track.trackName);
         if (favorite.metadata != null && favorite.metadata.title != null){
@@ -95,7 +112,13 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         holder.duration.setText(durationStr);
         holder.addedDate.setText(favorite.addedDate);
         holder.releasedDate.setText(track.releaseDate);
+        // ✅ 체크박스 표시 여부
+        holder.selectCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
 
+        // ✅ 체크 상태 설정
+        if (holder.selectCheckBox.getVisibility() == View.VISIBLE) {
+            holder.selectCheckBox.setChecked(favorite.isSelected);
+        }
 
         holder.deleteButton.setOnClickListener(v -> {
             deleteClickListener.onItemClick(favorite);
@@ -113,13 +136,82 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         });
 
 
+        //아이템 클릭 이벤트
         holder.itemView.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putParcelable("favorite", favorite);
-            NavController navController = Navigation.findNavController(v);
-            navController.navigate(R.id.action_favoritesFragment_to_musicInfoFragment, bundle);
+            if (isSelectionMode) {
+                if (holder.selectCheckBox.isChecked())
+                    favorite.isSelected = false;
+                else
+                    favorite.isSelected = true;
+                holder.selectCheckBox.setChecked(!holder.selectCheckBox.isChecked());
+                itemLongClickListener.onItemClick();
+            }
+            else {
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("favorite", favorite);
+                bundle.putString("transitionName", transitionName);
+
+                FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                        .addSharedElement(holder.image, transitionName)
+                        .build();
+
+                NavController navController = Navigation.findNavController(v);
+                navController.navigate(R.id.action_favoritesFragment_to_musicInfoFragment, bundle, null, extras);
+            }
         });
 
+        //아이템 롤클릭 이벤트
+        holder.itemView.setOnLongClickListener(v -> {
+            if (!isSelectionMode) {
+                setSelectionMode(true);
+                itemLongClickListener.onItemClick();
+            }
+
+            if (!holder.selectCheckBox.isChecked()) {
+                holder.selectCheckBox.setChecked(true);     // UI 갱신
+                favorite.isSelected = true;                 // 상태 반영
+                favorite.recyclerViewPosition = holder.getAdapterPosition();
+                itemLongClickListener.onItemClick();
+            }
+
+            return true;
+        });
+
+        holder.selectCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!buttonView.isPressed()) return; // 프로그래밍적으로 변경된 경우 무시
+            favorite.isSelected = isChecked;
+            favorite.recyclerViewPosition = holder.getAdapterPosition();
+            itemLongClickListener.onItemClick();
+        });
+
+    }
+
+    public boolean isSelectionMode() {
+        return isSelectionMode;
+    }
+
+    public List<Favorite> getSelectedList(){
+        List<Favorite> selectedList = new ArrayList<>();
+        for (Favorite item : favoritesList){
+            if (item.isSelected)
+                selectedList.add(item);
+        }
+        return selectedList;
+    }
+
+    public int getSelectedSize(){
+        List<Favorite> selectedList = new ArrayList<>();
+        for (Favorite item : favoritesList){
+            if (item.isSelected)
+                selectedList.add(item);
+        }
+        return selectedList.size();
+    }
+
+
+    public void setSelectionMode(boolean enable) {
+        isSelectionMode = enable;
+        notifyDataSetChanged(); // 전체 갱신
     }
 
     @Override

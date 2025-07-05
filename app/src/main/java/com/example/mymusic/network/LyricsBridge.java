@@ -9,10 +9,10 @@ import com.google.gson.Gson;
 import java.util.Arrays;
 import java.util.List;
 
-public class LyricsBridge {
+class LyricsBridge {
 
     // [수정됨] 성공과 실패를 모두 처리하는 리스너로 변경
-    public interface OnMetadataListener {
+    interface OnMetadataListener {
         void onSuccess(TrackMetadata metadata);
         void onFailure(String reason);
     }
@@ -20,7 +20,7 @@ public class LyricsBridge {
     private OnMetadataListener listener;
     private boolean isFinished = false; // 중복 호출 방지 플래그
 
-    public void setListener(OnMetadataListener listener) {
+    void setListener(OnMetadataListener listener) {
         this.listener = listener;
         this.isFinished = false;
     }

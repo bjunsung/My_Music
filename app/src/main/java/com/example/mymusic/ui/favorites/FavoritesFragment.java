@@ -3,8 +3,9 @@ package com.example.mymusic.ui.favorites;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,9 +27,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.fragment.FragmentNavigator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -43,11 +47,17 @@ import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistMetadataService;
 import com.example.mymusic.network.ArtistVibeLinkService;
 import com.example.mymusic.network.LyricsSearchService;
+import com.example.mymusic.util.ImageColorAnalyzer;
+import com.example.mymusic.util.MyColorUtils;
+import com.google.android.material.card.MaterialCardView;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.widget.LinearLayout;
+
 
 
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
@@ -62,13 +72,21 @@ public class FavoritesFragment extends Fragment {
     TextView emptyFavoriteSongTextView, emptyFavoriteArtistTextView, favoritesLoadedCountTextView;
     public int favoriteOption = 0; // 기본값: track
     private TextView elementCountTextView;
-    private List<String> selectedArtistIds = new ArrayList<>();
+    private Boolean isSelectionMode = false;
     private ImageButton filterButton;
 
     private WebView webView, webView2;
-    private String focusedTrackId;
+
     TextView lyricsTextView, onLyricsTitleTextView, getOnLyricsArtistTextView;
     ScrollView scrollAreaView;
+    LinearLayout countLayout, onLyricsContainer;
+    ImageButton cancelButton;
+    ImageView focusedImageView;
+    TextView focusedTitleTextView, focusedAlbumTextView, focusedArtistTextView, focusedDurationTextView, focusedReleaseDateTextView;
+    MaterialCardView musicInfoContainer, simpleMusicInfoContainer, lyricsTextContainer, lyricsContainer;
+    TextView cancelSelectionModeTextView, removeSelectedFavoritesTextView;
+    SwitchCompat favoriteOptionSwitch;
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
@@ -87,6 +105,8 @@ public class FavoritesFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
 
+
+
         elementCountTextView = view.findViewById(R.id.element_count);
         elementCountTextView.setText("Songs");
 
@@ -98,13 +118,16 @@ public class FavoritesFragment extends Fragment {
             OverScrollDecoratorHelper.setUpOverScroll(scrollAreaView);
 
         //switch toggle event
-        SwitchCompat favoriteOptionSwitch = view.findViewById(R.id.favorite_option_switch);
+        favoriteOptionSwitch = view.findViewById(R.id.favorite_option_switch);
         favoriteOptionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!isChecked)
+            if (!isChecked) {
                 favoriteOption = 0; //track
+            }
             else {
+                recyclerView.setVisibility(View.VISIBLE);
                 favoriteOption = 1; //artist
-                toggleLyricsVisibility(false);
+                recyclerView.setVisibility(View.VISIBLE);
+                onLyricsContainer.setVisibility(View.GONE);
             }
             loadFavoritesAndUpdateUI();
         });
@@ -118,18 +141,39 @@ public class FavoritesFragment extends Fragment {
         favoritesLoadedCountTextView = view.findViewById(R.id.favorites_loaded_count);
         webView = view.findViewById(R.id.hidden_web_view);
         webView2 = view.findViewById(R.id.hidden_web_view_2);
+        lyricsContainer = view.findViewById(R.id.lyrics_container);
+        cancelButton = view.findViewById(R.id.cancel_button);
+        countLayout = view.findViewById(R.id.count_layout);
+        onLyricsContainer = view.findViewById(R.id.on_lyrics_container);
+        musicInfoContainer = view.findViewById(R.id.music_info_container);
+        musicInfoContainer.setClipToOutline(true);
+        focusedImageView = view.findViewById(R.id.focused_image);
+        focusedTitleTextView = view.findViewById(R.id.focused_title);
+        focusedAlbumTextView = view.findViewById(R.id.focused_album_title);
+        focusedArtistTextView = view.findViewById(R.id.focused_artist);
+        focusedDurationTextView = view.findViewById(R.id.focused_duration);
+        focusedReleaseDateTextView = view.findViewById(R.id.focused_release_date);
+        simpleMusicInfoContainer = view.findViewById(R.id.simple_music_info);
+        lyricsTextContainer = view.findViewById(R.id.lyrics_text_container);
+        cancelSelectionModeTextView = view.findViewById(R.id.cancel_selection_mode);
+        removeSelectedFavoritesTextView = view.findViewById(R.id.remove_selected_favorites);
+
 
         if(favoriteOption == 0) {//track
             emptyFavoriteArtistTextView.setVisibility(View.GONE);
             favoritesViewModel.loadAllFavorites(favoritesList -> {
-                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::onLyricClick, this::onLyricLongClick);
+                Collections.reverse(favoritesList);
+                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::onLyricClick, this::onLyricLongClick, this::onItemLongClick);
                 recyclerView.setAdapter(favoriteTrackAdapter);
                 if (favoritesList.isEmpty()) {
                     emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
                     recyclerView.setVisibility(View.GONE);
                 } else {
                     emptyFavoriteSongTextView.setVisibility(View.GONE);
-                    recyclerView.setVisibility(View.VISIBLE);
+                    if (Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue()))
+                        recyclerView.setVisibility(View.GONE);
+                    else
+                        recyclerView.setVisibility(View.VISIBLE);
                     favoriteTrackAdapter.updateData(favoritesList);
                 }
                 favoritesLoadedCountTextView.setText(String.valueOf(favoritesList.size()));
@@ -154,16 +198,137 @@ public class FavoritesFragment extends Fragment {
         }
 
 
+        cancelButton.setOnClickListener(v -> {
+            favoritesViewModel.setLyricsMode(false);
+            cancelButton.setVisibility(View.GONE);
+            favoriteOptionSwitch.setVisibility(View.VISIBLE);
+            elementCountTextView.setVisibility(View.VISIBLE);
+            countLayout.setVisibility(View.VISIBLE);
+            toggleLyricsVisibility(false);
+        });
 
 
+        //다중삭제 취소 버튼
+        cancelSelectionModeTextView.setOnClickListener(v ->{
+            if (favoriteOption == 0){
+                List<Favorite> selectedList = favoriteTrackAdapter.getSelectedList();
+                favoriteTrackAdapter.setSelectionMode(false);
+                for (Favorite selected : selectedList){
+                    selected.isSelected = false;
+                    selected.recyclerViewPosition = -1;
+                }
+                cancelSelectionModeTextView.setVisibility(View.GONE);
+                removeSelectedFavoritesTextView.setVisibility(View.GONE);
+                isSelectionMode = false;
+                favoritesViewModel.getFavoritesCount(count -> favoritesLoadedCountTextView.setText(String.valueOf(count)));
+            }
+        });
+
+        removeSelectedFavoritesTextView.setOnClickListener(v -> {
+            if (favoriteOption == 0){
+                List<Favorite> selectedList;
+                selectedList = favoriteTrackAdapter.getSelectedList();
+                if (selectedList.isEmpty()) return;
+                StringBuilder selected = new StringBuilder();
+                for (Favorite item : selectedList) {
+                    if (item.metadata != null && item.metadata.title != null && !item.metadata.title.isEmpty()) {
+                        selected.append(item.metadata.title + " - " + item.track.artistName + "\n");
+                    } else {
+                        selected.append(item.track.trackName + " - " + item.track.artistName + "\n");
+                    }
+                }
+                String mentByCount = selectedList.size() == 1 ? "을(를) 삭제하시겠습니까?" : selectedList.size() + "개의 노래를 을(를) 모두 삭제하시겠습니까?";
+                new AlertDialog.Builder(getContext())
+                        .setTitle("삭제")
+                        .setMessage("정말\n" + selected + mentByCount)
+                        .setPositiveButton("삭제", ((dialog, which) -> {
+                            List<String> selectedIds = new ArrayList<>();
+                            for (Favorite favorite : selectedList) {
+                                selectedIds.add(favorite.track.trackId);
+                            }
+                            favoritesViewModel.deleteFavoritesByIds(selectedIds, result -> {
+                                if (result > 0) {
+                                    new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(requireContext(), result + "개의 노래가 삭제되었습니다.", Toast.LENGTH_SHORT));
+                                    for (Favorite fv : selectedList) {
+                                        Log.d(TAG, "삭제된 포지션: " + fv.recyclerViewPosition);
+                                        if (fv.recyclerViewPosition != RecyclerView.NO_POSITION)
+                                            favoriteTrackAdapter.notifyItemRemoved(fv.recyclerViewPosition);
+                                    }
+                                    favoritesViewModel.loadAllFavorites(favorites -> {
+                                        List<Favorite> copy = new ArrayList<>(favorites);
+                                        Collections.reverse(copy);
+                                        favoriteTrackAdapter.updateData(copy);
+                                        //count 업데이트
+                                        favoritesLoadedCountTextView.setText(String.valueOf(favorites.size()));
+
+                                    });
+                                } else {
+                                    new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(requireContext(), "삭제되지 않았습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT));
+                                    favoritesViewModel.getFavoritesCount(count -> favoritesLoadedCountTextView.setText(String.valueOf(count)));
+                                }
+                                favoriteTrackAdapter.setSelectionMode(false);
+                                for (Favorite fv : selectedList) {
+                                    fv.recyclerViewPosition = -1;
+                                }
+                                //selectedList = new ArrayList<>();
+                                cancelSelectionModeTextView.setVisibility(View.GONE);
+                                removeSelectedFavoritesTextView.setVisibility(View.GONE);
+                                   isSelectionMode = false;
+
+
+                            });
+
+
+                        }))
+                        .setNegativeButton("취소", null)
+                        .show();
+
+            }
+        });
+
+
+        simpleMusicInfoContainer.setOnClickListener(v -> {
+
+            Favorite favorite = favoritesViewModel.getFocusedTrack().getValue();
+            if (favorite == null) {
+                Log.d(TAG, "can not navigate to music_info_fragment, focused favorite track is null");
+                return;
+            }
+
+            String transitionName = "Transition_favorites_to_music_simple" + favorite.track.artworkUrl + "_" + favorite.track.trackId;
+            focusedImageView.setTransitionName(transitionName);
+
+            FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                    .addSharedElement(focusedImageView, transitionName)
+                    .build();
+
+            Bundle bundle = new Bundle();
+            bundle.putString("transitionName", transitionName);
+            bundle.putParcelable("favorite", favorite);
+
+            NavController navController = Navigation.findNavController(v);
+            navController.navigate(R.id.action_favoritesFragment_to_musicInfoFragment, bundle, null, extras);
+        });
+
+
+        Favorite focused = favoritesViewModel.getFocusedTrack().getValue();
+        Boolean isLyrics = favoritesViewModel.getLyricsMode().getValue();
+        if (isLyrics != null && isLyrics && focused != null){
+            LyricsOnMode(focused);
+        }
 
     }
 
     // 화면 업데이트 함수
     private void loadFavoritesAndUpdateUI() {
         if (favoriteOption == 0) {
+            if (Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue())) {
+                // 가사 모드면 리스트는 보여주지 않음
+                return;
+            }
             favoritesViewModel.loadAllFavorites(favoritesList -> {
-                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::onLyricClick, this::onLyricLongClick);
+                Collections.reverse(favoritesList);
+                favoriteTrackAdapter = new FavoritesAdapter(favoritesList, this::deleteFavoriteSong, this::onLyricClick, this::onLyricLongClick, this::onItemLongClick);
                 recyclerView.setAdapter(favoriteTrackAdapter);
                 updateEmptyState(favoritesList.isEmpty());
                 favoriteTrackAdapter.updateData(favoritesList);
@@ -194,7 +359,10 @@ public class FavoritesFragment extends Fragment {
                 emptyFavoriteArtistTextView.setVisibility(View.VISIBLE);
             }
             recyclerView.setVisibility(View.GONE);
-        } else {
+        } else if(Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue())){
+            recyclerView.setVisibility(View.GONE);
+        }
+        else{
             recyclerView.setVisibility(View.VISIBLE);
         }
     }
@@ -226,7 +394,9 @@ public class FavoritesFragment extends Fragment {
                                 emptyFavoriteSongTextView.setVisibility(View.GONE);
                                 recyclerView.setVisibility(View.VISIBLE);
                             }
-                            favoriteTrackAdapter.updateData(updatedList); // RecyclerView 새로고침
+                            List<Favorite> copy = new ArrayList<>(updatedList);
+                            Collections.reverse(copy);
+                            favoriteTrackAdapter.updateData(copy); // RecyclerView 새로고침
                             updateEmptyState(updatedList.isEmpty());
                             favoritesLoadedCountTextView.setText(String.valueOf(updatedList.size()));
                         });
@@ -350,44 +520,87 @@ public class FavoritesFragment extends Fragment {
 
         favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
             if (favorite != null && favorite.metadata != null && favorite.metadata.lyrics != null && !favorite.metadata.lyrics.isEmpty()){
-                showLyricsByScreenMode(favorite);
+                LyricsOnMode(favorite);
             } else {
                 addLyric(trackIdDb, trackName, false);
             }
         });
     }
 
-    private void showLyricsByScreenMode(Favorite favorite){
-        // 가로모드
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            //가사 보이는 상태에서 클릭시 가리기
-            if(scrollAreaView.getVisibility() == View.VISIBLE && favorite.track.trackId.equals(focusedTrackId)){
-                toggleLyricsVisibility(false);
-            }
-            else {
-                lyricsTextView.setText(favorite.metadata.lyrics);
-                lyricsTextView.setTextColor(ContextCompat.getColor(requireContext(), R.color.textPrimary));
-                if (favorite.metadata != null && favorite.metadata.title != null && !favorite.metadata.title.isEmpty()) {
-                    onLyricsTitleTextView.setText(favorite.metadata.title);
-                }
-                else{
-                    onLyricsTitleTextView.setText(favorite.track.trackName);
-                }
-                getOnLyricsArtistTextView.setText(favorite.track.artistName);
-                toggleLyricsVisibility(true);
-                focusedTrackId = favorite.track.trackId;
-            }
-
-        }     // 세로모드
-        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("상세정보")
-                    .setMessage(favorite.metadata.lyrics)
-                    .setPositiveButton("닫기", null)
-                    .show();
+    private void LyricsOnMode(Favorite favorite){
+        if (getView() == null || cancelButton == null) {
+            Log.w(TAG, "View not ready yet, skipping LyricsOnMode()");
+            return;
         }
+        toggleLyricsVisibility(true);
+        favoritesViewModel.setLyricsMode(true);
+        favoritesViewModel.setFocusedTrack(favorite);
+
+        if (favorite != null) {
+            Log.d(TAG, "focused favorite element saved");
+        }
+        else{
+            Log.d(TAG, "null point saved in focused favorite");
+        }
+        Track track = favorite.track;
+        cancelButton.setVisibility(View.VISIBLE);
+        countLayout.setVisibility(View.GONE);
+        //recyclerView.setVisibility(View.GONE);
+        favoriteOptionSwitch.setVisibility(View.GONE);
+        onLyricsContainer.setVisibility(View.VISIBLE);
+
+        int[] currentPrimaryColor = {0};
+        ImageColorAnalyzer.analyzePrimaryColor(requireContext(), track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
+            @Override
+            public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                currentPrimaryColor[0] = primaryColor;
+
+                int darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                int adjustedForWhiteText = MyColorUtils.adjustForWhiteText(darkenColor);
+                simpleMusicInfoContainer.setCardBackgroundColor(adjustedForWhiteText);
+                lyricsTextContainer.setCardBackgroundColor(adjustedForWhiteText);
+                musicInfoContainer.setCardBackgroundColor(primaryColor);
+                lyricsContainer.setCardBackgroundColor(primaryColor);
+                lyricsTextView.setTextColor(MyColorUtils.adjustForWhiteText(MyColorUtils.getSoftWhiteTextColor(adjustedForWhiteText)));
+                //lyricsTextView.setShadowLayer(0.25f, 0.25f, 0.25f, Color.BLACK);
+
+
+            }
+
+            @Override
+            public void onFailure() {
+                Log.d(TAG, "Fail to Analyze Primary Color of Album image");
+            }
+        });
+
+
+
+        Picasso.get()
+                .load(track.artworkUrl)
+                .error(R.drawable.ic_image_not_found_foreground)
+                .into(focusedImageView);
+
+        if (favorite.metadata != null && favorite.metadata.title != null && !favorite.metadata.title.isEmpty()){
+            focusedTitleTextView.setText(favorite.metadata.title);
+        }
+        else {
+            focusedTitleTextView.setText(track.trackName);
+        }
+        focusedAlbumTextView.setText(track.albumName);
+        focusedArtistTextView.setText(track.artistName);
+        focusedDurationTextView.setText(track.durationToString());
+        focusedReleaseDateTextView.setText(track.releaseDate);
+
+        lyricsTextView.setText(favorite.metadata.lyrics);
+        if (favorite.metadata != null && favorite.metadata.title != null && !favorite.metadata.title.isEmpty()) {
+            onLyricsTitleTextView.setText(favorite.metadata.title);
+        } else {
+            onLyricsTitleTextView.setText(favorite.track.trackName);
+        }
+        getOnLyricsArtistTextView.setText(favorite.track.artistName);
     }
+
+
 
     private void addArtistMetadata(String artistId){
         LinearLayout layout = new LinearLayout(getContext());
@@ -832,15 +1045,37 @@ public class FavoritesFragment extends Fragment {
 
             if (show) {
                 Animation slideIn = AnimationUtils.loadAnimation(getContext(), R.anim.slide_in_bottom);
-                metadataLayout.setVisibility(View.VISIBLE);
-                scrollAreaView.setVisibility(View.VISIBLE);
                 metadataLayout.startAnimation(slideIn);
+                onLyricsContainer.startAnimation(slideIn);
                 scrollAreaView.startAnimation(slideIn);
+                Animation slideOutSlow = AnimationUtils.loadAnimation(getContext(), R.anim.slide_out_bottom_slow);
+                recyclerView.startAnimation(slideOutSlow);
+                slideOutSlow.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        metadataLayout.setVisibility(View.VISIBLE);
+                        scrollAreaView.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+
+                        recyclerView.setVisibility(View.GONE);
+                    }
+                });
             } else {
                 Animation slideOut = AnimationUtils.loadAnimation(getContext(), R.anim.slide_out_bottom);
+                recyclerView.setVisibility(View.VISIBLE);
                 metadataLayout.startAnimation(slideOut);
+                onLyricsContainer.startAnimation(slideOut);
                 scrollAreaView.startAnimation(slideOut);
-
+                Animation slideIn = AnimationUtils.loadAnimation(getContext(), R.anim.slide_in_bottom);
+                Animation SlideTopIn = AnimationUtils.loadAnimation(getContext(), R.anim.slide_in_top);
+                recyclerView.startAnimation(slideIn);
                 slideOut.setAnimationListener(new Animation.AnimationListener() {
                     @Override
                     public void onAnimationStart(Animation animation) {
@@ -852,14 +1087,30 @@ public class FavoritesFragment extends Fragment {
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
-                        metadataLayout.setVisibility(View.GONE);
-                        scrollAreaView.setVisibility(View.GONE);
+                        //metadataLayout.setVisibility(View.GONE);
+                        //scrollAreaView.setVisibility(View.GONE);
                     }
                 });
+
+                onLyricsContainer.setVisibility(View.GONE);
+
             }
         }catch (NullPointerException e){}
     }
 
+
+    public void onItemLongClick(){
+        if (!isSelectionMode){
+            isSelectionMode = true;
+            cancelSelectionModeTextView.setVisibility(View.VISIBLE);
+            removeSelectedFavoritesTextView.setVisibility(View.VISIBLE);
+        }
+
+        int selectedCount = favoriteTrackAdapter.getSelectedSize();
+        favoritesLoadedCountTextView.setText(String.valueOf(selectedCount));
+
+
+    }
 
 
 

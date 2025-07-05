@@ -87,6 +87,7 @@ dependencies {    // Room core
     implementation("com.squareup.picasso:picasso:2.71828")
     implementation("androidx.webkit:webkit:1.8.0") // WebView 지원 향상
     implementation("com.github.chrisbanes:PhotoView:2.3.0") // 이미지 확대 가능
+    implementation("com.google.android.material:material:1.12.0") //layout 모서리 둥글게
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)

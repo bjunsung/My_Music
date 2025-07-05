@@ -34,7 +34,7 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
     public void onBindViewHolder(@NonNull DetailImageViewHolder holder, int position) {
         // 이전 프래그먼트에서 설정한 transitionName과 동일하게 설정
         String imageUrl = imageUrls.get(position);
-        holder.imageView.setTransitionName("image_detail_" + imageUrl);
+        holder.imageView.setTransitionName("Transition_" + imageUrl);
 
         Glide.with(holder.itemView.getContext())
                 .load(imageUrl)

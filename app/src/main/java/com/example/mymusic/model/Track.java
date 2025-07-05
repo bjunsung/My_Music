@@ -41,6 +41,11 @@ public class Track implements Parcelable{
         durationMs = in.readString();
     }
 
+    public String durationToString(){
+        int durationSec = (int) Double.parseDouble(this.durationMs)/1000;
+        return (durationSec/60 + "분 " + durationSec%60 + "초");
+    }
+
     public static final Creator<Track> CREATOR = new Creator<Track>() {
         public Track createFromParcel(Parcel in) {
             return new Track(in);

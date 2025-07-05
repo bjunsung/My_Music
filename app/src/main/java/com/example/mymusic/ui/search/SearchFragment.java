@@ -25,8 +25,10 @@ import androidx.core.util.Consumer;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -107,7 +109,8 @@ public class SearchFragment extends Fragment {
             trackAdapter= new TrackAdapter(searchViewModel.searchTrackResults,
                     getContext(),
                     this::showTrackDetails,
-                    this::addFavoriteSong);
+                    this::addFavoriteSong,
+                    this::onTrackClick);
 
             recyclerView.setAdapter(trackAdapter);
         } else if (searchViewModel.selectedOption == 1 && !searchViewModel.searchArtistResults.isEmpty()) {
@@ -325,7 +328,7 @@ public class SearchFragment extends Fragment {
 
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
-                        TrackAdapter adapter = new TrackAdapter(tracks, getContext(), track -> showTrackDetails(track), track -> addFavoriteSong(track));
+                        TrackAdapter adapter = new TrackAdapter(tracks, getContext(), track -> showTrackDetails(track), track -> addFavoriteSong(track), this::onTrackClick);
                         RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
                         recyclerView.setAdapter(adapter);
                     });
@@ -478,6 +481,26 @@ public class SearchFragment extends Fragment {
                 })
                 .setNegativeButton("취소", null)
                 .show();
+    }
+
+    public void onTrackClick(Track track, ImageView sharedImageView){
+        Bundle bundle = new Bundle();
+        Favorite favorite = new Favorite(track);
+        bundle.putParcelable("favorite", favorite);
+        String transitionName = "Transition_search_to_music" + track.artworkUrl + track.trackId;
+        bundle.putString("transitionName", transitionName);
+
+        FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                .addSharedElement(sharedImageView, transitionName)
+                .build();
+
+
+        NavController navController = NavHostFragment.findNavController(this);
+        NavDestination currentDestination = navController.getCurrentDestination();
+        assert currentDestination != null;
+        if (currentDestination.getId() == R.id.navigation_searches)
+            navController.navigate(R.id.musicInfoFragment, bundle, null, extras);
+
     }
 
 
