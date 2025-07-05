@@ -10,7 +10,6 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private String currentTransitionName = null;
     private int trackPosition = -1;
     private int albumPosition = -1;
-    private String trackTransitionName = null;
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
     }
@@ -46,12 +45,5 @@ public class ArtistInfoViewModel extends AndroidViewModel {
         this.albumPosition = position;
     }
 
-    public void setTrackTransitionName(String transitionName){
-        this.trackTransitionName = transitionName;
-    }
-
-    public String getTrackTransitionName(){
-        return this.trackTransitionName;
-    }
 
 }

@@ -36,10 +36,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     private boolean showImage = true;
     private boolean showPosition = false;
     private OnTrackClickListener trackClickListener;
-    private OnImageLoadListener imageLoadListener;
-    public interface OnImageLoadListener {
-        void onImageLoaded(int position, String transitionName);
-    }
 
     public interface OnDetailClickListener {
         void onItemClick(Track track);
@@ -56,14 +52,12 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
                         Context context,
                         OnDetailClickListener detailClickListener,
                         OnAddClickListener addClickListener,
-                        OnTrackClickListener trackClickListener,
-                        OnImageLoadListener imageLoadListener) {
+                        OnTrackClickListener trackClickListener) {
         this.tracks = tracks;
         this.context = context;
         this.detailClickListener = detailClickListener;
         this.addClickListener = addClickListener;
         this.trackClickListener = trackClickListener;
-        this.imageLoadListener = imageLoadListener;
     }
 
     public static class TrackViewHolder extends RecyclerView.ViewHolder {
@@ -98,7 +92,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
         Track track = tracks.get(position);
         String transitionName = "trasition_start_at_track_adapter_" + "위치: " + position + "_타이틀:" + track.trackName + "_" + track.artworkUrl + "_" + track.trackId + "_" + track.releaseDate + "_"  + track.durationMs;
-        Log.d("TrackAdapter", "transitionName for position: " + holder.getAdapterPosition() + " is_" + transitionName);
+        //Log.d("TrackAdapter", "transitionName for position: " + holder.getAdapterPosition() + " is_" + transitionName);
         ViewCompat.setTransitionName(holder.image, transitionName);
 
         holder.title.setText(track.trackName);
@@ -110,19 +104,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
                     .load(track.artworkUrl)
                     //.placeholder(R.drawable.default_artist_image) // 로딩 중 보여줄 이미지
                     .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
-                    .into(holder.image, new Callback() {
-                        @Override
-                        public void onSuccess() {
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                imageLoadListener.onImageLoaded(holder.getAdapterPosition(), transitionName);
-                            }, 100);
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            Log.d("TrackAdapter", "Fail to load Image for position: " + holder.getAdapterPosition());
-                        }
-                    });
+                    .into(holder.image);
         } else {
             holder.image.setImageResource(R.drawable.ic_image_not_found_foreground); // 기본 이미지로 대체
         }

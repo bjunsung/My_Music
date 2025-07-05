@@ -146,7 +146,12 @@ public class AlbumInfoFragment extends Fragment {
         apiHelper = new ArtistApiHelper(getContext(), requireActivity());
         apiHelper.searchTrackByAlbum(null, album,  trackList -> {
             // 4. 데이터를 받으면 어댑터를 설정합니다.
-            trackAdapter = new TrackAdapter(trackList, getContext(), this::showTrackDetails, this::addFavoriteSong, this::onTrackClick, this::onImageLoadListener);
+            trackAdapter = new TrackAdapter(
+                    trackList,
+                    getContext(),
+                    this::showTrackDetails,
+                    this::addFavoriteSong,
+                    this::onTrackClick);
             trackAdapter.setShowImage(false);
             trackAdapter.setShowPosition(true);
             trackRecyclerView.setAdapter(trackAdapter);

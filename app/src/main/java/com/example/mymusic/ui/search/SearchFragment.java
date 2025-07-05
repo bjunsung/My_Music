@@ -110,8 +110,7 @@ public class SearchFragment extends Fragment {
                     getContext(),
                     this::showTrackDetails,
                     this::addFavoriteSong,
-                    this::onTrackClick,
-                    this::onImageLoadListener);
+                    this::onTrackClick);
 
             recyclerView.setAdapter(trackAdapter);
         } else if (searchViewModel.selectedOption == 1 && !searchViewModel.searchArtistResults.isEmpty()) {
@@ -333,8 +332,7 @@ public class SearchFragment extends Fragment {
                                 getContext(),
                                 this::showTrackDetails,
                                 this::addFavoriteSong,
-                                this::onTrackClick,
-                                this::onImageLoadListener);
+                                this::onTrackClick);
                         RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
                         recyclerView.setAdapter(adapter);
                     });
@@ -507,10 +505,6 @@ public class SearchFragment extends Fragment {
         if (currentDestination.getId() == R.id.navigation_searches)
             navController.navigate(R.id.musicInfoFragment, bundle, null, extras);
 
-    }
-
-    public void onImageLoadListener(int position, String transitionName){
-        //todo
     }
 
 }
