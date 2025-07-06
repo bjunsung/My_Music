@@ -1,6 +1,7 @@
 package com.example.mymusic.adapter;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     OnMetadataClickListener metadataClickListener;
     FavoriteArtistViewModel viewModel;
     OnItemNavigateClickListener navigateClickListener;
+    private final String transitionNameForm = "Transition_favorite_artist_adapter_to_artist_";
 
     public interface OnDeleteClickListener{
         void onItemClick(Artist artist);
@@ -41,7 +43,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     }
 
     public interface OnItemNavigateClickListener {
-        void onNavigateClick(FavoriteArtist favorite, ImageView sharedImageView, int position);
+        void onNavigateClick(FavoriteArtist favorite, ImageView sharedImageView, String transitionNameForm, int position);
     }
 
     public FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, OnMetadataClickListener metadataClickListener, FavoriteArtistViewModel viewModel, OnItemNavigateClickListener navigateClickListener){
@@ -79,8 +81,10 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
-            String transitionName = "Transition_favorite_artist_adapter_to_artist_"  + artist.artworkUrl + "_" + artist.artistId  + "_" + artist.followers;
+            String transitionName = transitionNameForm  + holder.getAdapterPosition()  + "_" + artist.artistName + "_" + artist.artistId  + "_" + artist.artworkUrl;
             ViewCompat.setTransitionName(holder.image, transitionName);
+            Log.d("FavoriteArtistAdapter", "transition name for position " + holder.getAdapterPosition() + " is " + transitionName);
+
         } else {
             ViewCompat.setTransitionName(holder.image, null);
         }
@@ -107,6 +111,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                 navigateClickListener.onNavigateClick(
                         favoriteArtist,
                         holder.image,
+                        transitionNameForm,
                         holder.getAdapterPosition()
                 );
             }

@@ -7,6 +7,8 @@ import androidx.lifecycle.AndroidViewModel;
 
 public class ArtistInfoViewModel extends AndroidViewModel {
     private String initialTransitionName = null;
+    private String initialTransitionNameForm = null;
+    private int initialPosition = -1;
     private String currentTransitionName = null;
     private int trackPosition = -1;
     private int albumPosition = -1;
@@ -46,4 +48,19 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     }
 
 
+    public String getInitialTransitionNameForm() {
+        return initialTransitionNameForm;
+    }
+
+    public void setInitialTransitionNameForm(String initialTransitionNameForm) {
+        this.initialTransitionNameForm = initialTransitionNameForm;
+    }
+
+    public int getInitialPosition() {
+        return initialPosition;
+    }
+
+    public void setInitialPosition(int initialPosition) {
+        this.initialPosition = initialPosition;
+    }
 }

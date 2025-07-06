@@ -16,6 +16,8 @@ public class DateUtils {
 
     }
     public static long calculateDateDiffrence(String dateStr1, String dateStr2){
+        if (dateStr1.length() < 10)
+            throw new DateFormatMismatchException("format requires: yyyy-MM-dd, but received: " + dateStr1);
         // 1. 날짜 포맷 정의 (yyyy-MM-dd 형식)
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 

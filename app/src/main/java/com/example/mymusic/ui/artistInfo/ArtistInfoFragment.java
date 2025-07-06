@@ -4,15 +4,14 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
-import android.nfc.Tag;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -26,11 +25,11 @@ import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.mymusic.R;
@@ -83,17 +82,20 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private AtomicInteger readyCounter = new AtomicInteger(0);
     private boolean isTransitionStarted = false;
 
-    private long currentOnDataTime = 0;
+    private long currentOnDataReadyTime = 0;
 
 
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+
+        setSharedElementEnterTransition(TransitionInflater.from(requireContext())
+                .inflateTransition(android.R.transition.move));
+
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
         viewModel = new ViewModelProvider(this).get(ArtistInfoViewModel.class);
-
     }
 
     @Override
@@ -107,7 +109,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         super.onViewCreated(view, savedInstanceState);
         readyCounter.set(0);
         isTransitionStarted = false;
-        currentOnDataTime = 0;
+        currentOnDataReadyTime = 0;
         //전환 연기
         postponeEnterTransition();
 
@@ -138,45 +140,11 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         bindView(view);
 
 
-        //Artist images list for ViewPager2
-        imageUrls = new ArrayList<>();
-
-        assert getArguments() != null;
-        favoriteArtist = getArguments().getParcelable("favorite_artist");
-
-
-        if (favoriteArtist == null || favoriteArtist.artist == null){
-            Log.e(TAG, "Artist is null");
-            return;
-        }
-        artist = favoriteArtist.artist;
-
-
-        if (viewModel.getInitialTransitionName() == null){
-            String initialTransitionName = getArguments().getString("transitionName");
-            ViewCompat.setTransitionName(binding.imagePager, initialTransitionName);
-            viewModel.setInitialTransitionName(initialTransitionName);
-        } else{
-            String currentTransitionName = viewModel.getCurrentTransitionName();
-            ViewCompat.setTransitionName(binding.imagePager, currentTransitionName);
-        }
-
-
-        if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
-            imageUrls.add(artist.artworkUrl);
-        }
-
+        parseArgs();
 
         loadArtistMetadata();
 
-        /*
-        String transitionName = getArguments().getString("transitionName");
-        if(viewModel.getInitialTransitionName() == null){
-            viewModel.setInitialTransitionName(transitionName);
-            ViewCompat.setTransitionName(binding.imagePager, transitionName);
-            pager.post(() -> startPostponedEnterTransition());
-        }
-*/
+
 
         loadTopTracks();
 
@@ -208,6 +176,25 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     .show();
         });
 
+    }
+
+    private void parseArgs() {
+        if (viewModel.getInitialTransitionName() == null){
+            String initialTransitionName = getArguments().getString("transitionName");
+            viewModel.setInitialTransitionName(initialTransitionName);
+        } else{
+            //String currentTransitionName = viewModel.getCurrentTransitionName();
+        }
+        String transitionName = getArguments().getString("transitionName");
+        String transitionNameForm = getArguments().getString("transitionNameForm");
+        int position = getArguments().getInt("postiion");
+        if(viewModel.getInitialTransitionName() == null){
+            viewModel.setInitialTransitionName(transitionName);
+            viewModel.setInitialTransitionNameForm(transitionNameForm);
+            viewModel.setInitialPosition(position);
+            //ViewCompat.setTransitionName(binding.imagePager, transitionName);
+            //pager.post(() -> startPostponedEnterTransition());
+        }
     }
 
 // ArtistInfoFragment.java
@@ -260,19 +247,25 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
     private void onDataReady(){
         int currentCount = readyCounter.incrementAndGet();
-        if (currentOnDataTime != 0){
+        if (currentOnDataReadyTime != 0){
             long temp = System.currentTimeMillis();
-            Log.d(TAG, "시간차이: " + (temp - currentOnDataTime) + "ms");
-            currentOnDataTime = temp;
+            Log.d(TAG, "시간차이: " + (temp - currentOnDataReadyTime) + "ms");
+            currentOnDataReadyTime = temp;
         }else{
-            currentOnDataTime = System.currentTimeMillis();
+            currentOnDataReadyTime = System.currentTimeMillis();
         }
         Log.d(TAG, "onDataReady() 호출됨 - readyCounter num: " + currentCount);
         Log.d(TAG, "transition started state: " + isTransitionStarted);
         if (currentCount == 3 && !isTransitionStarted){
             Log.d(TAG, "every data is ready, now start transition first time");
             isTransitionStarted = true;
-            handleReenterAndStartTransition();
+            if (viewModel.getTrackPosition() != -1) {
+                handleReenterAndStartTransition();
+            }else if (viewModel.getAlbumPosition() != -1){
+                handleReenterTransitionAlbum();
+            } else{
+                pager.post(() -> startPostponedEnterTransition());
+            }
         }
     }
 
@@ -302,6 +295,27 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
     private void loadArtistMetadata() {
+        //Artist images list for ViewPager2
+        imageUrls = new ArrayList<>();
+
+        assert getArguments() != null;
+        favoriteArtist = getArguments().getParcelable("favorite_artist");
+        String transitionNameForm = getArguments().getString("transitionNameForm");
+        viewModel.setInitialTransitionNameForm(transitionNameForm);
+        int initialRecyclerViewPosition = getArguments().getInt("position");
+        viewModel.setInitialPosition(initialRecyclerViewPosition);
+
+
+        if (favoriteArtist == null || favoriteArtist.artist == null){
+            Log.e(TAG, "Artist is null");
+            return;
+        }
+        artist = favoriteArtist.artist;
+
+        if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
+            imageUrls.add(artist.artworkUrl);
+        }
+
         favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
             @Override
             public void onSuccess(ArtistMetadata metadata){
@@ -316,12 +330,35 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     }
 
                     Context context = getContext();
-                    if (context != null)
-                        pageAdapter = new ImagePagerAdapter(context, imageUrls, ArtistInfoFragment.this);
+                    if (context != null) {
+                        pageAdapter = new ImagePagerAdapter(
+                                context,
+                                imageUrls,
+                                ArtistInfoFragment.this,
+                                artist,
+                                viewModel.getInitialTransitionNameForm(),
+                                viewModel.getInitialPosition());
+                        pageAdapter.setImageLoadListener(new ImagePagerAdapter.OnImageLoadListener() {
+
+                            @Override
+                            public void onLoadSuccess(ImageView imageView) {
+                                String transitionName = ViewCompat.getTransitionName(imageView);
+                                if (transitionName.equals(viewModel.getInitialTransitionName())){
+                                    Log.d(TAG, "Artist main Image Load completed");
+
+                                    onDataReady();
+                                }
+                            }
+
+                            @Override
+                            public void onLoadFailed() {
+                                Log.d(TAG, "Artist main Image Load Failed");
+                                onDataReady();
+                            }
+                        });
+                    }
 
                     pager.setAdapter(pageAdapter);
-                    Log.d(TAG, "ViewPager2 load completed");
-                    onDataReady();
 
                     pager.setOffscreenPageLimit(3);
 
@@ -378,8 +415,31 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             @Override
             public void onFailure(String reason) {
                 requireActivity().runOnUiThread(() -> {
-                    onDataReady();
-                    pageAdapter = new ImagePagerAdapter(requireContext(), imageUrls, ArtistInfoFragment.this);
+                   // onDataReady();
+                    pageAdapter = new ImagePagerAdapter(
+                            requireContext(),
+                            imageUrls,
+                            ArtistInfoFragment.this,
+                            artist,
+                            viewModel.getInitialTransitionNameForm(),
+                            viewModel.getInitialPosition());
+                    pageAdapter.setImageLoadListener(new ImagePagerAdapter.OnImageLoadListener() {
+
+                        @Override
+                        public void onLoadSuccess(ImageView imageView) {
+                            String transitionName = ViewCompat.getTransitionName(imageView);
+                            if (transitionName.equals(viewModel.getInitialTransitionName())){
+                                Log.d(TAG, "Artist main Image Load completed");
+                                onDataReady();
+                            }
+                        }
+
+                        @Override
+                        public void onLoadFailed() {
+                            Log.d(TAG, "Artist main Image Load Failed");
+                            onDataReady();
+                        }
+                    });
                     pager.setAdapter(pageAdapter);
                     trackRecyclerView.setPadding(0,0,0,48);
                     Log.d(TAG, reason);
@@ -437,7 +497,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private void viewSetting(){
         artistNameTextView.setText(artist.artistName);
 
-        /*
         pager.post(() -> {
             imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth()/6.5f), pager.getWidth()/14);
 
@@ -465,11 +524,12 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
             enlargeButton.setLayoutParams(enlargeParams);
             enlargeButton.setVisibility(View.VISIBLE);
+            //onDataReady(); //임시방편, 삭제해야 하는 코드
 
         });
 
-         */
 
+/*
         pager.post(() -> {
             Log.d(TAG, "this is PAGER2 AREA");
             imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth() / 6.5f), pager.getWidth() / 14);
@@ -494,16 +554,10 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
             enlargeButton.setLayoutParams(enlargeParams);
             enlargeButton.setVisibility(View.VISIBLE);
-
-            // ✅ ViewPager2와 버튼까지 모두 준비된 시점 -> shared transition 시작
-            if (viewModel.getTrackPosition() == -1 && viewModel.getAlbumPosition() == -1) {
-                Log.d(TAG, "✅ ViewPager ready, no pending recyclerView transition → startPostponedEnterTransition()");
-                 startPostponedEnterTransition();
-            } else {
-                Log.d(TAG, "🔁 ViewPager ready but waiting for RecyclerView transition handling...");
-            }
+            Log.d(TAG, "ViewPager2 load completed");
+            onDataReady();
         });
-
+*/
 
         /*
         pager.postDelayed(() -> {
@@ -521,10 +575,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
          */
 
 
-        pager.postDelayed(() -> {
-            ViewCompat.setTransitionName(binding.imagePager, viewModel.getInitialTransitionName());
-            Log.d(TAG, "set initial transitionName to: " + viewModel.getInitialTransitionName());
-        }, 100);
 
 
 
@@ -649,7 +699,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         navController.navigate(R.id.musicInfoFragment, bundle, null, extras);
 
     }
-
 
 
 

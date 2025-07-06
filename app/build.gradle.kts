@@ -75,9 +75,6 @@ android {
 
 dependencies {    // Room core
     implementation("io.github.everythingme:overscroll-decor-android:1.1.1") //overscroll
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation(libs.palette)  //Glide
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0") // Java 프로젝트용 Glide
     implementation("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
     implementation(files("libs/auth-release.aar"))
@@ -88,6 +85,10 @@ dependencies {    // Room core
     implementation("androidx.webkit:webkit:1.8.0") // WebView 지원 향상
     implementation("com.github.chrisbanes:PhotoView:2.3.0") // 이미지 확대 가능
     implementation("com.google.android.material:material:1.12.0") //layout 모서리 둥글게
+    //annotationProcessor("com.github.bumptech.glide:compiler:4.16.0") // Java 프로젝트용 Glide
+    implementation("com.github.bumptech.glide:glide:4.16.0")    //Glide 설정
+    kapt("com.github.bumptech.glide:compiler:4.16.0") //⬅️ annotationProcessor를 kapt로 변경
+    implementation(libs.palette)  //Glide
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)

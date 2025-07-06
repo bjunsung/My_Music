@@ -40,7 +40,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     }
 
     public interface OnLyricClickListener{
-        void onItemClick(String trackId, String trackName);
+        void onItemClick(String trackId, String trackName, int position);
     }
 
     public interface OnLyricLongClickListener{
@@ -138,7 +138,10 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
         //lyrics button 클릭 이벤트
         holder.lyricButton.setOnClickListener(v -> {
-            lyricClickListener.onItemClick(track.trackId, track.trackName);
+            lyricClickListener.onItemClick(
+                    track.trackId,
+                    track.trackName,
+                    holder.getAdapterPosition());
         });
 
         //lyrics button long 클릭 이벤트

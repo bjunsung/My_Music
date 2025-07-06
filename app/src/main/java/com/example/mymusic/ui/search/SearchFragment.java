@@ -541,7 +541,7 @@ public class SearchFragment extends Fragment {
     }
 
 
-    public void onArtistClickListener(Artist artist, ImageView sharedImageView, int position){
+    public void onArtistClickListener(Artist artist, ImageView sharedImageView, int position, String transitionNameForm){
         if (artist == null){
             Log.d(TAG, "artist data is null");
             return;
@@ -550,6 +550,8 @@ public class SearchFragment extends Fragment {
         Bundle args = new Bundle();
         args.putParcelable("favorite_artist", new FavoriteArtist(artist));
         args.putString("transitionName", transitionName);
+        args.putString("transitionNameForm", transitionNameForm);
+        args.putInt("position", position);
         searchViewModel.setArtistPosition(position);
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()

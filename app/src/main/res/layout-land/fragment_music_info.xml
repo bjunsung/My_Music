@@ -9,12 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- 🟡 스와이프 시 이동할 컨테이너 -->
-        <FrameLayout
-            android:id="@+id/swipe_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
             <!-- ✅ ConstraintLayout으로 감싸서 constraint 속성 정상 작동 -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -276,24 +270,30 @@
                                 android:text="2020-04-13"
                                 android:textSize="22sp" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:id="@+id/days_between_layout"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="  (D + "
-                                android:textSize="22sp" />
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="  (D + "
+                                    android:textSize="22sp" />
 
-                            <TextView
-                                android:id="@+id/days_between"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="365"
-                                android:textSize="22sp" />
+                                <TextView
+                                    android:id="@+id/days_between"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="null"
+                                    android:textSize="22sp" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text=")"
-                                android:textSize="22sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=")"
+                                    android:textSize="22sp" />
+                            </LinearLayout>
                         </LinearLayout>
 
                         <LinearLayout
@@ -340,31 +340,22 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/enlarge_card"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="12dp"
-                app:cardElevation="8dp"
-                app:cardCornerRadius="24dp"
-                app:cardUseCompatPadding="true"
-                app:cardPreventCornerOverlap="false"
-                android:layout_gravity="bottom|end"
-                android:clipChildren="false"
-                android:clipToPadding="false">
-
-                <ImageView
-                    android:id="@+id/enlarge_button"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_enlargement_white"
-                    android:background="@android:color/white"
-                    android:padding="8dp"/>
-            </com.google.android.material.card.MaterialCardView>
+        <ImageView
+            android:id="@+id/enlarge_button_shadow"
+            android:layout_width="wrap_content"
+            android:elevation="2dp"
+            android:layout_height="wrap_content"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_enlargement_gray" />
 
 
+        <ImageView
+            android:id="@+id/enlarge_button"
+            android:layout_width="wrap_content"
+            android:elevation="4dp"
+            android:layout_height="wrap_content"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_enlargement_white"/>
 
         </FrameLayout>
 
@@ -412,7 +403,5 @@
                 android:layout_height="match_parent" />
 
         </FrameLayout>
-
-    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

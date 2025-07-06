@@ -49,6 +49,7 @@ import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
+import com.example.mymusic.util.DateFormatMismatchException;
 import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.ImageOverlayManager;
@@ -72,6 +73,7 @@ public class MusicInfoFragment extends Fragment {
     private int artworkSize;
     private View bottomNavView;
     ImageButton backButton;
+    private TextView daysBetween;
     private int primaryColor, selectedColor, unselectedColor;
     // ✅ ViewBinding 사용을 권장합니다
     private FragmentMusicInfoBinding binding;
@@ -104,9 +106,8 @@ public class MusicInfoFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentMusicInfoBinding.inflate(inflater, container, false);
-
+        View view = inflater.inflate(R.layout.fragment_music_info, container, false);
         savedInDb = false;
-
         return binding.getRoot();
     }
 
@@ -172,7 +173,7 @@ public class MusicInfoFragment extends Fragment {
             TextView lyrics = view.findViewById(R.id.metadata_lyrics);
             LinearLayout vocalistsLayout = view.findViewById(R.id.vocalists_layout);
             TextView vocalists = view.findViewById(R.id.vocalists);
-            TextView daysBetween = view.findViewById(R.id.days_between);
+            daysBetween = view.findViewById(R.id.days_between);
             addedDateLayout = view.findViewById(R.id.added_date_layout);
             addedDate = view.findViewById(R.id.added_date);
             ImageView enlargeButton = view.findViewById(R.id.enlarge_button);
@@ -209,7 +210,13 @@ public class MusicInfoFragment extends Fragment {
                 addedDateLayout.setVisibility(View.VISIBLE);
             }
 
-            daysBetween.setText(String.valueOf(DateUtils.calculateDateDiffrence(track.releaseDate, DateUtils.today())));
+            try {
+                daysBetween.setText(String.valueOf(DateUtils.calculateDateDiffrence(track.releaseDate, DateUtils.today())));
+            }catch(DateFormatMismatchException e){
+                Log.d(TAG, e.getMessage());
+                LinearLayout daysBetweenLayout = binding.daysBetweenLayout;
+                daysBetweenLayout.setVisibility(View.GONE);
+            }
 
 
             trackTitle.setOnClickListener(v -> {
@@ -278,6 +285,9 @@ public class MusicInfoFragment extends Fragment {
                     int pagerRightX = pagerLocation[0] + artworkImage.getWidth();    // Pager의 오른쪽 끝 X 좌표
                     int pagerBottomY = pagerLocation[1] + artworkImage.getHeight();
 
+
+
+
                     // 2. 버튼의 크기를 고려하여 위치 계산
                     // (버튼의 너비와 높이를 알아야 정확한 위치에 놓을 수 있습니다)
                     int buttonWidth = enlargeButton.getWidth();
@@ -298,6 +308,16 @@ public class MusicInfoFragment extends Fragment {
 
                     enlargeButton.setLayoutParams(enlargeParams);
                     enlargeButton.setVisibility(View.VISIBLE);
+
+
+                    ImageView enlargeButtonShadow =  binding.enlargeButtonShadow;
+                    FrameLayout.LayoutParams enlargeShadowParams = (FrameLayout.LayoutParams) enlargeButtonShadow.getLayoutParams();
+                    enlargeShadowParams.leftMargin = pagerRightX - buttonWidth - padding + 1;
+                    enlargeShadowParams.topMargin = pagerBottomY - buttonHeight - padding + 1;
+                    enlargeButtonShadow.setLayoutParams(enlargeShadowParams);
+                    enlargeButtonShadow.setVisibility(View.VISIBLE);
+
+
                 }
             });
 
@@ -320,8 +340,11 @@ public class MusicInfoFragment extends Fragment {
                     }
                     if (bottomNavView != null) {
                         bottomNavView.setBackgroundColor(primaryColor);
-                        backButton.setBackgroundColor(primaryColor);
-                        backButton.setColorFilter(selectedColor);
+                        backButton = requireActivity().findViewById(R.id.back_button);
+                        if (backButton != null) {
+                            backButton.setBackgroundColor(primaryColor);
+                            backButton.setColorFilter(selectedColor);
+                        }
                         ImageButton emptySpace = requireActivity().findViewById(R.id.empty_space);
                         emptySpace.setBackgroundColor(primaryColor);
                     }

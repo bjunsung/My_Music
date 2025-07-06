@@ -21,6 +21,9 @@ public class FavoritesViewModel extends AndroidViewModel {
     private final FavoriteSongRepository repository;
     private final MutableLiveData<Favorite> focusedTrack = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLyricsMode = new MutableLiveData<>(false);
+    private int focusedPosition = -1;
+
+
 
     public void setLyricsMode(boolean value) {
         isLyricsMode.setValue(value);
@@ -95,4 +98,11 @@ public class FavoritesViewModel extends AndroidViewModel {
     }
 
 
+    public int getFocusedPosition() {
+        return focusedPosition;
+    }
+
+    public void setFocusedPosition(int focusedPosition) {
+        this.focusedPosition = focusedPosition;
+    }
 }

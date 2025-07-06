@@ -23,13 +23,13 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
 
     private List<Artist> artists;
     private Context context;
-
+    private final String transitionNameForm = "transition_starts_at_artist_adapter_(POSITION_AT_";
     OnDetailClickListener detailClickListener;
     OnAddClickListener addClickListener;
     OnArtistClickListener artistClickListener;
 
     public interface OnArtistClickListener{
-        void onItemClick(Artist artist, ImageView sharedImageView, int position);
+        void onItemClick(Artist artist, ImageView sharedImageView, int position,  String transitionNameForm);
 
     }
     public interface OnDetailClickListener {
@@ -78,7 +78,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
         String followers = NumberUtils.formatWithComma(artist.followers);
         holder.followersTextView.setText(followers);
 
-        String transitionName = "transition_starts_at_artist_adapter_(POSITION_AT_" + holder.getAdapterPosition() + "_" + artist.artistName + "_" + artist.artistId;
+        String transitionName = transitionNameForm + holder.getAdapterPosition() + "_" + artist.artistName + "_" + artist.artistId + "_" + artist.artworkUrl;
         ViewCompat.setTransitionName(holder.artworkImage, transitionName);
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
@@ -98,7 +98,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
 
 
         holder.itemView.setOnClickListener(v -> {
-            artistClickListener.onItemClick(artist, holder.artworkImage, holder.getAdapterPosition());
+            artistClickListener.onItemClick(artist, holder.artworkImage, holder.getAdapterPosition(), transitionNameForm);
         });
 
 
