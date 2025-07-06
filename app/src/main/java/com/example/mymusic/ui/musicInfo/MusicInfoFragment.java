@@ -111,19 +111,6 @@ public class MusicInfoFragment extends Fragment {
     }
 
 
-    /*
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState){
-        super.onSaveInstanceState(outState);
-        if (getView() != null){
-            String currentTransitionName = ViewCompat.getTransitionName(binding.artworkImage);
-            outState.putString(KEY_TRANSITION_NAME, currentTransitionName);
-            Log.d("TransitionDebug", "MusicInfoFragment: onSaveInstanceState 저장, name=" + currentTransitionName);
-        }
-    }
-
-    */
-
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {

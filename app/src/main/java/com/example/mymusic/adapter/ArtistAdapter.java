@@ -1,7 +1,6 @@
 package com.example.mymusic.adapter;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,12 +9,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.squareup.picasso.Picasso;
@@ -29,7 +26,12 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
 
     OnDetailClickListener detailClickListener;
     OnAddClickListener addClickListener;
+    OnArtistClickListener artistClickListener;
 
+    public interface OnArtistClickListener{
+        void onItemClick(Artist artist, ImageView sharedImageView, int position);
+
+    }
     public interface OnDetailClickListener {
         void onClickItem(Artist artist);
     }
@@ -38,23 +40,24 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
         void onClickItem(Artist artist);
     }
 
-    public ArtistAdapter(List<Artist> artists, Context context, OnDetailClickListener detailClickListener, OnAddClickListener addClickListener) {
+    public ArtistAdapter(List<Artist> artists, Context context, OnDetailClickListener detailClickListener, OnAddClickListener addClickListener, OnArtistClickListener artistClickListener) {
         this.artists = artists;
         this.context = context;
         this.detailClickListener = detailClickListener;
         this.addClickListener = addClickListener;
+        this.artistClickListener = artistClickListener;
     }
 
     public static class ArtistViewHolder extends RecyclerView.ViewHolder {
         TextView nameTextView, followersTextView;
-        ImageView imageTextView;
+        ImageView artworkImage;
         ImageButton detailButton, addButton;
 
         public ArtistViewHolder(@NonNull View itemView) {
             super(itemView);
             nameTextView = itemView.findViewById(R.id.artistNameTextView);
             followersTextView = itemView.findViewById(R.id.followersTextView);
-            imageTextView = itemView.findViewById(R.id.imageView);
+            artworkImage = itemView.findViewById(R.id.imageView);
             detailButton = itemView.findViewById(R.id.showDetailButton);
             addButton = itemView.findViewById(R.id.addButton);
         }
@@ -75,14 +78,17 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
         String followers = NumberUtils.formatWithComma(artist.followers);
         holder.followersTextView.setText(followers);
 
+        String transitionName = "transition_starts_at_artist_adapter_(POSITION_AT_" + holder.getAdapterPosition() + "_" + artist.artistName + "_" + artist.artistId;
+        ViewCompat.setTransitionName(holder.artworkImage, transitionName);
+
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
             Picasso.get()
                     .load(artist.artworkUrl)
                     //.placeholder(R.drawable.default_artist_image) // 로딩 중 보여줄 이미지
                     .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
-                    .into(holder.imageTextView);
+                    .into(holder.artworkImage);
         } else {
-            holder.imageTextView.setImageResource(R.drawable.ic_image_not_found_foreground); // 기본 이미지로 대체
+            holder.artworkImage.setImageResource(R.drawable.ic_image_not_found_foreground); // 기본 이미지로 대체
         }
 
         holder.detailButton.setOnClickListener(v -> {
@@ -92,10 +98,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
 
 
         holder.itemView.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putParcelable("favorite_artist", new FavoriteArtist(artist));
-            NavController navController = Navigation.findNavController(v);
-            navController.navigate(R.id.artist_info, bundle);
+            artistClickListener.onItemClick(artist, holder.artworkImage, holder.getAdapterPosition());
         });
 
 

@@ -143,6 +143,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
         assert getArguments() != null;
         favoriteArtist = getArguments().getParcelable("favorite_artist");
+
+
         if (favoriteArtist == null || favoriteArtist.artist == null){
             Log.e(TAG, "Artist is null");
             return;
@@ -166,6 +168,15 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
 
         loadArtistMetadata();
+
+        /*
+        String transitionName = getArguments().getString("transitionName");
+        if(viewModel.getInitialTransitionName() == null){
+            viewModel.setInitialTransitionName(transitionName);
+            ViewCompat.setTransitionName(binding.imagePager, transitionName);
+            pager.post(() -> startPostponedEnterTransition());
+        }
+*/
 
         loadTopTracks();
 
@@ -208,9 +219,14 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
         // 돌아갈 위치 정보가 없으면 바로 전환 시작
         if (position == -1) {
-            startPostponedEnterTransition();
-            Log.d(TAG, "startPostponedEnterTransition() 호출됨");
-            isTransitionStarted = true;
+            /*
+            pager.post(() -> {
+                startPostponedEnterTransition();
+                Log.d(TAG, "startPostponedEnterTransition() 호출됨");
+                isTransitionStarted = true;
+            });
+
+             */
             return;
         }
 
@@ -234,8 +250,12 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             }
 
             // 모든 스크롤이 강제로 완료된 이 시점에 전환을 시작합니다.
-            startPostponedEnterTransition();
-            Log.d(TAG, "startPostponedEnterTransition() 호출됨");
+            if (viewModel.getTrackPosition() != -1) {
+                startPostponedEnterTransition();
+                Log.d(TAG, "startPostponedEnterTransition() 호출됨");
+            } else{
+                Log.d(TAG, "reenter state 아님, startPostponedEnterTransition() 호출 취소");
+            }
         });
     }
     private void onDataReady(){
@@ -302,14 +322,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     pager.setAdapter(pageAdapter);
                     Log.d(TAG, "ViewPager2 load completed");
                     onDataReady();
-
-
-                    /*
-                    pager.post(()->{
-                        Log.d(TAG, "ViewPager2 load completed");
-                        onDataReady();
-                    });
-                     */
 
                     pager.setOffscreenPageLimit(3);
 
@@ -425,6 +437,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private void viewSetting(){
         artistNameTextView.setText(artist.artistName);
 
+        /*
         pager.post(() -> {
             imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth()/6.5f), pager.getWidth()/14);
 
@@ -452,9 +465,45 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
             enlargeButton.setLayoutParams(enlargeParams);
             enlargeButton.setVisibility(View.VISIBLE);
-            isArtistImageReady =  true;
 
         });
+
+         */
+
+        pager.post(() -> {
+            Log.d(TAG, "this is PAGER2 AREA");
+            imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth() / 6.5f), pager.getWidth() / 14);
+
+            int[] pagerLocation = new int[2];
+            pager.getLocationOnScreen(pagerLocation);
+            int pagerRightX = pagerLocation[0] + pager.getWidth();
+            int pagerBottomY = pagerLocation[1] + pager.getHeight();
+
+            int buttonWidth = enlargeButton.getWidth();
+            int buttonHeight = enlargeButton.getHeight();
+
+            final float density = getResources().getDisplayMetrics().density;
+            if (buttonWidth == 0) buttonWidth = (int)(24 * density);
+            if (buttonHeight == 0) buttonHeight = (int)(24 * density);
+
+            int padding = (int)(6 * density);
+
+            FrameLayout.LayoutParams enlargeParams = (FrameLayout.LayoutParams) enlargeButton.getLayoutParams();
+            enlargeParams.leftMargin = pagerRightX - buttonWidth - padding;
+            enlargeParams.topMargin = pagerBottomY - buttonHeight - padding;
+
+            enlargeButton.setLayoutParams(enlargeParams);
+            enlargeButton.setVisibility(View.VISIBLE);
+
+            // ✅ ViewPager2와 버튼까지 모두 준비된 시점 -> shared transition 시작
+            if (viewModel.getTrackPosition() == -1 && viewModel.getAlbumPosition() == -1) {
+                Log.d(TAG, "✅ ViewPager ready, no pending recyclerView transition → startPostponedEnterTransition()");
+                 startPostponedEnterTransition();
+            } else {
+                Log.d(TAG, "🔁 ViewPager ready but waiting for RecyclerView transition handling...");
+            }
+        });
+
 
         /*
         pager.postDelayed(() -> {
@@ -475,7 +524,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         pager.postDelayed(() -> {
             ViewCompat.setTransitionName(binding.imagePager, viewModel.getInitialTransitionName());
             Log.d(TAG, "set initial transitionName to: " + viewModel.getInitialTransitionName());
-        }, 20);
+        }, 100);
 
 
 
@@ -594,7 +643,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                 .addSharedElement(sharedImageView, transitionName)
                 .build();
-        sharedImageView.setTransitionName(transitionName);
         bundle.putString("transitionName", transitionName);
 
         NavController navController = NavHostFragment.findNavController(this);

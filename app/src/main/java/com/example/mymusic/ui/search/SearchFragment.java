@@ -22,6 +22,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -36,10 +37,12 @@ import com.example.mymusic.R;
 import com.example.mymusic.data.local.Token;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.data.repository.TokenRepository;
+import com.example.mymusic.databinding.FragmentSearchBinding;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.adapter.ArtistAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.TokenHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
@@ -75,7 +78,8 @@ public class SearchFragment extends Fragment {
     private static final int MAX_RETRY_REFRESH_TOKEN_COUNT = 3;
     private static int retryRefreshTokenCount;
     private TrackAdapter trackAdapter;
-
+    private FragmentSearchBinding binding;
+    private final String TAG = "SearchFragment";
 
     //ViewModel 연결, repository 연결
     @Override
@@ -92,12 +96,27 @@ public class SearchFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         retryRefreshTokenCount = 0;
-        return inflater.inflate(R.layout.fragment_search, container, false);
+        binding = FragmentSearchBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        if (searchViewModel.getTrackPosition() != -1) {
+            postponeEnterTransition();
+            RecyclerView recyclerView = binding.resultRecyclerView;
+            if (recyclerView != null){
+                recyclerView.post(() -> handleReenterTransitionTrack());
+            }
+        } else if(searchViewModel.getArtistPosition() != -1){
+            postponeEnterTransition();
+            RecyclerView recyclerView = binding.resultRecyclerView;
+            if (recyclerView != null){
+                recyclerView.post(() -> handleReenterTransitionArtist());
+            }
+        }
+
         searchEditText = view.findViewById(R.id.searchEditText);
 
         recyclerView = view.findViewById(R.id.result_recycler_view);
@@ -114,11 +133,17 @@ public class SearchFragment extends Fragment {
 
             recyclerView.setAdapter(trackAdapter);
         } else if (searchViewModel.selectedOption == 1 && !searchViewModel.searchArtistResults.isEmpty()) {
-            ArtistAdapter adapter = new ArtistAdapter(searchViewModel.searchArtistResults, getContext(), this::showArtistDetails, this::addFavoriteArtist);
+            ArtistAdapter adapter = new ArtistAdapter(
+                    searchViewModel.searchArtistResults,
+                    getContext(),
+                    this::showArtistDetails,
+                    this::addFavoriteArtist,
+                    this::onArtistClickListener);
             recyclerView.setAdapter(adapter);
         }
         getTokenAndEnableSearch();
     }
+
 
     //토큰 재발급
     private void refreshToken(Consumer<String> callback){
@@ -335,6 +360,7 @@ public class SearchFragment extends Fragment {
                                 this::onTrackClick);
                         RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
                         recyclerView.setAdapter(adapter);
+                        handleReenterTransitionTrack();
                     });
                 }
                 else if(searchTypeInt == 1){ //search artist
@@ -366,9 +392,15 @@ public class SearchFragment extends Fragment {
 
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
-                        ArtistAdapter adapter = new ArtistAdapter(artists, getContext(), this::showArtistDetails, this::addFavoriteArtist);
+                        ArtistAdapter adapter = new ArtistAdapter(
+                                artists,
+                                getContext(),
+                                this::showArtistDetails,
+                                this::addFavoriteArtist,
+                                this::onArtistClickListener);
                         RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
                         recyclerView.setAdapter(adapter);
+                        handleReenterTransitionArtist();
                     });
                 }
 
@@ -491,8 +523,9 @@ public class SearchFragment extends Fragment {
         Bundle bundle = new Bundle();
         Favorite favorite = new Favorite(track);
         bundle.putParcelable("favorite", favorite);
-        String transitionName = "Transition_search_to_music" + track.artworkUrl + track.trackId;
+        String transitionName = ViewCompat.getTransitionName(sharedImageView);
         bundle.putString("transitionName", transitionName);
+        searchViewModel.setTrackPosition(position);
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                 .addSharedElement(sharedImageView, transitionName)
@@ -506,5 +539,64 @@ public class SearchFragment extends Fragment {
             navController.navigate(R.id.musicInfoFragment, bundle, null, extras);
 
     }
+
+
+    public void onArtistClickListener(Artist artist, ImageView sharedImageView, int position){
+        if (artist == null){
+            Log.d(TAG, "artist data is null");
+            return;
+        }
+        String transitionName = ViewCompat.getTransitionName(sharedImageView);
+        Bundle args = new Bundle();
+        args.putParcelable("favorite_artist", new FavoriteArtist(artist));
+        args.putString("transitionName", transitionName);
+        searchViewModel.setArtistPosition(position);
+
+        FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                .addSharedElement(sharedImageView, transitionName)
+                .build();
+
+        NavController navController = NavHostFragment.findNavController(this);
+        navController.navigate(R.id.artist_info, args, null, extras);
+
+
+    }
+
+    private void handleReenterTransitionTrack(){
+        Log.d(TAG, "handleReenterTransitionTrack() 호출");
+        int position = searchViewModel.getTrackPosition();
+        if (position == - 1 || position != searchViewModel.getTrackPosition()){
+            Log.d(TAG, "position : -1  startPostponedEnterTransition() 호출");
+            startPostponedEnterTransition();
+            return;
+        }
+        binding.resultRecyclerView.post(() -> {
+            RecyclerView.ViewHolder holder = binding.resultRecyclerView.findViewHolderForAdapterPosition(position);
+            if (holder != null) {
+                startPostponedEnterTransition();
+                Log.d(TAG, "holder at position(" + position + ") exist  startPostponedEnterTransition() 호출");
+                searchViewModel.setTrackPosition(-1);
+            }
+        });
+    }
+
+    private void handleReenterTransitionArtist() {
+        Log.d(TAG, "handleReenterTransitionArtist() 호출");
+        int position = searchViewModel.getArtistPosition();
+        if (position == - 1 || position != searchViewModel.getArtistPosition()){
+            Log.d(TAG, "position : -1  startPostponedEnterTransition() 호출");
+            startPostponedEnterTransition();
+            return;
+        }
+        binding.resultRecyclerView.post(() -> {
+            RecyclerView.ViewHolder holder = binding.resultRecyclerView.findViewHolderForAdapterPosition(position);
+            if (holder != null) {
+                startPostponedEnterTransition();
+                Log.d(TAG, "holder at position(" + position + ") exist  startPostponedEnterTransition() 호출");
+                searchViewModel.setArtistPosition(-1);
+            }
+        });
+    }
+
 
 }
