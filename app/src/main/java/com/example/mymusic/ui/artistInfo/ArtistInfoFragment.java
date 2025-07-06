@@ -179,25 +179,20 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
     private void parseArgs() {
-        if (viewModel.getInitialTransitionName() == null){
-            String initialTransitionName = getArguments().getString("transitionName");
-            viewModel.setInitialTransitionName(initialTransitionName);
-        } else{
-            //String currentTransitionName = viewModel.getCurrentTransitionName();
-        }
         String transitionName = getArguments().getString("transitionName");
         String transitionNameForm = getArguments().getString("transitionNameForm");
         int position = getArguments().getInt("postiion");
+
         if(viewModel.getInitialTransitionName() == null){
             viewModel.setInitialTransitionName(transitionName);
             viewModel.setInitialTransitionNameForm(transitionNameForm);
             viewModel.setInitialPosition(position);
-            //ViewCompat.setTransitionName(binding.imagePager, transitionName);
-            //pager.post(() -> startPostponedEnterTransition());
+            viewModel.setInitialTransitionNameForm(transitionNameForm);
+            int initialRecyclerViewPosition = getArguments().getInt("position");
+            viewModel.setInitialPosition(initialRecyclerViewPosition);
         }
     }
 
-// ArtistInfoFragment.java
 
     private void handleReenterAndStartTransition() {
         Log.d(TAG, ":::: handleReenterAndStartTransition() 호출됨 ::::");
@@ -206,14 +201,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
         // 돌아갈 위치 정보가 없으면 바로 전환 시작
         if (position == -1) {
-            /*
-            pager.post(() -> {
-                startPostponedEnterTransition();
-                Log.d(TAG, "startPostponedEnterTransition() 호출됨");
-                isTransitionStarted = true;
-            });
-
-             */
             return;
         }
 
@@ -300,10 +287,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
         assert getArguments() != null;
         favoriteArtist = getArguments().getParcelable("favorite_artist");
-        String transitionNameForm = getArguments().getString("transitionNameForm");
-        viewModel.setInitialTransitionNameForm(transitionNameForm);
-        int initialRecyclerViewPosition = getArguments().getInt("position");
-        viewModel.setInitialPosition(initialRecyclerViewPosition);
 
 
         if (favoriteArtist == null || favoriteArtist.artist == null){
