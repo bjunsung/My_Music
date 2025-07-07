@@ -340,7 +340,10 @@ public class MusicInfoFragment extends Fragment {
                     }
                     if (bottomNavView != null) {
                         bottomNavView.setBackgroundColor(primaryColor);
-                        backButton = requireActivity().findViewById(R.id.back_button);
+                        if (activity != null) {
+                            backButton = activity.findViewById(R.id.back_button);
+                        }
+
                         if (backButton != null) {
                             backButton.setBackgroundColor(primaryColor);
                             backButton.setColorFilter(selectedColor);

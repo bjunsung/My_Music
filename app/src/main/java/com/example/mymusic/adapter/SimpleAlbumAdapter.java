@@ -1,6 +1,7 @@
 package com.example.mymusic.adapter;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,9 +23,13 @@ import java.util.List;
 
 public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.AlbumViewHolder> {
 
+    private final String TAG = "SimpleAlbumAdapter";
     List<Album> albumList;
-    AlbumViewHolder viewHolder;
+    public interface OnAlbumClickListener{
+        void onItemClick(Album album, ImageView sharedImageView, int position);
+    }
 
+    private OnAlbumClickListener albumClickListener;
     public static class AlbumViewHolder extends RecyclerView.ViewHolder {
         ImageView albumImage;
         TextView albumName, releaseYear;
@@ -36,8 +42,9 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
         }
     }
 
-    public SimpleAlbumAdapter(List<Album> albumList){
+    public SimpleAlbumAdapter(List<Album> albumList, OnAlbumClickListener albumClickListener){
         this.albumList = albumList;
+        this.albumClickListener = albumClickListener;
     }
 
     @NonNull
@@ -48,6 +55,11 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
 
     public void onBindViewHolder(@NonNull AlbumViewHolder holder, int position){
         Album album = albumList.get(position);
+
+        String transitionName = "transition_starts_at_simple_album_adapter_" + holder.getAdapterPosition() + "_" + album.albumId + "_" + album.artworkUrl + "_" + album.releaseDate;
+        ViewCompat.setTransitionName(holder.albumImage, transitionName);
+        Log.d(TAG, "set transitionName at position " + holder.getAdapterPosition() + " : " + transitionName);
+
         Picasso.get()
                 .load(album.artworkUrl)
                 .error(R.drawable.ic_image_not_found_foreground)
@@ -56,11 +68,10 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
         holder.releaseYear.setText(album.releaseDate.substring(0, 4));
 
         holder.itemView.setOnClickListener(v -> {
-            //todo move album info fragment
-            Bundle bundle = new Bundle();
-            bundle.putParcelable("album", album);
-            NavController navController = Navigation.findNavController(v);
-            navController.navigate(R.id.album_info, bundle);
+            albumClickListener.onItemClick(
+                    album,
+                    holder.albumImage,
+                    holder.getAdapterPosition());
         });
     }
 

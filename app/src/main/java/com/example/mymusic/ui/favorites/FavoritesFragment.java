@@ -86,7 +86,7 @@ public class FavoritesFragment extends Fragment {
     TextView lyricsTextView, onLyricsTitleTextView, getOnLyricsArtistTextView;
     ScrollView scrollAreaView;
     LinearLayout countLayout, onLyricsContainer;
-    ImageButton cancelButton;
+    ImageButton lyricsModeCancelButton;
     ImageView focusedImageView;
     TextView focusedTitleTextView, focusedAlbumTextView, focusedArtistTextView, focusedDurationTextView, focusedReleaseDateTextView;
     MaterialCardView musicInfoContainer, simpleMusicInfoContainer, lyricsTextContainer, lyricsContainer;
@@ -179,7 +179,7 @@ public class FavoritesFragment extends Fragment {
         webView = view.findViewById(R.id.hidden_web_view);
         webView2 = view.findViewById(R.id.hidden_web_view_2);
         lyricsContainer = view.findViewById(R.id.lyrics_container);
-        cancelButton = view.findViewById(R.id.cancel_button);
+        lyricsModeCancelButton = view.findViewById(R.id.cancel_button);
         countLayout = view.findViewById(R.id.count_layout);
         onLyricsContainer = view.findViewById(R.id.on_lyrics_container);
         musicInfoContainer = view.findViewById(R.id.music_info_container);
@@ -218,25 +218,14 @@ public class FavoritesFragment extends Fragment {
 */
 
 
-        cancelButton.setOnClickListener(v -> {
+        lyricsModeCancelButton.setOnClickListener(v -> {
             cancelLyricsMode();
         });
 
 
         //다중삭제 취소 버튼
         cancelSelectionModeTextView.setOnClickListener(v ->{
-            if (favoriteOption == 0){
-                List<Favorite> selectedList = favoriteTrackAdapter.getSelectedList();
-                favoriteTrackAdapter.setSelectionMode(false);
-                for (Favorite selected : selectedList){
-                    selected.isSelected = false;
-                    selected.recyclerViewPosition = -1;
-                }
-                cancelSelectionModeTextView.setVisibility(View.GONE);
-                removeSelectedFavoritesTextView.setVisibility(View.GONE);
-                isSelectionMode = false;
-                favoritesViewModel.getFavoritesCount(count -> favoritesLoadedCountTextView.setText(String.valueOf(count)));
-            }
+          handleCancelSelectionMode();
         });
 
         removeSelectedFavoritesTextView.setOnClickListener(v -> {
@@ -372,9 +361,11 @@ public class FavoritesFragment extends Fragment {
                     Log.d(TAG, "Artist List is empty");
                     recyclerView.setVisibility(View.GONE);
                 }
-                updateEmptyState(favoriteArtistList.isEmpty());
-                favoriteArtistAdapter.updateData(favoriteArtistList);
-                favoritesLoadedCountTextView.setText(String.valueOf(favoriteArtistList.size()));
+                List<Artist> reversed = new ArrayList<>(favoriteArtistList);
+                Collections.reverse(reversed);
+                updateEmptyState(reversed.isEmpty());
+                favoriteArtistAdapter.updateData(reversed);
+                favoritesLoadedCountTextView.setText(String.valueOf(reversed.size()));
                 elementCountTextView.setText("Artists");
                 handleReenterTransition();
             });
@@ -518,6 +509,9 @@ public class FavoritesFragment extends Fragment {
 
                     // 삭제 후 즐겨찾기 목록 새로고침 (공통 로직)
                     favoriteArtistViewModel.loadFavorites(updatedList -> {
+                        List<Artist> reversed = new ArrayList<>(updatedList);
+                        Collections.reverse(reversed);
+
                         // 목록 상태에 따라 UI 업데이트 (empty/visible)
                         if (updatedList.isEmpty()) {
                             emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
@@ -526,9 +520,9 @@ public class FavoritesFragment extends Fragment {
                             emptyFavoriteSongTextView.setVisibility(View.GONE);
                             recyclerView.setVisibility(View.VISIBLE);
                         }
-                        favoriteArtistAdapter.updateData(updatedList); // RecyclerView 데이터 업데이트
+                        favoriteArtistAdapter.updateData(reversed); // RecyclerView 데이터 업데이트
                         // updateEmptyState(updatedList.isEmpty()); // 이 메서드가 별도로 있다면 호출
-                        favoritesLoadedCountTextView.setText(String.valueOf(updatedList.size())); // 개수 업데이트
+                        favoritesLoadedCountTextView.setText(String.valueOf(reversed.size())); // 개수 업데이트
                     });
                 })
                 .show(); // 다이얼로그 표시
@@ -562,7 +556,7 @@ public class FavoritesFragment extends Fragment {
     }
 
     private void LyricsOnMode(Favorite favorite, int recyclerViewPosition){
-        if (getView() == null || cancelButton == null) {
+        if (getView() == null || lyricsModeCancelButton == null) {
             Log.w(TAG, "View not ready yet, skipping LyricsOnMode()");
             return;
         }
@@ -578,7 +572,7 @@ public class FavoritesFragment extends Fragment {
             Log.d(TAG, "null point saved in focused favorite");
         }
         Track track = favorite.track;
-        cancelButton.setVisibility(View.VISIBLE);
+        lyricsModeCancelButton.setVisibility(View.VISIBLE);
         countLayout.setVisibility(View.GONE);
         //recyclerView.setVisibility(View.GONE);
         favoriteOptionSwitch.setVisibility(View.GONE);
@@ -1259,7 +1253,10 @@ public class FavoritesFragment extends Fragment {
     OnBackPressedCallback callback = new OnBackPressedCallback(true) {
         @Override
         public void handleOnBackPressed() {
-            if (lyricsContainer.getVisibility() == View.GONE){
+            if (isSelectionMode){
+                handleCancelSelectionMode();
+            }
+            else if (lyricsContainer.getVisibility() == View.GONE){
                 requireActivity().onBackPressed();
             }else{
                 cancelLyricsMode();
@@ -1267,6 +1264,20 @@ public class FavoritesFragment extends Fragment {
         }
     };
 
+    private void handleCancelSelectionMode(){
+        if (favoriteOption == 0){
+            List<Favorite> selectedList = favoriteTrackAdapter.getSelectedList();
+            favoriteTrackAdapter.setSelectionMode(false);
+            for (Favorite selected : selectedList){
+                selected.isSelected = false;
+                selected.recyclerViewPosition = -1;
+            }
+            cancelSelectionModeTextView.setVisibility(View.GONE);
+            removeSelectedFavoritesTextView.setVisibility(View.GONE);
+            isSelectionMode = false;
+            favoritesViewModel.getFavoritesCount(count -> favoritesLoadedCountTextView.setText(String.valueOf(count)));
+        }
+    }
 
     private void cancelLyricsMode(){
         favoritesViewModel.setLyricsMode(false);
@@ -1300,7 +1311,7 @@ public class FavoritesFragment extends Fragment {
             });
 
         }
-        cancelButton.setVisibility(View.GONE);
+        lyricsModeCancelButton.setVisibility(View.GONE);
         favoriteOptionSwitch.setVisibility(View.VISIBLE);
         elementCountTextView.setVisibility(View.VISIBLE);
         countLayout.setVisibility(View.VISIBLE);

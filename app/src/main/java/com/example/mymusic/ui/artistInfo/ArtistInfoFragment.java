@@ -1,4 +1,4 @@
-package com.example.mymusic.ui.artistInfo;
+   package com.example.mymusic.ui.artistInfo;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -34,6 +34,7 @@ import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.databinding.FragmentArtistInfoBinding;
+import com.example.mymusic.model.Album;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
@@ -121,7 +122,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         Log.d(TAG, "Empty Track adapter setting Done");
         trackRecyclerView.setNestedScrollingEnabled(false);
 
-        albumAdapter = new SimpleAlbumAdapter(new ArrayList<>());
+        albumAdapter = new SimpleAlbumAdapter(new ArrayList<>(), this::onAlbumClick);
         albumRecyclerView.setAdapter(albumAdapter);
         Log.d(TAG, "Empty Album adapter setting Done");
         albumRecyclerView.setNestedScrollingEnabled(false);
@@ -178,6 +179,12 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
     private void parseArgs() {
         String transitionName = getArguments().getString("transitionName");
+        if (transitionName == null){
+            Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition()");
+            startPostponedEnterTransition();
+            return;
+        }
+
         String transitionNameForm = getArguments().getString("transitionNameForm");
         int position = getArguments().getInt("postiion");
 
@@ -192,69 +199,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
 
-    private void handleReenterTransitionForTrack() {
-        Log.d(TAG, ":::: handleReenterAndStartTransition() 호출됨 ::::");
-        // ViewModel에서 돌아갈 위치를 가져옵니다.
-        int position = viewModel.getTrackPosition();
-        viewModel.setTrackPosition(-1);
-        // 돌아갈 위치 정보가 없으면 바로 전환 시작
-        if (position == -1) {
-            Log.d(TAG, "reenter state 아님, startPostponedEnterTransition() 호출 취소");
-            return;
-        }
 
-        // ✅ RecyclerView에게 해당 위치의 뷰를 '준비'하라고 먼저 알립니다.
-        binding.trackResultRecyclerView.scrollToPosition(position);
-
-        // ✅ post()를 사용해, 위 스크롤 요청이 반영된 '다음' 프레임에 로직을 실행합니다.
-        binding.trackResultRecyclerView.post(() -> {
-            // 이제 해당 위치의 ViewHolder를 찾습니다.
-            RecyclerView.ViewHolder holder = binding.trackResultRecyclerView.findViewHolderForAdapterPosition(position);
-
-            // ViewHolder를 찾았다면, 그 뷰의 Y좌표로 부모 스크롤뷰를 강제로 스크롤합니다.
-            if (holder != null) {
-                // ❗ fragment_artist_info.xml에서 ViewPager2와 RecyclerView를 모두 감싸는
-                // 최상위 NestedScrollView 또는 ScrollView의 ID로 변경해야 합니다.
-                binding.parentScrollContainer.scrollTo(0, (int) holder.itemView.getY() + 220);
-                Log.d(TAG, "viewholder detected! force parent scroll view to locate (0, Y of shared item view)");
-            }
-            else{
-                Log.d(TAG, "Error, viewholder does not detected!");
-            }
-
-            // 모든 스크롤이 강제로 완료된 이 시점에 전환을 시작합니다.
-
-            startPostponedEnterTransition();
-            Log.d(TAG, "startPostponedEnterTransition() 호출됨");
-
-        });
-    }
-    private void onDataReady(){
-        int currentCount = readyCounter.incrementAndGet();
-        if (currentOnDataReadyTime != 0){
-            long temp = System.currentTimeMillis();
-            Log.d(TAG, "시간차이: " + (temp - currentOnDataReadyTime) + "ms");
-            currentOnDataReadyTime = temp;
-        }else{
-            currentOnDataReadyTime = System.currentTimeMillis();
-        }
-        Log.d(TAG, "onDataReady() 호출됨 - readyCounter num: " + currentCount);
-        Log.d(TAG, "transition started state: " + isTransitionStarted);
-        if (currentCount == 3 && !isTransitionStarted){
-            Log.d(TAG, "every data is ready, now start transition first time");
-            isTransitionStarted = true;
-            if (viewModel.getTrackPosition() != -1) {
-                Log.d(TAG, "onDataReady Debug - viewModel.getTrackPosition() != -1");
-                handleReenterTransitionForTrack();
-            }else if (viewModel.getAlbumPosition() != -1){
-                Log.d(TAG, "onDataReady Debug - viewModel.getAlbumPosition() != -1");
-                handleReenterTransitionAlbum();
-            } else{
-                Log.d(TAG, "onDataReady Debug - initial enter or reenter from image detail");
-                pager.post(() -> startPostponedEnterTransition());
-            }
-        }
-    }
 
     private void loadAlbums() {
         ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext(), requireActivity());
@@ -512,56 +457,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         });
 
 
-/*
-        pager.post(() -> {
-            Log.d(TAG, "this is PAGER2 AREA");
-            imageOverlayManager.setDownloadButtonLocation(- (int)(pager.getWidth() / 6.5f), pager.getWidth() / 14);
-
-            int[] pagerLocation = new int[2];
-            pager.getLocationOnScreen(pagerLocation);
-            int pagerRightX = pagerLocation[0] + pager.getWidth();
-            int pagerBottomY = pagerLocation[1] + pager.getHeight();
-
-            int buttonWidth = enlargeButton.getWidth();
-            int buttonHeight = enlargeButton.getHeight();
-
-            final float density = getResources().getDisplayMetrics().density;
-            if (buttonWidth == 0) buttonWidth = (int)(24 * density);
-            if (buttonHeight == 0) buttonHeight = (int)(24 * density);
-
-            int padding = (int)(6 * density);
-
-            FrameLayout.LayoutParams enlargeParams = (FrameLayout.LayoutParams) enlargeButton.getLayoutParams();
-            enlargeParams.leftMargin = pagerRightX - buttonWidth - padding;
-            enlargeParams.topMargin = pagerBottomY - buttonHeight - padding;
-
-            enlargeButton.setLayoutParams(enlargeParams);
-            enlargeButton.setVisibility(View.VISIBLE);
-            Log.d(TAG, "ViewPager2 load completed");
-            onDataReady();
-        });
-*/
-
-        /*
-        pager.postDelayed(() -> {
-            if (!((viewModel.getTrackPosition() != -1 && !isTrackImageReady) || (viewModel.getAlbumPosition() != -1 && !isArtistImageReady))) {
-
-                //startPostponedEnterTransition();
-                //Log.d(TAG, "startPostponedEnterTransition()");
-                Log.d(TAG, "track position: " + viewModel.getTrackPosition());
-                Log.d(TAG, "is Track Ready: " + isTrackImageReady);
-                Log.d(TAG, "album position: " + viewModel.getAlbumPosition());
-                Log.d(TAG, "is album Ready: " + isAlbumImageReady);
-            }
-
-        }, 10);
-         */
-
-
-
-
-
-        // ArtistInfoFragment.java 의 onViewCreated 또는 setView 내부
 
         enlargeButton.setOnClickListener(v -> {
             int currentPosition = pager.getCurrentItem();
@@ -603,9 +498,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
 
 
-    private void handleReenterTransitionAlbum(){
-        //todo track 과 같은 로직으로 수정
-    }
 
 
     public void onLongClick(ImageView imageView, MotionEvent event, String imageUrl){
@@ -663,6 +555,98 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 .show();
     }
 
+    private void onDataReady(){
+        int currentCount = readyCounter.incrementAndGet();
+        if (currentOnDataReadyTime != 0){
+            long temp = System.currentTimeMillis();
+            Log.d(TAG, "시간차이: " + (temp - currentOnDataReadyTime) + "ms");
+            currentOnDataReadyTime = temp;
+        }else{
+            currentOnDataReadyTime = System.currentTimeMillis();
+        }
+        Log.d(TAG, "onDataReady() 호출됨 - readyCounter num: " + currentCount);
+        Log.d(TAG, "transition started state: " + isTransitionStarted);
+        if (currentCount == 3 && !isTransitionStarted){
+            Log.d(TAG, "every data is ready, now start transition first time");
+            isTransitionStarted = true;
+            if (viewModel.getTrackPosition() != -1) {
+                Log.d(TAG, "onDataReady Debug - viewModel.getTrackPosition() != -1");
+                handleReenterTransitionForTrack();
+            }else if (viewModel.getAlbumPosition() != -1){
+                Log.d(TAG, "onDataReady Debug - viewModel.getAlbumPosition() != -1");
+                handleReenterTransitionAlbum();
+            } else{
+                Log.d(TAG, "onDataReady Debug - initial enter or reenter from image detail");
+                pager.post(() -> startPostponedEnterTransition());
+            }
+        }
+    }
+
+    private void handleReenterTransitionForTrack() {
+        Log.d(TAG, "handleReenterAndStartTransition() 호출됨");
+        // ViewModel에서 돌아갈 위치를 가져옵니다.
+        int position = viewModel.getTrackPosition();
+        viewModel.setTrackPosition(-1);
+        // 돌아갈 위치 정보가 없으면 바로 전환 시작
+        if (position == -1) {
+            Log.d(TAG, "(Track) reenter state 아님, startPostponedEnterTransition() 호출 취소");
+            return;
+        }
+
+        // ✅ RecyclerView에게 해당 위치의 뷰를 '준비'하라고 먼저 알립니다.
+        binding.trackResultRecyclerView.scrollToPosition(position);
+
+        // ✅ post()를 사용해, 위 스크롤 요청이 반영된 '다음' 프레임에 로직을 실행합니다.
+        binding.trackResultRecyclerView.post(() -> {
+            // 이제 해당 위치의 ViewHolder를 찾습니다.
+            RecyclerView.ViewHolder holder = binding.trackResultRecyclerView.findViewHolderForAdapterPosition(position);
+
+            // ViewHolder를 찾았다면, 그 뷰의 Y좌표로 부모 스크롤뷰를 강제로 스크롤합니다.
+            if (holder != null) {
+                // ❗ fragment_artist_info.xml에서 ViewPager2와 RecyclerView를 모두 감싸는
+                // 최상위 NestedScrollView 또는 ScrollView의 ID로 변경해야 합니다.
+                binding.parentScrollContainer.scrollTo(0, (int) holder.itemView.getY() + 220);
+                Log.d(TAG, "viewholder detected! force parent scroll view to locate (0, Y of shared item view)");
+            }
+            else{
+                Log.d(TAG, "Error, viewholder does not detected!");
+            }
+
+            // 모든 스크롤이 강제로 완료된 이 시점에 전환을 시작합니다.
+
+            startPostponedEnterTransition();
+            Log.d(TAG, "startPostponedEnterTransition() 호출됨");
+
+        });
+    }
+
+    private void handleReenterTransitionAlbum(){
+        Log.d(TAG, "handleReenterTransitionAlbum() 호출됨");
+        int position = viewModel.getAlbumPosition();
+        viewModel.setAlbumPosition(-1);
+
+        if (position == -1){
+            Log.d(TAG, "(Album) reenter state 아님, startPostponedEnterTransition() 호출 취소");
+            return;
+        }
+
+        binding.albumResultRecyclerView.scrollToPosition(position);
+
+        binding.albumResultRecyclerView.post(() -> {
+            RecyclerView.ViewHolder holder = binding.albumResultRecyclerView.findViewHolderForAdapterPosition(position);
+
+            if (holder != null){
+                binding.parentScrollContainer.scrollTo((int) holder.itemView.getX() , 0);
+            }else{
+                Log.d(TAG, "Error, viewholder does not detected!");
+            }
+            startPostponedEnterTransition();
+            Log.d(TAG, "startPostponedEnterTransition() 호출됨");
+        });
+
+    }
+
+
     public void onTrackClick(Track track, ImageView sharedImageView, int position){
         Log.d(TAG, "onTrackClick() 호출됨");
         Bundle bundle = new Bundle();
@@ -670,7 +654,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         bundle.putParcelable("favorite", favorite);
         String transitionName = ViewCompat.getTransitionName(sharedImageView);
         viewModel.setTrackPosition(position);
-        viewModel.setAlbumPosition(-1);
+        //viewModel.setAlbumPosition(-1);
 
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
@@ -683,6 +667,21 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
     }
 
+    public void onAlbumClick(Album album, ImageView sharedImageView, int position){
+        Log.d(TAG, "onAlbumClick() 호출됨");
+        Bundle args = new Bundle();
+        args.putParcelable("album", album);
+        String transitionName = ViewCompat.getTransitionName(sharedImageView);
+        viewModel.setAlbumPosition(position);
+
+        FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
+                .addSharedElement(sharedImageView, transitionName)
+                .build();
+        args.putString("transitionName", transitionName);
+
+        NavController navController = NavHostFragment.findNavController(this);
+        navController.navigate(R.id.album_info, args, null, extras);
+    }
 
 
 
