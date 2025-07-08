@@ -28,6 +28,7 @@ import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.Transition;
 import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -39,6 +40,7 @@ import com.example.mymusic.model.Album;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
+import com.example.mymusic.ui.imageDetail.ImageDetailFragment;
 import com.example.mymusic.util.ImageOverlayManager;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
@@ -46,6 +48,8 @@ import com.example.mymusic.model.Track;
 import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
+import com.google.android.material.transition.MaterialArcMotion;
+import com.google.android.material.transition.MaterialContainerTransform;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -97,14 +101,31 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         setSharedElementEnterTransition(TransitionInflater.from(requireContext())
                 .inflateTransition(android.R.transition.move));
 
-        setExitSharedElementCallback(new SharedElementCallback() {
-            @Override
-            public void onSharedElementEnd(List<String> sharedElementNames, List<View> sharedElements, List<View> sharedElementSnapshots) {
-                super.onSharedElementEnd(sharedElementNames, sharedElements, sharedElementSnapshots);
-                Log.d(TAG, "onSharedElementEnd called");
-                if (viewModel.isSecondPostponeFlag() && sharedElements != null && !sharedElements.isEmpty()){
-                    ViewCompat.setTransitionName(sharedElements.get(0), viewModel.getInitialTransitionName());
-                    Log.d(TAG, "set transitionName to initial name after reenter from image detail fragment");
+        MaterialContainerTransform transform = new MaterialContainerTransform();
+        transform.setPathMotion(new MaterialArcMotion());
+        setSharedElementEnterTransition(transform);
+        setSharedElementReturnTransition(transform);
+
+
+        getParentFragmentManager().setFragmentResultListener(ImageDetailFragment.REQUEST_KEY, this, (requestKey, bundle) -> {
+            // B 프래그먼트에서 보낸 키와 일치하는지 확인
+            if (requestKey.equals(ImageDetailFragment.REQUEST_KEY)) {
+                boolean transitionEnded = bundle.getBoolean(ImageDetailFragment.BUNDLE_KEY_TRANSITION_END);
+                if (transitionEnded) {
+                    Log.d("ListFragment", "Return transition from DetailsFragment has ended.");
+                    // ⭐ B에서 A로의 복귀 전환이 완전히 끝난 시점! ⭐
+                    // 여기에 원하는 작업을 구현하면 됩니다.
+                    int position = 0;
+                    RecyclerView recyclerView = (RecyclerView) pager.getChildAt(0);
+                    ImagePagerAdapter.ImageViewHolder holder = (ImagePagerAdapter.ImageViewHolder) recyclerView.findViewHolderForAdapterPosition(position);
+                    if (holder == null) {
+                        Log.d(TAG, "holder is null, cannot find imageView");
+                        return;
+                    }
+                    ImageView imageView = holder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
+                    Log.d(TAG, "image view connected");
+                    ViewCompat.setTransitionName(imageView, viewModel.getInitialTransitionName());
+
                 }
             }
         });
@@ -463,6 +484,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 return;
             }
             ImageView currentImageView = holder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
+            Log.d(TAG, "image view connected");
 
             // 3. 전환할 뷰(currentImageView)에 고유한 transitionName 설정
             String transitionName = "Transition_artist_to_image_detail" + imageUrls.get(currentPosition) + currentPosition;
@@ -573,7 +595,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 Log.d(TAG, "onDataReady Debug - reenter from image detail fragment");
                 handleReenterTransitionFromImageDetail();
             } else {
-                Log.d(TAG, "onDataReady Debug - initial enter");
                 pager.post(() -> startPostponedEnterTransition());
             }
         }
@@ -583,6 +604,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         Log.d(TAG, "handleReenterTransitionFromImageDetail() 호출됨");
         viewModel.setSecondPostponeFlag(false);
         startPostponedEnterTransition();
+
+        Log.d(TAG, "onDataReady Debug - initial enter");
     }
     private void handleReenterTransitionForTrack() {
         Log.d(TAG, "handleReenterAndStartTransition() 호출됨");
@@ -684,6 +707,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         NavController navController = NavHostFragment.findNavController(this);
         navController.navigate(R.id.album_info, args, null, extras);
     }
+
 
 
 

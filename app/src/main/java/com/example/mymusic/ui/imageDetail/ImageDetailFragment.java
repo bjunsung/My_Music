@@ -22,6 +22,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.transition.Explode;
+import androidx.transition.Transition;
 import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.mymusic.R; // 자신의 R 클래스 경로
@@ -45,33 +46,14 @@ public class ImageDetailFragment extends Fragment {
     private FragmentImageDetailBinding binding;
     private String transitionName;
     private final String TAG = "ImageDetailFragment";
+    public static final String REQUEST_KEY = "details_fragment_request";
+    public static final String BUNDLE_KEY_TRANSITION_END = "transition_ended";
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 애니메이션 설정
-
-        /*
-        Context context = getContext();
-        if (context != null){
-            setSharedElementEnterTransition(TransitionInflater.from(context)
-                    .inflateTransition(android.R.transition.move));
-        }
-
-        setExitSharedElementCallback(new SharedElementCallback() {
-            @Override
-            public void onSharedElementEnd(List<String> sharedElementNames, List<View> sharedElements, List<View> sharedElementSnapshots) {
-                super.onSharedElementEnd(sharedElementNames, sharedElements, sharedElementSnapshots);
-                Log.d(TAG, "onSharedElementEnd called");
-                if (viewModel.isSecondPostponeFlag() && sharedElements != null && !sharedElements.isEmpty()){
-                    ViewCompat.setTransitionName(sharedElements.get(0), viewModel.getInitialTransitionName());
-                    Log.d(TAG, "set transitionName to initial name after reenter from image detail fragment");
-                }
-            }
-        });
-
-         */
-
         //앨범 이미지 트랜지션 설정
         MaterialContainerTransform transform = new MaterialContainerTransform();
         transform.setPathMotion(new MaterialArcMotion());
@@ -79,7 +61,40 @@ public class ImageDetailFragment extends Fragment {
         setSharedElementReturnTransition(new MaterialContainerTransform());
 
 
-        //setEnterTransition(new Explode());
+
+        Transition returnTransition = (Transition) getSharedElementReturnTransition();
+        if (returnTransition != null) {
+            returnTransition.addListener(new Transition.TransitionListener() {
+                @Override
+                public void onTransitionStart(@NonNull Transition transition) {
+
+                }
+
+                @Override
+                public void onTransitionEnd(@NonNull Transition transition) {
+                    Bundle result = new Bundle();
+                    result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
+                    getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
+                    transition.removeListener(this);
+                }
+
+                @Override
+                public void onTransitionCancel(@NonNull Transition transition) {
+
+                }
+
+                @Override
+                public void onTransitionPause(@NonNull Transition transition) {
+
+                }
+
+                @Override
+                public void onTransitionResume(@NonNull Transition transition) {
+
+                }
+            });
+        }
+
 
     }
 
@@ -93,12 +108,9 @@ public class ImageDetailFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-
-
-
         // 애니메이션 시작을 잠시 지연
         postponeEnterTransition();
+
 
         // Safe Args 또는 Bundle에서 데이터 가져오기
         if (getArguments() != null) {
@@ -110,6 +122,7 @@ public class ImageDetailFragment extends Fragment {
         bindView(view);
         setView();
         DetailImagePagerAdapter adapter = new DetailImagePagerAdapter(imageUrls, (v) -> toggleUiMode());
+
 
 
         viewPager.setAdapter(adapter);
