@@ -35,6 +35,7 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     private String transitionNameForm;
     private int recyclerviewPosition;
     private OnImageLoadListener imageLoadListener;
+    private  ArtistInfoViewModel viewModel;
     public interface OnImageLoadListener{
         void onLoadSuccess(ImageView imageView);
         void onLoadFailed();
@@ -46,13 +47,14 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     }
 
 
-    public ImagePagerAdapter(Context context, List<String> urls, OnImageLongClickListener longClickListener, Artist artist, String transitionNameForm, int recyclerviewPosition) {
+    public ImagePagerAdapter(Context context, List<String> urls, OnImageLongClickListener longClickListener, Artist artist, ArtistInfoViewModel viewModel) {
         this.context = context;
         this.imageUrls = urls;
         this.longClickListener = longClickListener;
         this.artist = artist;
-        this.transitionNameForm = transitionNameForm;
-        this.recyclerviewPosition = recyclerviewPosition;
+        this.transitionNameForm = viewModel.getInitialTransitionNameForm();
+        this.recyclerviewPosition = viewModel.getInitialPosition();
+        this.viewModel = viewModel;
     }
 
     public void setImageLoadListener(OnImageLoadListener imageLoadListener) {
@@ -74,28 +76,38 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
         String url = imageUrls.get(position);
-        String transitionName = transitionNameForm + recyclerviewPosition + "_" + artist.artistName + "_" + artist.artistId + "_" + url;
-        Log.d(TAG, "setting transition name for (ViewPager2) position at " + position + " transitionName: " + transitionName);
-        ViewCompat.setTransitionName(holder.imageView, transitionName);
+        if (!viewModel.isSecondPostponeFlag()) {
+            String transitionName = transitionNameForm + recyclerviewPosition + "_" + artist.artistName + "_" + artist.artistId + "_" + url;
+            Log.d(TAG, "setting transition name for (ViewPager2) position at " + position + " transitionName: " + transitionName);
+            ViewCompat.setTransitionName(holder.imageView, transitionName);
 
-        Glide.with(context)
-                .load(imageUrls.get(position))
-                .listener(new RequestListener<Drawable>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @androidx.annotation.NonNull Target<Drawable> target, boolean isFirstResource) {
-                        imageLoadListener.onLoadFailed();
-                        return false;
-                    }
+        }else{
+            if (viewModel.getCurrentTransitionName().contains(url)){
+                ViewCompat.setTransitionName(holder.imageView, viewModel.getCurrentTransitionName());
+                Log.d(TAG, "setting transition name for (ViewPager2) position at " + position + " transitionName: " + viewModel.getCurrentTransitionName());
+            } else{
+                ViewCompat.setTransitionName(holder.imageView, "basic_transition_name_" + holder.getAdapterPosition());
+            }
+        }
+        if (ViewCompat.getTransitionName(holder.imageView) != null) {
+            Glide.with(context)
+                    .load(imageUrls.get(position))
+                    .listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @androidx.annotation.NonNull Target<Drawable> target, boolean isFirstResource) {
+                            imageLoadListener.onLoadFailed();
+                            return false;
+                        }
 
-                    @Override
-                    public boolean onResourceReady(@androidx.annotation.NonNull Drawable resource, @androidx.annotation.NonNull Object model, Target<Drawable> target, @androidx.annotation.NonNull DataSource dataSource, boolean isFirstResource) {
-                        imageLoadListener.onLoadSuccess(holder.imageView);
-                        return false;
-                    }
-                })
-                .error(R.drawable.ic_image_not_found_foreground)
-                .into(holder.imageView);
-
+                        @Override
+                        public boolean onResourceReady(@androidx.annotation.NonNull Drawable resource, @androidx.annotation.NonNull Object model, Target<Drawable> target, @androidx.annotation.NonNull DataSource dataSource, boolean isFirstResource) {
+                            imageLoadListener.onLoadSuccess(holder.imageView);
+                            return false;
+                        }
+                    })
+                    .error(R.drawable.ic_image_not_found_foreground)
+                    .into(holder.imageView);
+        }
 
 
 

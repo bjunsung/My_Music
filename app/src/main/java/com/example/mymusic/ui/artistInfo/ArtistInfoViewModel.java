@@ -13,6 +13,7 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private int trackPosition = -1;
     private int albumPosition = -1;
     private boolean firstFragmentCreation = true;
+    private boolean secondPostponeFlag = false;
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
     }
@@ -71,5 +72,13 @@ public class ArtistInfoViewModel extends AndroidViewModel {
 
     public void setFirstFragmentCreation(boolean firstFragmentCreation) {
         this.firstFragmentCreation = firstFragmentCreation;
+    }
+
+    public boolean isSecondPostponeFlag() {
+        return secondPostponeFlag;
+    }
+
+    public void setSecondPostponeFlag(boolean secondPostponeFlag) {
+        this.secondPostponeFlag = secondPostponeFlag;
     }
 }

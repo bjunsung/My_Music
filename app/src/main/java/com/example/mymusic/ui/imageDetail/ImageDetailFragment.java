@@ -1,5 +1,7 @@
 package com.example.mymusic.ui.imageDetail;
 
+import androidx.core.app.SharedElementCallback;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 
 import android.app.Activity;
@@ -7,6 +9,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.transition.ChangeBounds;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +30,7 @@ import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ImageDetailFragment extends Fragment {
 
@@ -40,6 +44,7 @@ public class ImageDetailFragment extends Fragment {
     ImageButton backButtonImageButton, emptySpaceImageButton;
     private FragmentImageDetailBinding binding;
     private String transitionName;
+    private final String TAG = "ImageDetailFragment";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -52,6 +57,18 @@ public class ImageDetailFragment extends Fragment {
             setSharedElementEnterTransition(TransitionInflater.from(context)
                     .inflateTransition(android.R.transition.move));
         }
+
+        setExitSharedElementCallback(new SharedElementCallback() {
+            @Override
+            public void onSharedElementEnd(List<String> sharedElementNames, List<View> sharedElements, List<View> sharedElementSnapshots) {
+                super.onSharedElementEnd(sharedElementNames, sharedElements, sharedElementSnapshots);
+                Log.d(TAG, "onSharedElementEnd called");
+                if (viewModel.isSecondPostponeFlag() && sharedElements != null && !sharedElements.isEmpty()){
+                    ViewCompat.setTransitionName(sharedElements.get(0), viewModel.getInitialTransitionName());
+                    Log.d(TAG, "set transitionName to initial name after reenter from image detail fragment");
+                }
+            }
+        });
 
          */
 
