@@ -24,7 +24,6 @@ public class FavoritesViewModel extends AndroidViewModel {
     private int focusedPosition = -1;
 
 
-
     public void setLyricsMode(boolean value) {
         isLyricsMode.setValue(value);
     }

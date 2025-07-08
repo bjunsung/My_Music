@@ -12,6 +12,7 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private String currentTransitionName = null;
     private int trackPosition = -1;
     private int albumPosition = -1;
+    private boolean firstFragmentCreation = true;
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
     }
@@ -62,5 +63,13 @@ public class ArtistInfoViewModel extends AndroidViewModel {
 
     public void setInitialPosition(int initialPosition) {
         this.initialPosition = initialPosition;
+    }
+
+    public boolean isFirstFragmentCreation() {
+        return firstFragmentCreation;
+    }
+
+    public void setFirstFragmentCreation(boolean firstFragmentCreation) {
+        this.firstFragmentCreation = firstFragmentCreation;
     }
 }

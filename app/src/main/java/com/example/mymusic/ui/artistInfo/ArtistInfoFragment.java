@@ -179,9 +179,14 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
     private void parseArgs() {
         String transitionName = getArguments().getString("transitionName");
-        if (transitionName == null){
-            Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition()");
+        if (viewModel.isFirstFragmentCreation() && transitionName == null){
+            Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition() at FIRST CREATION of fragment");
+            viewModel.setFirstFragmentCreation(false);
             startPostponedEnterTransition();
+            return;
+        } else if(!viewModel.isFirstFragmentCreation() && transitionName == null){
+            Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition() at reenter to fragment");
+            onDataReady();
             return;
         }
 
