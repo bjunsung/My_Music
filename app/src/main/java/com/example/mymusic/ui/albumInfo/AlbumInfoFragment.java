@@ -79,8 +79,6 @@ public class AlbumInfoFragment extends Fragment {
     private ImageView enlargeButton;
     private FragmentAlbumInfoBinding binding;
 
-    private boolean isImageReady = false;
-    private boolean isListReady = false;
     private AlbumInfoViewModel viewModel;
 
     @Override
@@ -110,35 +108,53 @@ public class AlbumInfoFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
-        postponeEnterTransition();
         super.onViewCreated(view, savedInstanceState);
+
+        postponeEnterTransition();
+
+        if (viewModel.getInitialTransitionName() == null){
+            String receivedTransitionName = getArguments().getString("transitionName");
+            viewModel.setInitialTransitionName(receivedTransitionName);
+            ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
+            Log.d(TAG, "navigation 으로 '전달받은' 이름 설정, name=" + receivedTransitionName);
+        }else{
+            String currentTransitionName = viewModel.getCurrentTransitionName();
+            ViewCompat.setTransitionName(binding.artworkImage, currentTransitionName);
+            Log.d(TAG, "viewModel 에 '저장된' current 이름 복원, name=" + currentTransitionName);
+        }
+
+
         binding.trackResultRecyclerView.setTransitionGroup(false);
         bindView(view);
 
         if (albumImageView != null && albumImageView.getTransitionName() != null){
             Log.d(TAG, "현재 album transition name: " + albumImageView.getTransitionName());
         }
+
         Glide.with(requireContext())
                 .load(album.artworkUrl)
                 .error(R.drawable.ic_image_not_found_foreground)
-                .into(albumImageView);
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                        albumImageView.setImageDrawable(resource);
+                        Log.d(TAG, "Image resource Ready and start postponed enter transition");
+                        startPostponedEnterTransition(); // ✅ 성공 시 전환 시작
+                        albumImageView.post(() -> {
+                            Log.d(TAG, "set transition name to initial transition name after album imageview posted");
+                            ViewCompat.setTransitionName(binding.artworkImage, viewModel.getInitialTransitionName());
+                        });
+
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                });
 
         LinearLayout metadata_container = view.findViewById(R.id.metadata_container);
         Animation anim = AnimationUtils.loadAnimation(requireContext(), R.anim.slide_in_bottom);
         metadata_container.startAnimation(anim);
-
-
-        if (viewModel.getInitialTransitionName() == null){
-            String receivedTransitionName = getArguments().getString("transitionName");
-            viewModel.setInitialTransitionName(receivedTransitionName);
-            ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
-            Log.d(TAG, "onViewCreated 에서 '전달받은' 이름 설정, name=" + receivedTransitionName);
-        }else{
-            String currentTransitionName = viewModel.getCurrentTransitionName();
-            ViewCompat.setTransitionName(binding.artworkImage, currentTransitionName);
-            Log.d(TAG, "MusicInfoFragment: viewModel 에 '저장된' current 이름 복원, name=" + currentTransitionName);
-        }
-
 
 
 
@@ -156,20 +172,6 @@ public class AlbumInfoFragment extends Fragment {
             trackAdapter.setShowPosition(true);
             trackRecyclerView.setAdapter(trackAdapter);
 
-            // 5. ✅ RecyclerView가 화면에 그려질 준비가 끝났을 때 전환을 시작합니다.
-            // 이 시점이 이미지와 리스트가 모두 준비된 가장 확실한 타이밍입니다.
-            view.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    // 리스너를 여러 번 호출하지 않도록 바로 제거해줍니다.
-                    view.getViewTreeObserver().removeOnPreDrawListener(this);
-                    // 연기했던 모든 전환을 시작합니다!
-                    isListReady = true;
-                    if (isImageReady)
-                        startPostponedEnterTransition();
-                    return true;
-                }
-            });
         });
 
         setView();
@@ -196,13 +198,6 @@ public class AlbumInfoFragment extends Fragment {
         });
     }
 
-    public void trackItemClickEvent(Favorite favorite){
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("favorite", favorite);
-        NavController navController = Navigation.findNavController((requireView()));
-        navController.navigate(R.id.action_searchFragment_to_musicInfoFragment, bundle);
-    }
-
     private void bindView(View view){
         albumNameTextView = view.findViewById(R.id.album_name);
         artistNameTextView = view.findViewById(R.id.artist_name);
@@ -219,36 +214,6 @@ public class AlbumInfoFragment extends Fragment {
 
     @SuppressLint("ClickableViewAccessibility")
     private void setView(){
-        Glide.with(requireContext())
-                .load(album.artworkUrl)
-                .transition(DrawableTransitionOptions.withCrossFade())
-                .error(R.drawable.ic_image_not_found_foreground)
-                .into(new CustomTarget<Drawable>() {
-                    @Override
-                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                        albumImageView.setImageDrawable(resource);
-                        isImageReady = true;
-                        if (isListReady) {
-                            startPostponedEnterTransition(); // ✅ 성공 시 전환 시작
-                            albumImageView.postDelayed(() -> {
-                                ViewCompat.setTransitionName(binding.artworkImage, viewModel.getInitialTransitionName());
-                            }, 100);
-                        }
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                        // 필요하면 placeholder 정리
-                    }
-
-                    @Override
-                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                        super.onLoadFailed(errorDrawable);
-                        albumImageView.setImageResource(R.drawable.ic_image_not_found_foreground);
-                        startPostponedEnterTransition(); // ✅ 실패해도 전환 시작
-                    }
-                });
-
         albumNameTextView.setText(album.albumName);
         artistNameTextView.setText(album.artistName);
         releaseDateTextView.setText(album.releaseDate);
@@ -375,9 +340,6 @@ public class AlbumInfoFragment extends Fragment {
 
     }
 
-    public void onImageLoadListener(int position, String transitionName){
-        //todo
-    }
 
 
 }

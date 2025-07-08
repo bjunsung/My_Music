@@ -250,10 +250,10 @@ public class MusicInfoFragment extends Fragment {
                                 public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                                     artworkImage.setImageDrawable(resource);
                                     startPostponedEnterTransition();
-                                    artworkImage.postDelayed(() -> {
+                                    artworkImage.post(() -> {
                                         artworkImage.setTransitionName(viewModel.getInitialTransitionName());
                                         Log.d(TAG, "TransitionName set to initial transName: " + viewModel.getInitialTransitionName() );
-                                    }, 100);
+                                    });
 
                                 }
 
