@@ -1,6 +1,7 @@
 package com.example.mymusic.adapter;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +24,7 @@ import com.example.mymusic.R;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
+import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -36,6 +38,8 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     private boolean showImage = true;
     private boolean showPosition = false;
     private OnTrackClickListener trackClickListener;
+    private FavoritesViewModel favoritesViewModel;
+    private boolean hasTitleKr = false;
 
     public interface OnDetailClickListener {
         void onItemClick(Track track);
@@ -80,6 +84,9 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     @Override
     public TrackViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.item_track, parent, false);
+        Context context = parent.getContext(); // Adapter에 전달받은 context
+        Application app = (Application) context.getApplicationContext();
+        favoritesViewModel = new FavoritesViewModel(app);
         return new TrackViewHolder(view);
     }
 
@@ -89,13 +96,25 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             holder.positionTextView.setText(String.valueOf(position+1));
             holder.positionTextView.setVisibility(TextView.VISIBLE);
         }
-
+        //Favorites list 에 있는지 먼저 확인
         Track track = tracks.get(position);
+        favoritesViewModel.loadFavoriteItem(track.trackId, favorite -> {
+            if (favorite != null) {
+                holder.addButton.setVisibility(View.GONE);
+                if (favorite.metadata != null && favorite.metadata.title!= null && !favorite.metadata.title.isEmpty()) {
+                    holder.title.setText(favorite.metadata.title);
+                    hasTitleKr = true;
+                }
+            }
+        });
+
         String transitionName = "trasition_start_at_track_adapter_" + "위치: " + position + "_타이틀:" + track.trackName + "_" + track.artworkUrl + "_" + track.trackId + "_" + track.releaseDate + "_"  + track.durationMs;
         //Log.d("TrackAdapter", "transitionName for position: " + holder.getAdapterPosition() + " is_" + transitionName);
         ViewCompat.setTransitionName(holder.image, transitionName);
 
-        holder.title.setText(track.trackName);
+        if (!hasTitleKr) {
+            holder.title.setText(track.trackName);
+        }
         holder.artist.setText(track.artistName);
 
         // 이미지 로딩 (Picasso 필요)

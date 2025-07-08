@@ -217,6 +217,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             onDataReady();
             return;
         }
+
         String transitionNameForm = getArguments().getString("transitionNameForm");
         int initialRecyclerViewPosition = getArguments().getInt("position");
 
