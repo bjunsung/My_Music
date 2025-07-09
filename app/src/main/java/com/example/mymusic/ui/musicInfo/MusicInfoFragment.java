@@ -420,7 +420,7 @@ public class MusicInfoFragment extends Fragment {
 
                     // 매니저를 호출하여 오버레이와 애니메이션을 표시합니다.
                     imageOverlayManager.showOverlay(artworkImage, track.artworkUrl, touchX, touchY);
-                    imageOverlayManager.setNavBarColor(MusicInfoFragment.this.primaryColor, MusicInfoFragment.this.selectedColor, MusicInfoFragment.this.unselectedColor);
+                    //imageOverlayManager.setNavBarColor(MusicInfoFragment.this.primaryColor, MusicInfoFragment.this.selectedColor, MusicInfoFragment.this.unselectedColor);
                 }
             });
 

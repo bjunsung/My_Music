@@ -51,7 +51,7 @@ public class StrokePulseView extends View {
         }
 
         // 1. 반지름을 0에서 500까지 키우는 애니메이션
-        ObjectAnimator radiusAnimator = ObjectAnimator.ofFloat(this, "radius", 0f, 250f);
+        ObjectAnimator radiusAnimator = ObjectAnimator.ofFloat(this, "radius", 0f, 75);
 
         // 2. 투명도를 100%에서 0%로 바꾸는 애니메이션 (fade out)
         ObjectAnimator alphaAnimator = ObjectAnimator.ofInt(paint, "alpha", 255, 0);
@@ -59,7 +59,7 @@ public class StrokePulseView extends View {
         // 두 애니메이션을 함께 실행
         animatorSet = new AnimatorSet();
         animatorSet.playTogether(radiusAnimator, alphaAnimator);
-        animatorSet.setDuration(500); // 0.4초 동안 실행
+        animatorSet.setDuration(300); // 0.3초 동안 실행
         animatorSet.setInterpolator(new AccelerateDecelerateInterpolator());
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override

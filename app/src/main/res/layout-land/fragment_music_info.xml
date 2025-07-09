@@ -378,24 +378,32 @@
                 android:id="@+id/dim_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#99000000"
+                android:background="@android:color/transparent"
                 android:clickable="true"
                 android:focusable="true" />
 
-            <ImageView
-                android:id="@+id/overlay_image_clone"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:scaleType="centerCrop" />
 
-            <TextView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/download_button_overlay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DOWNLOAD"
-                android:textColor="@android:color/white"
-                android:padding="6dp"
-                android:elevation="4dp" />
+                app:cardBackgroundColor="@color/cardview_dark_background"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="false"
+                app:cardPreventCornerOverlap="false">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="이미지 다운로드"
+                    android:padding="6dp"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/white"/>
+            </androidx.cardview.widget.CardView>
+
+
 
             <com.example.mymusic.animation.StrokePulseView
                 android:id="@+id/stroke_pulse_view"
