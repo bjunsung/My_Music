@@ -126,12 +126,24 @@
 
             <!-- 리사이클러뷰: 기본 visible -->
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/result_recycler_view"
+                android:id="@+id/track_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_margin="8dp"
                 android:paddingBottom="@dimen/navigation_bar_margin"
                 android:visibility="visible"
+                app:layout_constraintTop_toBottomOf="@id/filter_button"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/artist_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_margin="8dp"
+                android:paddingBottom="@dimen/navigation_bar_margin"
+                android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/filter_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
