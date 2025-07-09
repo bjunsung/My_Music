@@ -273,7 +273,7 @@ public class AlbumInfoFragment extends Fragment {
 
     }
 
-    private void addFavoriteSong(Track track){
+    private void addFavoriteSong(Track track, int position){
         new AlertDialog.Builder(getContext())
                 .setTitle("관심목록에 추가")
                 .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
@@ -293,6 +293,9 @@ public class AlbumInfoFragment extends Fragment {
                                         favoritesViewModel.insert(track, today);
                                         requireActivity().runOnUiThread(() -> {
                                             Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                            if (trackAdapter != null){
+                                                trackAdapter.notifyItemChanged(position);
+                                            }
                                         });
                                     } catch (SQLiteConstraintException e) {
                                         requireActivity().runOnUiThread(() -> {

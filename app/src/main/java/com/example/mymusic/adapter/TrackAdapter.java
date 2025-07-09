@@ -49,7 +49,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         void onItemClick(Track track, ImageView  sharedImageView, int position);
     }
     public interface OnAddClickListener{
-        void onItemClick(Track track);
+        void onItemClick(Track track, int position);
     }
 
     public TrackAdapter(List<Track> tracks,
@@ -145,7 +145,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         holder.detailButton.setOnClickListener(v -> detailClickListener.onItemClick(track));
 
         //addButton 클릭 event
-        holder.addButton.setOnClickListener(v -> addClickListener.onItemClick(track));
+        holder.addButton.setOnClickListener(v -> addClickListener.onItemClick(track, holder.getAdapterPosition()));
 
     }
 

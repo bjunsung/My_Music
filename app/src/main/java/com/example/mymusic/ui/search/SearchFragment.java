@@ -353,13 +353,13 @@ public class SearchFragment extends Fragment {
 
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
-                        TrackAdapter adapter = new TrackAdapter(tracks,
+                        trackAdapter = new TrackAdapter(tracks,
                                 getContext(),
                                 this::showTrackDetails,
                                 this::addFavoriteSong,
                                 this::onTrackClick);
                         RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
-                        recyclerView.setAdapter(adapter);
+                        recyclerView.setAdapter(trackAdapter);
                         handleReenterTransitionTrack();
                     });
                 }
@@ -447,7 +447,7 @@ public class SearchFragment extends Fragment {
     }
 
     //addButton click시 db에 노래 저장
-    private void addFavoriteSong(Track track){
+    private void addFavoriteSong(Track track, int position){
         new AlertDialog.Builder(getContext())
                 .setTitle("관심목록에 추가")
                 .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
@@ -460,6 +460,12 @@ public class SearchFragment extends Fragment {
                                 favoritesViewModel.insert(track, today);
                                 requireActivity().runOnUiThread(() -> {
                                     Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                    if (trackAdapter != null) {
+                                        trackAdapter.notifyItemChanged(position);
+                                        Log.d(TAG, "notify item changed: " + position);
+                                    } else{
+                                        Log.d(TAG, "track adapter is null, position: " + position);
+                                    }
                                 });
                             } catch (SQLiteConstraintException e) {
                                 requireActivity().runOnUiThread(() -> {

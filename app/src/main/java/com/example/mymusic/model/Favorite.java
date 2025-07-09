@@ -53,4 +53,30 @@ public class Favorite implements Parcelable {
         dest.writeParcelable(track, flags);
         dest.writeString(addedDate);
     }
+
+    public String getTitle() {
+        if (metadata != null && metadata.title != null && !metadata.title.isEmpty()){
+            return metadata.title;
+        }else {
+            return track != null ? track.trackName : "";
+        }
+    }
+
+    public String getAddedDate(){
+        return addedDate;
+    }
+
+    public String getReleaseDate() {
+        return track != null ? track.releaseDate : "9999-99-99";
+    }
+    public Integer getDuration(){
+        return track != null ? Integer.parseInt(track.durationMs) : 0;
+    }
+    public String getArtistName() {
+        return track != null ? track.artistName : "";
+    }
+
+
+
+
 }
