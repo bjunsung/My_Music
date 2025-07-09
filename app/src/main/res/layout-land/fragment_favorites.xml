@@ -32,14 +32,40 @@
                 android:id="@+id/filter_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginTop="28dp"
-                android:src="@drawable/baseline_backspace_24"
+                android:layout_marginTop="30dp"
+                android:layout_marginLeft="6dp"
+                android:src="@drawable/ic_filter_button"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/favorite_option_switch"
-                android:layout_marginEnd="16dp"
-                android:visibility="invisible" />
+              />
+
+            <ImageButton
+                android:id="@+id/in_order_button_drop_down"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="24dp"
+                android:layout_marginTop="30dp"
+                android:src="@drawable/ic_arrow_drop_down"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/filter_button"
+                android:layout_marginStart="14dp"
+                />
+
+            <ImageButton
+                android:id="@+id/in_order_button_drop_up"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="24dp"
+                android:layout_marginTop="30dp"
+                android:src="@drawable/ic_arrow_drop_up_24"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/filter_button"
+                android:layout_marginStart="14dp"
+                android:visibility="gone"
+                />
 
 
             <LinearLayout

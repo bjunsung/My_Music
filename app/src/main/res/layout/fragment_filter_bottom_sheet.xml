@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="8dp"
+    app:cardPreventCornerOverlap="false"
+    android:layout_margin="8dp">
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white">
+
+    <!-- 정렬 기준 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="정렬 기준"
+        android:layout_marginLeft="4dp"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:paddingTop="8dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="2dp"
+        android:background="#CCCCCC" />
+
+    <GridLayout
+        android:id="@+id/sort_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="2"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:text="추가일"
+            android:gravity="center"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:text="발매일"
+            android:gravity="center"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:text="재생시간"
+            android:gravity="center"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:text="Title"
+            android:gravity="center"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:text="Artist이름"
+            android:gravity="center"
+            android:padding="8dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            android:layout_columnWeight="1" />
+    </GridLayout>
+
+    <!-- 발매일 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="발매일"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="8dp"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:paddingTop="16dp" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="2dp"
+        android:background="#CCCCCC" />
+
+
+    <GridLayout
+        android:id="@+id/release_filter_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="4"
+        android:layout_marginTop="8dp"
+        android:rowCount="5">
+
+        <!-- 각 TextView는 같은 스타일로 반복 -->
+
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="3개월"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="1년"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="5년"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="10년"
+            android:gravity="center" android:padding="8dp"/>
+
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="2020년대"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="2010년대"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="2000년대"
+            android:gravity="center" android:padding="8dp"/>
+
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="2000년 이전"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="봄"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="여름"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="가을"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="겨울"
+            android:gravity="center" android:padding="8dp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="전체"
+            android:gravity="center" android:padding="8dp"/>
+
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="직접입력"
+            android:gravity="center" android:padding="8dp"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_columnSpan="2"
+            android:layout_columnWeight="1">
+
+            <!-- 시작 날짜 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/date_start"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2025.07.10"
+                    android:textColor="#333"
+                    android:textSize="14sp"/>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/ic_arrow_drop_up_24" />
+
+            </LinearLayout>
+
+            <!-- 구분자 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:text="-"
+                android:layout_marginEnd="24dp"
+                android:textColor="#999"
+                android:textSize="16sp" />
+
+            <!-- 종료 날짜 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/date_end"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2025.07.10"
+                    android:textColor="#333"
+                    android:textSize="14sp"/>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/ic_arrow_drop_down" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+
+    </GridLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="2dp"
+        android:background="#CCCCCC" />
+
+    <Button
+        android:id="@+id/apply_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="적용"
+        android:textStyle="bold"
+        android:background="?attr/selectableItemBackground"
+        android:textColor="@android:color/black"/>
+</LinearLayout>
+</androidx.cardview.widget.CardView>

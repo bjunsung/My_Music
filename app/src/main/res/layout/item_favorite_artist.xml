@@ -18,8 +18,8 @@
     <!-- 앨범 이미지 -->
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_marginEnd="12dp"
         android:scaleType="centerCrop" />
 
@@ -86,17 +86,20 @@
                 android:ellipsize="end" />
         </LinearLayout>
     </LinearLayout>
+
     <ImageButton
         android:id="@+id/deleteButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_delete_favorite_song"
+        android:src="@drawable/ic_delete_button"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_gravity="center_vertical"
         app:layout_constraintTop_toTopOf="@id/artistTextView"
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
-        android:layout_marginEnd="8dp"/>
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="4dp"
+        android:padding="4dp"/>
     <ImageButton
         android:id="@+id/add_button"
         android:layout_width="wrap_content"
@@ -107,5 +110,7 @@
         app:layout_constraintTop_toTopOf="@id/artistTextView"
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
-        android:layout_marginEnd="6dp" />
+        android:layout_marginBottom="4dp"
+        android:padding="4dp"
+        android:layout_marginEnd="4dp"/>
 </LinearLayout>

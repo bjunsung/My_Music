@@ -53,6 +53,7 @@ import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistMetadataService;
 import com.example.mymusic.network.ArtistVibeLinkService;
 import com.example.mymusic.network.LyricsSearchService;
+import com.example.mymusic.ui.favorites.bottomSheet.FilterBottomSheetFragment;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.google.android.material.card.MaterialCardView;
@@ -79,9 +80,8 @@ public class FavoritesFragment extends Fragment {
     public int favoriteOption = 0; // 기본값: track
     private TextView elementCountTextView;
     private Boolean isSelectionMode = false;
-    private ImageButton filterButton;
-
     private WebView webView, webView2;
+    private FilterBottomSheetFragment bottomSheet;
 
     TextView lyricsTextView, onLyricsTitleTextView, getOnLyricsArtistTextView;
     ScrollView scrollAreaView;
@@ -93,6 +93,7 @@ public class FavoritesFragment extends Fragment {
     TextView cancelSelectionModeTextView, removeSelectedFavoritesTextView;
     SwitchCompat favoriteOptionSwitch;
     private FragmentFavoritesBinding binding;
+    private ImageButton filterImageButton, dropDownImageButton, dropUpImageButton;
 
 
     @Override
@@ -229,6 +230,11 @@ public class FavoritesFragment extends Fragment {
         lyricsTextContainer = view.findViewById(R.id.lyrics_text_container);
         cancelSelectionModeTextView = view.findViewById(R.id.cancel_selection_mode);
         removeSelectedFavoritesTextView = view.findViewById(R.id.remove_selected_favorites);
+        bottomSheet = new FilterBottomSheetFragment();
+        filterImageButton = view.findViewById(R.id.filter_button);
+        dropDownImageButton = view.findViewById(R.id.in_order_button_drop_down);
+        dropUpImageButton = view.findViewById(R.id.in_order_button_drop_up);
+
 
         trackRecyclerView.setAdapter(favoriteTrackAdapter);
         artistRecyclerView.setAdapter(favoriteArtistAdapter);
@@ -414,6 +420,17 @@ public class FavoritesFragment extends Fragment {
             }
         }
 
+
+        filterImageButton.setOnClickListener(v -> {
+            if (!bottomSheet.isAdded() && !bottomSheet.isVisible()) {
+                bottomSheet.show(getParentFragmentManager(), "FilterBottomSheet");
+            }
+
+        });
+
+
+
+//onViewCreated
     }
 
     // 화면 업데이트 함수
