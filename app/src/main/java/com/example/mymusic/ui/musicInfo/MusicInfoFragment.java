@@ -78,6 +78,8 @@ public class MusicInfoFragment extends Fragment {
     // ✅ ViewBinding 사용을 권장합니다
     private FragmentMusicInfoBinding binding;
     private MusicInfoViewModel viewModel;
+    public static final String REQUEST_KEY = "music_info_fragment_request";
+    public static final String BUNDLE_KEY_TRANSITION_END = "transition_track_artwork_ended";
 
 
     //ViewModel 연결
@@ -98,6 +100,34 @@ public class MusicInfoFragment extends Fragment {
 
         // ✅ 2. 나머지 뷰(텍스트 등)를 위한 전환 설정
         setEnterTransition(new Explode());
+
+        // ✅ 3. transition end (Fragment) callback
+        androidx.transition.Transition returnTransition = (androidx.transition.Transition) getSharedElementReturnTransition();
+        if (returnTransition != null){
+            returnTransition.addListener(new androidx.transition.Transition.TransitionListener() {
+                @Override
+                public void onTransitionStart(@NonNull androidx.transition.Transition transition) {}
+
+                @Override
+                public void onTransitionEnd(@NonNull androidx.transition.Transition transition) {
+                    Bundle result = new Bundle();
+                    result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
+                    getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
+                    transition.removeListener(this);
+                }
+
+                @Override
+                public void onTransitionCancel(@NonNull androidx.transition.Transition transition) {}
+
+                @Override
+                public void onTransitionPause(@NonNull androidx.transition.Transition transition) {}
+
+                @Override
+                public void onTransitionResume(@NonNull androidx.transition.Transition transition) {}
+            });
+        }
+
+
 
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);

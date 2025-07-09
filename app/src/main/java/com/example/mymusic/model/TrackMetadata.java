@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TrackMetadata {
     public String vibeTrackId;
@@ -100,5 +101,28 @@ public class TrackMetadata {
     public void update(List<List<String>> vocalists) {
         this.vocalists = vocalists;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        TrackMetadata that = (TrackMetadata) obj;
+
+        return Objects.equals(lyrics, that.lyrics)
+                && Objects.equals(vibeTrackId, that.vibeTrackId)
+                && Objects.equals(title, that.title)
+                && Objects.equals(artistLink, that.artistLink)
+                && Objects.equals(vocalists, that.vocalists)
+                && Objects.equals(lyricists, that.lyricists)
+                && Objects.equals(composers, that.composers);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lyrics, vibeTrackId, title, artistLink,
+                vocalists, lyricists, composers);
+    }
+
 
 }

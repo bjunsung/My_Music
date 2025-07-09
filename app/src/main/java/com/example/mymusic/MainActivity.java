@@ -1,5 +1,6 @@
 package com.example.mymusic;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -120,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @SuppressLint("ResourceAsColor")
     private void setColor(){
         SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
         int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
@@ -139,13 +141,14 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.nav_view);
         bottomNav.setItemIconTintList(colorStateList);
         bottomNav.setItemTextColor(colorStateList);
-        bottomNav.setBackgroundColor(Color.WHITE);
+        bottomNav.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
+
 
         ImageButton backButton = binding.backButton;
-        backButton.setBackgroundColor(Color.WHITE);
+        backButton.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
         backButton.setColorFilter(Color.DKGRAY);
         ImageButton emptySpace = binding.emptySpace;
-        emptySpace.setBackgroundColor(Color.WHITE);
+        emptySpace.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
 
     }
     @Override

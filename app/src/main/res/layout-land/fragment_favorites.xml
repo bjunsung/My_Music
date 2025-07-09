@@ -158,7 +158,7 @@
                 android:layout_height="0dp"
                 android:layout_margin="8dp"
                 android:paddingBottom="@dimen/navigation_bar_margin"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/filter_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -181,7 +181,7 @@
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:orientation="horizontal"
-                android:visibility="gone"
+                android:visibility="visible"
                 app:layout_constraintTop_toBottomOf="@id/filter_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -189,201 +189,226 @@
                 android:layout_marginBottom="@dimen/navigation_bar_margin">
 
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/music_info_container"
-            android:layout_width="0dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="4dp"
-            android:layout_height="match_parent"
-            android:layout_weight="55"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="14dp">
-
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/simple_music_info"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginTop="10dp"
-                android:padding="8dp"
-                app:cardElevation="4dp"
-                app:cardCornerRadius="12dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/music_info_container"
+                    android:layout_width="0dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="4dp"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:layout_weight="50"
+                    app:cardElevation="4dp"
+                    app:cardCornerRadius="16dp"
+                    tools:ignore="MissingConstraints">
 
-                    <!-- 앨범 이미지 -->
-                    <ImageView
-                        android:id="@+id/focused_image"
-                        android:layout_width="140dp"
-                        android:layout_height="140dp"
-                        android:layout_marginEnd="12dp"
-                        android:scaleType="centerCrop" />
-
-                    <!-- 텍스트 정보 (제목, 아티스트) -->
                     <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingTop="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:id="@+id/focused_title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="The Wave"
-                                android:textColor="#FFFFFF"
-                                android:textSize="18sp"
-                                android:textStyle="bold"
-                                android:maxLines="1"
-                                android:layout_marginEnd="4dp"
-                                android:ellipsize="end" />
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="-"
-                                android:textStyle="bold"
-                                android:textSize="16sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:layout_marginEnd="4dp"
-                                android:ellipsize="end" />
-                            <TextView
-                                android:id="@+id/focused_album_title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Secret Garden"
-                                android:textStyle="bold|italic"
-                                android:textSize="16sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="앨범: "
-                                android:textSize="14sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end"
-                                android:visibility="gone"/>
-                            <TextView
-                                android:id="@+id/focused_artist"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Apink"
-                                android:textStyle="bold"
-                                android:textSize="16sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
 
-                        </LinearLayout>
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/simple_music_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginRight="10dp"
+                            android:layout_marginTop="10dp"
+                            android:padding="8dp"
+                            app:cardElevation="4dp"
+                            app:cardCornerRadius="16dp">
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="재생시간: "
-                                android:textSize="14sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                            <TextView
-                                android:id="@+id/focused_duration"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="4분19초"
-                                android:textSize="14sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="발매일: "
-                                android:textSize="14sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                            <TextView
-                                android:id="@+id/focused_release_date"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="2016-09-26"
-                                android:textSize="14sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal"
-                            android:visibility="gone">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="추가한 날짜: "
-                                android:textSize="14sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                            <TextView
-                                android:id="@+id/focused_added_date"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="2025-06-25"
-                                android:textSize="14sp"
-                                android:textColor="#FFFFFF"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                        </LinearLayout>
+                                <!-- 앨범 이미지 -->
+                                <ImageView
+                                    android:id="@+id/focused_image"
+                                    android:layout_width="140dp"
+                                    android:layout_height="140dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:scaleType="centerCrop" />
 
+                                <!-- 텍스트 정보 (제목, 아티스트) -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:paddingTop="4dp"
+                                    android:orientation="vertical">
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+                                        <TextView
+                                            android:id="@+id/focused_title"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="The Wave"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="18sp"
+                                            android:textStyle="bold"
+                                            android:maxLines="1"
+                                            android:layout_marginEnd="4dp"
+                                            android:ellipsize="end" />
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="-"
+                                            android:textStyle="bold"
+                                            android:textSize="16sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:layout_marginEnd="4dp"
+                                            android:ellipsize="end" />
+                                        <TextView
+                                            android:id="@+id/focused_album_title"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Secret Garden"
+                                            android:textStyle="bold|italic"
+                                            android:textSize="16sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+                                    </LinearLayout>
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="앨범: "
+                                            android:textSize="14sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end"
+                                            android:visibility="gone"/>
+                                        <TextView
+                                            android:id="@+id/focused_artist"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Apink"
+                                            android:textStyle="bold"
+                                            android:textSize="16sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="재생시간: "
+                                            android:textSize="14sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+                                        <TextView
+                                            android:id="@+id/focused_duration"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="4분19초"
+                                            android:textSize="14sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+                                    </LinearLayout>
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="발매일: "
+                                            android:textSize="14sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+                                        <TextView
+                                            android:id="@+id/focused_release_date"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="2016-09-26"
+                                            android:textSize="14sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+                                    </LinearLayout>
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal"
+                                        android:visibility="gone">
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="추가한 날짜: "
+                                            android:textSize="14sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+                                        <TextView
+                                            android:id="@+id/focused_added_date"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="2025-06-25"
+                                            android:textSize="14sp"
+                                            android:textColor="#FFFFFF"
+                                            android:maxLines="1"
+                                            android:ellipsize="end" />
+                                    </LinearLayout>
+
+                                </LinearLayout>
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/artists_other_music_card_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginRight="10dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:paddingLeft="2dp"
+                            android:paddingRight="2dp"
+                            android:paddingTop="2dp"
+                            android:paddingBottom="2dp"
+                            app:cardElevation="4dp"
+                            app:cardCornerRadius="16dp">
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/artists_other_music_recycler"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1" />
+                        </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-        </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
                 <!-- 오른쪽 가사 영역 (4.5 비율) -->
         <com.google.android.material.card.MaterialCardView
             app:cardElevation="4dp"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="16dp"
             android:id="@+id/lyrics_container"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="45"
+            android:layout_weight="50"
             android:layout_marginRight="10dp"
             android:layout_marginLeft="4dp">
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/lyrics_text_container"
                 app:cardElevation="4dp"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="45"

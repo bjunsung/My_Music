@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.Track;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +19,7 @@ public class SortFilterUtil {
     private final static String TAG = "SortFilterUtil";
     private static Context context;
 
-    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList) {
+    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, Track track) {
         SortFilterUtil.context = context;
         if (context == null || originalList == null) return originalList;
 
@@ -27,18 +28,19 @@ public class SortFilterUtil {
         String filter = prefs.getString("filter_option", "ALL");
         boolean isDescending = prefs.getBoolean("isDescending", false);
 
-        List<Favorite> filteredList = filterList(originalList, filter);
+        List<Favorite> filteredList = filterList(originalList, filter, track);
         return sortList(filteredList, sort, isDescending);
     }
-
-    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, String filterOption, String sortOption, boolean isDescending) {
+    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, String filterOption, Track track, String sortOption, boolean isDescending) {
         SortFilterUtil.context = context;
         if (context == null || originalList == null) return originalList;
-        List<Favorite> filteredList = filterList(originalList, filterOption);
+        if (filterOption == null) filterOption = "ALL";
+        List<Favorite> filteredList = filterList(originalList, filterOption, track);
+        if (sortOption == null) sortOption = "ADDED_DATE";
         return sortList(filteredList, sortOption, isDescending);
     }
 
-    private static List<Favorite> filterList(List<Favorite> list, String filter) {
+    private static List<Favorite> filterList(List<Favorite> list, String filter, Track queryTrack) {
         List<Favorite> result = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate threeMonthsAgo = LocalDate.now().minusMonths(3);
@@ -220,6 +222,19 @@ public class SortFilterUtil {
                             e.printStackTrace();
                         }
                         break;
+                    case "ON_THIS_DAY":
+                        try {
+                            if (item.track != null && item.track.releaseDate != null) {
+                                LocalDate releaseDate = LocalDate.parse(item.track.releaseDate);
+                                if (releaseDate.getMonth().equals(today.getMonth()) && releaseDate.getDayOfMonth() == today.getDayOfMonth()) {
+                                    result.add(item);
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+
                     case "CUSTOM_INPUT":
                         try {
                             if (item.track != null && item.track.releaseDate != null) {
@@ -232,7 +247,19 @@ public class SortFilterUtil {
                             e.printStackTrace();
                         }
                         break;
-
+                    case "ARTIST":
+                        if (queryTrack != null) {
+                            try {
+                                if (item.track != null && item.track.artistId != null && !item.track.artistId.isEmpty()) {
+                                    if (item.track.artistId.equals(queryTrack.artistId) && !item.track.trackId.equals(queryTrack.trackId)) {
+                                        result.add(item);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        }
                     default:
                         result.add(item);
                         break;

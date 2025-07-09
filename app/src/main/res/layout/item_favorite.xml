@@ -57,6 +57,7 @@
                 android:ellipsize="end"
                 android:visibility="visible"/>
             <TextView
+                android:id="@+id/text_dash"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="-"
@@ -110,6 +111,7 @@
             android:layout_weight="1"
             android:orientation="horizontal">
             <TextView
+                android:id="@+id/text_duration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="재생시간: "
@@ -133,6 +135,7 @@
             android:layout_weight="1"
             android:orientation="horizontal">
             <TextView
+                android:id="@+id/text_release_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="발매일: "

@@ -3,6 +3,8 @@ package com.example.mymusic.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Objects;
+
 public class Track implements Parcelable{
     public String trackId;
     public String albumId;
@@ -73,5 +75,33 @@ public class Track implements Parcelable{
     public int describeContents() {
         return 0;
     }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        Track other = (Track) obj;
+
+        return Objects.equals(trackId, other.trackId)
+                && Objects.equals(albumId, other.albumId)
+                && Objects.equals(artistId, other.artistId)
+                && Objects.equals(artistNameKr, other.artistNameKr)
+                && Objects.equals(trackName, other.trackName)
+                && Objects.equals(albumName, other.albumName)
+                && Objects.equals(artistName, other.artistName)
+                && Objects.equals(artworkUrl, other.artworkUrl)
+                && Objects.equals(releaseDate, other.releaseDate)
+                && Objects.equals(durationMs, other.durationMs);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(trackId, albumId, artistId, artistNameKr,
+                trackName, albumName, artistName, artworkUrl,
+                releaseDate, durationMs);
+    }
+
 
 }
