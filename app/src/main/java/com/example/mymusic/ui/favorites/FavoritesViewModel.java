@@ -23,8 +23,12 @@ public class FavoritesViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> isLyricsMode = new MutableLiveData<>(false);
     private int focusedPosition = -1;
     private String focusedTransitionName = null;
+    private int scrollPosition = 0;
 
-
+    private int scrollOffset = 0;
+    private int reenterScrollPosition = 0;
+    private int reenterScrollOffset = 0;
+    private int transitionPosition = -1;
 
     public void setLyricsMode(boolean value) {
         isLyricsMode.setValue(value);
@@ -113,5 +117,45 @@ public class FavoritesViewModel extends AndroidViewModel {
 
     public void setFocusedTransitionName(String focusedTransitionName) {
         this.focusedTransitionName = focusedTransitionName;
+    }
+
+    public int getScrollPosition() {
+        return scrollPosition;
+    }
+
+    public void setScrollPosition(int scrollPosition) {
+        this.scrollPosition = scrollPosition;
+    }
+
+    public int getScrollOffset() {
+        return scrollOffset;
+    }
+
+    public void setScrollOffset(int scrollOffset) {
+        this.scrollOffset = scrollOffset;
+    }
+
+    public int getReenterScrollPosition() {
+        return reenterScrollPosition;
+    }
+
+    public void setReenterScrollPosition(int reenterScrollPosition) {
+        this.reenterScrollPosition = reenterScrollPosition;
+    }
+
+    public int getReenterScrollOffset() {
+        return reenterScrollOffset;
+    }
+
+    public void setReenterScrollOffset(int reenterScrollOffset) {
+        this.reenterScrollOffset = reenterScrollOffset;
+    }
+
+    public int getTransitionPosition() {
+        return transitionPosition;
+    }
+
+    public void setTransitionPosition(int transitionPosition) {
+        this.transitionPosition = transitionPosition;
     }
 }

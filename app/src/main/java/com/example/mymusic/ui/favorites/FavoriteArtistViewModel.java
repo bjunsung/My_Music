@@ -24,6 +24,10 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
     private final FavoriteArtistRepository repository;
     private final ArtistMetadataRepository artistMetadataRepository;
     public Bundle reenterState = null;
+    private int scrollPosition = 0;
+    private int scrollOffset = 0;
+    private int reenterScrollPosition = 0;
+    private int reenterScrollOffset = 0;
 
     public FavoriteArtistViewModel(@NonNull Application application) {
         super(application);
@@ -138,6 +142,38 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
                 });
             }
         }).start();
+    }
+
+    public int getScrollPosition() {
+        return scrollPosition;
+    }
+
+    public void setScrollPosition(int scrollPosition) {
+        this.scrollPosition = scrollPosition;
+    }
+
+    public int getScrollOffset() {
+        return scrollOffset;
+    }
+
+    public void setScrollOffset(int scrollOffset) {
+        this.scrollOffset = scrollOffset;
+    }
+
+    public int getReenterScrollPosition() {
+        return reenterScrollPosition;
+    }
+
+    public void setReenterScrollPosition(int reenterScrollPosition) {
+        this.reenterScrollPosition = reenterScrollPosition;
+    }
+
+    public int getReenterScrollOffset() {
+        return reenterScrollOffset;
+    }
+
+    public void setReenterScrollOffset(int reenterScrollOffset) {
+        this.reenterScrollOffset = reenterScrollOffset;
     }
 
 

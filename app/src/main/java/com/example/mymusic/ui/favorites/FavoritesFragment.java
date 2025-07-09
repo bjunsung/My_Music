@@ -92,7 +92,6 @@ public class FavoritesFragment extends Fragment {
     MaterialCardView musicInfoContainer, simpleMusicInfoContainer, lyricsTextContainer, lyricsContainer;
     TextView cancelSelectionModeTextView, removeSelectedFavoritesTextView;
     SwitchCompat favoriteOptionSwitch;
-    private Bundle reenterState = null;
     private FragmentFavoritesBinding binding;
 
 
@@ -152,9 +151,38 @@ public class FavoritesFragment extends Fragment {
 
         trackRecyclerView = binding.trackRecyclerView;
         trackRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        trackRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                LinearLayoutManager layoutManager = (LinearLayoutManager) trackRecyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    int position = layoutManager.findFirstVisibleItemPosition();
+                    View firstItemView = layoutManager.findViewByPosition(position);
+                    int offset = (firstItemView != null) ? firstItemView.getTop() : 0;
+
+                    favoritesViewModel.setScrollPosition(position);
+                    favoritesViewModel.setScrollOffset(offset);
+                }
+            }
+        });
 
         artistRecyclerView = binding.artistRecyclerView;
         artistRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        artistRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
+                if (layoutManager != null){
+                    int position = layoutManager.findFirstVisibleItemPosition();
+                    View firstItemView = layoutManager.findViewByPosition(position);
+                    int offset = (firstItemView != null) ? firstItemView.getTop() : 0;
+
+                    favoriteArtistViewModel.setScrollPosition(position);
+                    favoriteArtistViewModel.setScrollOffset(offset);
+                }
+            }
+        });
 
 
 
@@ -200,15 +228,16 @@ public class FavoritesFragment extends Fragment {
         cancelSelectionModeTextView = view.findViewById(R.id.cancel_selection_mode);
         removeSelectedFavoritesTextView = view.findViewById(R.id.remove_selected_favorites);
 
+        trackRecyclerView.setAdapter(favoriteTrackAdapter);
+        artistRecyclerView.setAdapter(favoriteArtistAdapter);
+
         if(favoriteOption == 0) {//track
             Log.d(TAG, "OnViewCreatied-  option 0 (Favorites Tracks)");
-            trackRecyclerView.setAdapter(favoriteTrackAdapter);
             emptyFavoriteArtistTextView.setVisibility(View.GONE);
             loadFavoritesAndUpdateUI();
         }
         else if(favoriteOption == 1) {//artist
             Log.d(TAG, "OnViewCreatied-  option 1 (Favorites Artists)");
-            trackRecyclerView.setAdapter(favoriteArtistAdapter);
             emptyFavoriteSongTextView.setVisibility(View.GONE);
             loadFavoritesAndUpdateUI();
         }
@@ -295,13 +324,19 @@ public class FavoritesFragment extends Fragment {
                 return;
             }
 
-            reenterState = new Bundle();
             String transitionName = "Transition_favorites_to_music_simple" + favorite.track.artworkUrl + "_" + favorite.track.trackId;
             focusedImageView.setTransitionName(transitionName);
             favoritesViewModel.setFocusedTransitionName(transitionName);
+            favoritesViewModel.setTransitionPosition(-2);
 
-            reenterState.putString("transitionName", transitionName);
-            reenterState.putInt("position", -2);
+            LinearLayoutManager layoutManager = (LinearLayoutManager) trackRecyclerView.getLayoutManager();
+            if (layoutManager != null) {
+                int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+                View firstItemView = layoutManager.findViewByPosition(firstVisiblePosition);
+                int offset = (firstItemView != null) ? firstItemView.getTop() : 0;
+                favoritesViewModel.setReenterScrollPosition(firstVisiblePosition);
+                favoritesViewModel.setReenterScrollOffset(offset);
+            }
 
             Bundle bundle = new Bundle();
             bundle.putParcelable("favorite", favorite);
@@ -324,7 +359,9 @@ public class FavoritesFragment extends Fragment {
         Favorite focused = favoritesViewModel.getFocusedTrack().getValue();
         Boolean isLyrics = favoritesViewModel.getLyricsMode().getValue();
         if (isLyrics != null && isLyrics && focused != null){
+            Log.d(TAG, "lyrics on mode");
             LyricsOnMode(focused, favoritesViewModel.getFocusedPosition());
+            loadFavoritesAndUpdateUI();
             if (favoritesViewModel.getFocusedTransitionName() != null){
                 ViewCompat.setTransitionName(focusedImageView, favoritesViewModel.getFocusedTransitionName());
             }
@@ -336,11 +373,6 @@ public class FavoritesFragment extends Fragment {
     private void loadFavoritesAndUpdateUI() {
         if (favoriteOption == 0) {
             artistRecyclerView.setVisibility(View.GONE);
-            trackRecyclerView.setAdapter(favoriteTrackAdapter);
-            if (Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue())) {
-                handleReenterTransition();
-                return;
-            }
             favoritesViewModel.loadAllFavorites(favoritesList -> {
                 if (!favoritesList.isEmpty())
                     trackRecyclerView.setVisibility(View.VISIBLE);
@@ -350,13 +382,20 @@ public class FavoritesFragment extends Fragment {
                 Collections.reverse(favoritesList);
                 updateEmptyState(favoritesList.isEmpty());
                 favoriteTrackAdapter.updateData(favoritesList);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) trackRecyclerView.getLayoutManager();
+                if (layoutManager != null){
+                    layoutManager.scrollToPositionWithOffset(favoritesViewModel.getScrollPosition(), favoritesViewModel.getScrollOffset());
+                    Log.d(TAG, "loadFavoritesAndUpdateUI called, set scrollPositoin: "
+                            + favoritesViewModel.getScrollPosition() + " , scrollOffset: " + favoritesViewModel.getScrollOffset());
+                }
+
                 favoritesLoadedCountTextView.setText(String.valueOf(favoritesList.size()));
                 elementCountTextView.setText("Songs");
                 handleReenterTransition();
             });
         } else {
             trackRecyclerView.setVisibility(View.GONE);
-            artistRecyclerView.setAdapter(favoriteArtistAdapter);
             favoriteArtistViewModel.loadFavorites(favoriteArtistList -> {
                 if (!favoriteArtistList.isEmpty())
                     artistRecyclerView.setVisibility(View.VISIBLE);
@@ -368,6 +407,12 @@ public class FavoritesFragment extends Fragment {
                 Collections.reverse(reversed);
                 updateEmptyState(reversed.isEmpty());
                 favoriteArtistAdapter.updateData(reversed);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
+                if (layoutManager != null){
+                    layoutManager.scrollToPositionWithOffset(favoriteArtistViewModel.getScrollPosition(), favoriteArtistViewModel.getScrollOffset());
+                }
+
                 favoritesLoadedCountTextView.setText(String.valueOf(reversed.size()));
                 elementCountTextView.setText("Artists");
                 handleReenterTransition();
@@ -1155,11 +1200,12 @@ public class FavoritesFragment extends Fragment {
      */
     private void handleReenterTransition() {
         Log.d(TAG, "handleReenterTransition() 호출됨");
-        if (reenterState != null) {
+        String transitionName = favoritesViewModel.getFocusedTransitionName();
+        if (transitionName != null) {
             Log.d(TAG, "favorite track reenterState Exist");
-            int position = reenterState.getInt("position");
+            int position = favoritesViewModel.getTransitionPosition();
             if (position == -2){
-                ViewCompat.setTransitionName(binding.focusedImage, reenterState.getString("transitionName"));
+                ViewCompat.setTransitionName(binding.focusedImage, transitionName);
                 focusedImageView.post(() -> {
                     Log.d(TAG, "transitionName" + ViewCompat.getTransitionName(focusedImageView));
                     startPostponedEnterTransition();
@@ -1172,9 +1218,11 @@ public class FavoritesFragment extends Fragment {
                     @Override
                     public boolean onPreDraw() {
                         binding.trackRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                        binding.trackRecyclerView.getLayoutManager().scrollToPosition(position);
+                        LinearLayoutManager layoutManager = (LinearLayoutManager) trackRecyclerView.getLayoutManager();
+                        layoutManager.scrollToPositionWithOffset(favoritesViewModel.getReenterScrollPosition(), favoritesViewModel.getReenterScrollOffset());
                         startPostponedEnterTransition();
-                        reenterState = null;
+                        favoritesViewModel.setFocusedTransitionName(null);
+                        favoritesViewModel.setTransitionPosition(0);
                         return true;
                     }
                 });
@@ -1187,7 +1235,8 @@ public class FavoritesFragment extends Fragment {
                 @Override
                 public boolean onPreDraw() {
                     binding.trackRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                    binding.trackRecyclerView.getLayoutManager().scrollToPosition(position);
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
+                    layoutManager.scrollToPositionWithOffset(favoriteArtistViewModel.getReenterScrollPosition(), favoriteArtistViewModel.getReenterScrollOffset());
                     startPostponedEnterTransition();
                     favoriteArtistViewModel.reenterState = null;
                     return true;
@@ -1205,11 +1254,17 @@ public class FavoritesFragment extends Fragment {
      */
     private void handleItemNavigation(Favorite favorite, ImageView sharedImageView, int position) {
         Log.d(TAG, "handleItemNavigation() 호출됨");
-        reenterState = new Bundle();
-        reenterState.putInt("position", position);
         String transitionName = ViewCompat.getTransitionName(sharedImageView);
-        reenterState.putString("transitionName", transitionName);
-
+        favoritesViewModel.setFocusedTransitionName(transitionName);
+        favoritesViewModel.setTransitionPosition(position);
+        LinearLayoutManager layoutManager = (LinearLayoutManager) trackRecyclerView.getLayoutManager();
+        if (layoutManager != null) {
+            int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+            View firstItemView = layoutManager.findViewByPosition(firstVisiblePosition);
+            int offset = (firstItemView != null) ? firstItemView.getTop() : 0;
+            favoritesViewModel.setReenterScrollPosition(firstVisiblePosition);
+            favoritesViewModel.setReenterScrollOffset(offset);
+        }
         Bundle bundle = new Bundle();
         bundle.putParcelable("favorite", favorite);
         bundle.putString("transitionName", transitionName);
@@ -1238,6 +1293,15 @@ public class FavoritesFragment extends Fragment {
         String transitionName = ViewCompat.getTransitionName(sharedImageView);
         Log.d(TAG, "Prepare Transition, transitionName is " + transitionName);
         reenterState.putString("transitionName", transitionName);
+
+        LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
+        if (layoutManager != null){
+            int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+            View firstItemView = layoutManager.findViewByPosition(firstVisiblePosition);
+            int offset = (firstItemView != null) ? firstItemView.getTop() : 0;
+            favoriteArtistViewModel.setReenterScrollPosition(firstVisiblePosition);
+            favoriteArtistViewModel.setReenterScrollOffset(offset);
+        }
 
         favoriteArtistViewModel.reenterState = reenterState;
 
@@ -1290,10 +1354,11 @@ public class FavoritesFragment extends Fragment {
 
     private void cancelLyricsMode(){
         favoritesViewModel.setLyricsMode(false);
-        if (reenterState != null && reenterState.getInt("position") == -2 ){ // position : -2 means reenter to lyrics on mode from other fragments
+        if (favoritesViewModel.getTransitionPosition() == -2 ){ // position : -2 means reenter to lyrics on mode from other fragments
             //reenterState 이면 recycler view 위치 재조정할 시간을 위해 연기
             postponeEnterTransition();
-            reenterState = null;
+            favoritesViewModel.setFocusedTransitionName(null);
+            favoritesViewModel.setTransitionPosition(0);
             favoritesViewModel.loadAllFavorites(favoritesList -> {
                 if (!favoritesList.isEmpty())
                     trackRecyclerView.setVisibility(View.VISIBLE);
@@ -1309,9 +1374,11 @@ public class FavoritesFragment extends Fragment {
                     @Override
                     public boolean onPreDraw() {
                         binding.trackRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                        binding.trackRecyclerView.getLayoutManager().scrollToPosition(favoritesViewModel.getFocusedPosition());
-                        binding.trackRecyclerView.scrollToPosition(favoritesViewModel.getFocusedPosition());
-                        Log.d(TAG, "recyclerView 위치 복원, position: " + favoritesViewModel.getFocusedPosition());
+                        LinearLayoutManager layoutManager = (LinearLayoutManager) binding.trackRecyclerView.getLayoutManager();
+                        if(layoutManager != null) {
+                            layoutManager.scrollToPositionWithOffset(favoritesViewModel.getReenterScrollPosition(), favoritesViewModel.getReenterScrollOffset());
+                            Log.d(TAG, "recyclerView 위치 복원, position: " + favoritesViewModel.getReenterScrollPosition() + " ,offset: " + favoritesViewModel.getReenterScrollOffset());
+                        }
                         startPostponedEnterTransition();
                         return true;
                     }
