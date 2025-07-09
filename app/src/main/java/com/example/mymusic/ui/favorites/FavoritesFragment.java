@@ -135,7 +135,9 @@ public class FavoritesFragment extends Fragment {
                 this::deleteFavoriteArtist,
                 this::addArtistMetadata,
                 favoriteArtistViewModel,
-                this::handleItemNavigationForArtist);
+                this::handleItemNavigationForArtist,
+                this::addSelected,
+                this::removeSelected);
 
 
         elementCountTextView = view.findViewById(R.id.element_count);
@@ -266,7 +268,7 @@ public class FavoritesFragment extends Fragment {
                         selected.append(item.track.trackName + " - " + item.track.artistName + "\n");
                     }
                 }
-                String mentByCount = selectedList.size() == 1 ? "을(를) 삭제하시겠습니까?" : selectedList.size() + "개의 노래를 을(를) 모두 삭제하시겠습니까?";
+                String mentByCount = selectedList.size() == 1 ? "을(를) 삭제하시겠습니까?" : selectedList.size() + "개의 노래를 모두 삭제하시겠습니까?";
                 new AlertDialog.Builder(getContext())
                         .setTitle("삭제")
                         .setMessage("정말\n" + selected + mentByCount)
@@ -312,6 +314,51 @@ public class FavoritesFragment extends Fragment {
                         .setNegativeButton("취소", null)
                         .show();
 
+            }
+            else if (favoriteOption == 1){
+                List<Artist> selectedList = favoriteArtistViewModel.selectedList;
+                if (selectedList.isEmpty()) return;
+                StringBuilder selectedStr = new StringBuilder();
+                for (Artist item : selectedList) {
+                    if (item.artistName != null && !item.artistName.isEmpty()) {
+                        selectedStr.append(item.artistName + "\n");
+                    }
+                }
+                String mentByCount = selectedList.size() == 1 ? "을(를) 삭제하시겠습니까?" : selectedList.size() + "팀의 아티스트를 모두 삭제하시겠습니까?";
+                new AlertDialog.Builder(getContext())
+                        .setTitle("삭제")
+                        .setMessage("정말\n" + selectedStr + mentByCount)
+                        .setPositiveButton("삭제", ((dialog, which) -> {
+                            List<String> selectedIds = new ArrayList<>();
+                            for (Artist artist : selectedList) {
+                                selectedIds.add(artist.artistId);
+                            }
+                            favoriteArtistViewModel.deleteFavoritesArtistByIds(selectedIds, result -> {
+                                if (result > 0) {
+                                    new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(requireContext(), result + "팀의 아티스트가 삭제되었습니다.", Toast.LENGTH_SHORT));
+                                    favoriteArtistViewModel.loadFavorites(favorites -> {
+                                        List<Artist> copy = new ArrayList<>(favorites);
+                                        Collections.reverse(copy);
+                                        favoriteArtistAdapter.updateData(copy);
+                                        //count 업데이트
+                                        favoritesLoadedCountTextView.setText(String.valueOf(favorites.size()));
+
+                                    });
+                                } else {
+                                    new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(requireContext(), "삭제되지 않았습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT));
+                                    favoriteArtistViewModel.getFavoriteArtistsCount(count -> favoritesLoadedCountTextView.setText(String.valueOf(count)));
+                                }
+                                favoriteArtistAdapter.setSelectionMode(false);
+                                favoriteArtistViewModel.selectedList = new ArrayList<>();
+                                cancelSelectionModeTextView.setVisibility(View.GONE);
+                                removeSelectedFavoritesTextView.setVisibility(View.GONE);
+                                isSelectionMode = false;
+                            });
+
+
+                        }))
+                        .setNegativeButton("취소", null)
+                        .show();
             }
         });
 
@@ -555,7 +602,7 @@ public class FavoritesFragment extends Fragment {
 
                     }
                     // 체크되지 않은 경우 (기존 로직: 즐겨찾기 목록에서만 삭제)
-                    favoriteArtistViewModel.deleteFavoriteArtist(artist);
+                    favoriteArtistViewModel.deleteFavoriteArtist(artist.artistId);
                     Toast.makeText(getContext(),
                             artist.artistName + " 이(가) Favorites List 에서 삭제되었습니다.",
                             Toast.LENGTH_SHORT).show();
@@ -1194,6 +1241,29 @@ public class FavoritesFragment extends Fragment {
 
 
     }
+    public void removeSelected(Artist artist){
+        if (!favoriteArtistViewModel.selectedList.contains(artist)) return;
+        favoriteArtistViewModel.selectedList.remove(artist);
+
+        int selectedCount = favoriteArtistViewModel.selectedList.size();
+        favoritesLoadedCountTextView.setText(String.valueOf(selectedCount));
+    }
+
+    public void addSelected(Artist artist){
+        if (!isSelectionMode){
+            isSelectionMode = true;
+            cancelSelectionModeTextView.setVisibility(View.VISIBLE);
+            removeSelectedFavoritesTextView.setVisibility(View.VISIBLE);
+        }
+
+        if (favoriteArtistViewModel.selectedList.contains(artist)) return;
+        favoriteArtistViewModel.selectedList.add(artist);
+
+        int selectedCount = favoriteArtistViewModel.selectedList.size();
+        favoritesLoadedCountTextView.setText(String.valueOf(selectedCount));
+
+
+    }
 
     /**
      * 뒤로 가기로 돌아온 상태를 처리하는 메서드
@@ -1349,6 +1419,14 @@ public class FavoritesFragment extends Fragment {
             removeSelectedFavoritesTextView.setVisibility(View.GONE);
             isSelectionMode = false;
             favoritesViewModel.getFavoritesCount(count -> favoritesLoadedCountTextView.setText(String.valueOf(count)));
+        }
+        else{
+            favoriteArtistAdapter.setSelectionMode(false);
+            favoriteArtistViewModel.selectedList = new ArrayList<>();
+            cancelSelectionModeTextView.setVisibility(View.GONE);
+            removeSelectedFavoritesTextView.setVisibility(View.GONE);
+            isSelectionMode = false;
+            favoriteArtistViewModel.getFavoriteArtistsCount(count -> favoritesLoadedCountTextView.setText(String.valueOf(count)));
         }
     }
 

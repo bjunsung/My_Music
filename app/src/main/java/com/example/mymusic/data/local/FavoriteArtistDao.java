@@ -17,6 +17,9 @@ public interface FavoriteArtistDao {
     @Query("DELETE FROM favorite_artist_table WHERE artistId = :artistId")
     void deleteFavoriteArtist(String artistId);
 
+    @Query("DELETE FROM favorite_artist_table WHERE artistId IN (:artistId)")
+    int deleteFavoriteArtistsByIds(List<String> artistId);
+
     //save favorite song
     @Insert(onConflict = OnConflictStrategy.ABORT)
     void saveFavoriteArtist(FavoriteArtist favoriteArtist);

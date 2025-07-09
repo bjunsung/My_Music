@@ -8,6 +8,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.transition.ChangeBounds;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -168,10 +170,13 @@ public class ImageDetailFragment extends Fragment {
         if (getActivity() != null && getActivity().getWindow() != null) {
             backButtonImageButton.setVisibility(View.GONE);
             emptySpaceImageButton.setVisibility(View.GONE);
-            insetsController = WindowCompat.getInsetsController(getActivity().getWindow(), getActivity().getWindow().getDecorView());
-            if (insetsController != null) {
-                insetsController.hide(WindowInsetsCompat.Type.systemBars());
-                insetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            Activity activity = getActivity();
+            if (activity != null) {
+                insetsController = WindowCompat.getInsetsController(activity.getWindow(), activity.getWindow().getDecorView());
+                if (insetsController != null) {
+                    insetsController.hide(WindowInsetsCompat.Type.systemBars());
+                    insetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                }
             }
         }
     }

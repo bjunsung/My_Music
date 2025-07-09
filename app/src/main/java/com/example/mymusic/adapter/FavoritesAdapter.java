@@ -198,9 +198,6 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     }
 
-    public boolean isSelectionMode() {
-        return isSelectionMode;
-    }
 
     public List<Favorite> getSelectedList(){
         List<Favorite> selectedList = new ArrayList<>();

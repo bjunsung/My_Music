@@ -9,6 +9,8 @@ public class FavoriteArtist implements Parcelable {
     public Artist artist;
     public String addedDate;
     public ArtistMetadata metadata;
+
+
     public FavoriteArtist(Artist artist){
         this.artist = artist;
     }

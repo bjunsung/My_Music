@@ -312,8 +312,8 @@ public class MusicInfoFragment extends Fragment {
 
                     ImageView enlargeButtonShadow =  binding.enlargeButtonShadow;
                     FrameLayout.LayoutParams enlargeShadowParams = (FrameLayout.LayoutParams) enlargeButtonShadow.getLayoutParams();
-                    enlargeShadowParams.leftMargin = pagerRightX - buttonWidth - padding + 1;
-                    enlargeShadowParams.topMargin = pagerBottomY - buttonHeight - padding + 1;
+                    enlargeShadowParams.leftMargin = pagerRightX - buttonWidth - padding + 2;
+                    enlargeShadowParams.topMargin = pagerBottomY - buttonHeight - padding + 2;
                     enlargeButtonShadow.setLayoutParams(enlargeShadowParams);
                     enlargeButtonShadow.setVisibility(View.VISIBLE);
 

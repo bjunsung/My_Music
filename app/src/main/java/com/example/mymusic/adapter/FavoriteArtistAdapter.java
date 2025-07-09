@@ -1,15 +1,19 @@
 package com.example.mymusic.adapter;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Consumer;
 import androidx.core.view.ViewCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -23,6 +27,7 @@ import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAdapter.FavoriteArtistViewHolder> {
@@ -33,6 +38,16 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     FavoriteArtistViewModel viewModel;
     OnItemNavigateClickListener navigateClickListener;
     private final String transitionNameForm = "Transition_favorite_artist_adapter_to_artist_";
+    private boolean isSelectionMode = false;
+    private OnAddSelectedListener addSelectedListener;
+    private OnRemoveSelectedListener removeSelectedListener;
+    public interface OnAddSelectedListener{
+        void onItemClick(Artist artist);
+    }
+
+    public interface OnRemoveSelectedListener{
+        void onItemClick(Artist artist);
+    }
 
     public interface OnDeleteClickListener{
         void onItemClick(Artist artist);
@@ -46,17 +61,28 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         void onNavigateClick(FavoriteArtist favorite, ImageView sharedImageView, String transitionNameForm, int position);
     }
 
-    public FavoriteArtistAdapter(List<Artist> artistList, OnDeleteClickListener deleteClickListener, OnMetadataClickListener metadataClickListener, FavoriteArtistViewModel viewModel, OnItemNavigateClickListener navigateClickListener){
+    public FavoriteArtistAdapter(List<Artist> artistList,
+                                 OnDeleteClickListener deleteClickListener,
+                                 OnMetadataClickListener metadataClickListener,
+                                 FavoriteArtistViewModel viewModel,
+                                 OnItemNavigateClickListener navigateClickListener,
+                                 OnAddSelectedListener addSelectedListener,
+                                 OnRemoveSelectedListener removeSelectedListener){
         this.artistList = artistList;
         this.deleteClickListener = deleteClickListener;
         this.metadataClickListener = metadataClickListener;
         this.viewModel = viewModel;
         this.navigateClickListener = navigateClickListener;
+        this.addSelectedListener = addSelectedListener;
+        this.removeSelectedListener = removeSelectedListener;
     }
     public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView artistName, followers, addedDate;
         ImageButton deleteButton, addButton;
+        CheckBox selectCheckBox;
+
+        public int recyclerViewPosition = -1;
         public FavoriteArtistViewHolder(@NonNull View itemView){
             super(itemView);
             image = itemView.findViewById(R.id.imageView);
@@ -65,6 +91,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             addedDate = itemView.findViewById(R.id.addedDateTextView);
             deleteButton = itemView.findViewById(R.id.deleteButton);
             addButton = itemView.findViewById(R.id.add_button);
+            selectCheckBox = itemView.findViewById(R.id.select_checkbox);
         }
     }
 
@@ -79,6 +106,10 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     public void onBindViewHolder(@NonNull FavoriteArtistViewHolder holder, int position){
         Artist artist = artistList.get(position);
         FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
+
+        if (viewModel.selectedList.contains(artist)){
+            holder.selectCheckBox.setChecked(true);
+        }
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
             String transitionName = transitionNameForm  + holder.getAdapterPosition()  + "_" + artist.artistName + "_" + artist.artistId  + "_" + artist.artworkUrl;
@@ -106,18 +137,56 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
         holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(artist));
 
+        holder.selectCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
+
         holder.itemView.setOnClickListener(v -> {
-            if (navigateClickListener != null && ViewCompat.getTransitionName(holder.image) != null){
-                navigateClickListener.onNavigateClick(
-                        favoriteArtist,
-                        holder.image,
-                        transitionNameForm,
-                        holder.getAdapterPosition()
-                );
+            if (!isSelectionMode) {
+                if (navigateClickListener != null && ViewCompat.getTransitionName(holder.image) != null) {
+                    navigateClickListener.onNavigateClick(
+                            favoriteArtist,
+                            holder.image,
+                            transitionNameForm,
+                            holder.getAdapterPosition()
+                    );
+                }
+            }
+            else{
+                if (holder.selectCheckBox.isChecked()){
+                    holder.selectCheckBox.setChecked(false);
+                    removeSelectedListener.onItemClick(artist);
+                }
+                else{
+                    holder.selectCheckBox.setChecked(true);
+                    addSelectedListener.onItemClick(artist);
+                }
             }
         });
 
         holder.addButton.setOnClickListener(v -> metadataClickListener.onItemClick(artist.artistId));
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (!isSelectionMode) {
+                setSelectionMode(true);
+            }
+            if (!holder.selectCheckBox.isChecked()) {
+                Log.d("sex", "sex");
+                holder.selectCheckBox.setChecked(true);
+                addSelectedListener.onItemClick(artist);// UI 갱신// 상태 반영
+            }
+
+            return true;
+        });
+
+        holder.selectCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!buttonView.isPressed()) return; // 프로그래밍적으로 변경된 경우 무시
+
+            if(isChecked){
+                addSelectedListener.onItemClick(artist);
+            }
+            else{
+                removeSelectedListener.onItemClick(artist);
+            }
+        });
 
     }
 
@@ -130,5 +199,13 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         this.artistList = newList;
         notifyDataSetChanged();
     }
+
+    public void setSelectionMode(boolean selectionMode){
+        this.isSelectionMode = selectionMode;
+        notifyDataSetChanged();
+    }
+
+
+
 
 }

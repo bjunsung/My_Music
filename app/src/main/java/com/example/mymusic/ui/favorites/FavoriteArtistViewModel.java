@@ -15,6 +15,7 @@ import com.example.mymusic.data.repository.FavoriteArtistRepository;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.ArtistMetadata;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -28,6 +29,7 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
     private int scrollOffset = 0;
     private int reenterScrollPosition = 0;
     private int reenterScrollOffset = 0;
+    public List<Artist> selectedList = new ArrayList<>();
 
     public FavoriteArtistViewModel(@NonNull Application application) {
         super(application);
@@ -57,11 +59,19 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         }).start();
     }
 
-    public void deleteFavoriteArtist(Artist artist){
+    public void deleteFavoriteArtist(String artistId){
         new Thread(() -> {
-            repository.deleteFavoriteArtist(artist.artistId);
+            repository.deleteFavoriteArtist(artistId);
         }).start();
     }
+
+    public void deleteFavoritesArtistByIds(List<String> artistIds, Consumer<Integer> callback){
+        new Thread(() -> {
+            int result = repository.deleteFavoriteArtistsByIds(artistIds);
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(result));
+        }).start();
+    }
+
     public void insert(Artist artist, String addedDate) {
         repository.saveFavoriteArtist(artist, addedDate); // 내부에서 Thread 처리
     }
@@ -87,6 +97,12 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         }).start();
     }
 
+    public void getFavoriteArtistsCount(Consumer<Integer> callback){
+        new Thread(() -> {
+            int result = repository.getFavoriteArtistCount();
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(result));
+        }).start();
+    }
 
 
     /// ArtistMetadata 관련

@@ -466,7 +466,14 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
             enlargeButton.setLayoutParams(enlargeParams);
             enlargeButton.setVisibility(View.VISIBLE);
-            //onDataReady(); //임시방편, 삭제해야 하는 코드
+
+            ImageView enlargeButtonShadow =  binding.enlargeButtonShadow;
+            FrameLayout.LayoutParams enlargeShadowParams = (FrameLayout.LayoutParams) enlargeButtonShadow.getLayoutParams();
+            enlargeShadowParams.leftMargin = pagerRightX - buttonWidth - padding + 2;
+            enlargeShadowParams.topMargin = pagerBottomY - buttonHeight - padding + 2;
+            enlargeButtonShadow.setLayoutParams(enlargeShadowParams);
+            enlargeButtonShadow.setVisibility(View.VISIBLE);
+
 
         });
 

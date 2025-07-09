@@ -53,6 +53,10 @@ public class FavoriteArtistRepository {
         return artists;
     }
 
+    public int deleteFavoriteArtistsByIds(List<String> artistIds){
+        return favoriteArtistDao.deleteFavoriteArtistsByIds(artistIds);
+    }
+
     public String getAddedDate(String artistId){
         FavoriteArtist artist = favoriteArtistDao.getFavoriteArtist(artistId);
         if (artist == null) return null;
