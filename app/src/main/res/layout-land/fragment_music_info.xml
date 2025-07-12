@@ -383,25 +383,38 @@
                 android:focusable="true" />
 
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/download_button_overlay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/cardview_dark_background"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp"
-                app:cardUseCompatPadding="false"
-                app:cardPreventCornerOverlap="false">
-
-                <TextView
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <LinearLayout
+                    android:id="@+id/long_click_overlay"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="이미지 다운로드"
-                    android:padding="6dp"
-                    android:textSize="14sp"
-                    android:textColor="@android:color/white"/>
-            </androidx.cardview.widget.CardView>
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/download_button_overlay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="8dp"
+                        app:cardBackgroundColor="@color/cardview_dark_background"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="4dp"
+                        app:cardUseCompatPadding="false"
+                        app:cardPreventCornerOverlap="false">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="이미지 다운로드"
+                            android:padding="6dp"
+                            android:textSize="14sp"
+                            android:textColor="@android:color/white"/>
+                    </androidx.cardview.widget.CardView>
+                </LinearLayout>
+            </FrameLayout>
+
 
 
 

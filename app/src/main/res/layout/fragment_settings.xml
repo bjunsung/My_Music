@@ -20,6 +20,8 @@
         >
     </TextView>
 
+
+
     <TextView
         android:id="@+id/cancel_button"
         android:layout_width="wrap_content"
@@ -158,13 +160,45 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/color_setting_in_favorites"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/keyboard_mode_on_add_lyrics"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Artist의 다른노래 리스트 배경 색상을 단일화합니다."
+            android:textSize="16sp">
+        </TextView>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/favorites_color_state_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="8dp"
+            android:checked="false"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+    </LinearLayout>
+
+
 
     <LinearLayout
         android:id="@+id/navigation_icon_color"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/keyboard_mode_on_add_lyrics"
+        app:layout_constraintTop_toBottomOf="@id/color_setting_in_favorites"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"

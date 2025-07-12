@@ -1,5 +1,6 @@
 package com.example.mymusic.adapter;
 
+import android.app.Application;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,8 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
+import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.squareup.picasso.Picasso;
@@ -27,6 +30,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
     OnDetailClickListener detailClickListener;
     OnAddClickListener addClickListener;
     OnArtistClickListener artistClickListener;
+    FavoriteArtistViewModel viewModel;
 
     public interface OnArtistClickListener{
         void onItemClick(Artist artist, ImageView sharedImageView, int position,  String transitionNameForm);
@@ -37,7 +41,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
     }
 
     public interface OnAddClickListener {
-        void onClickItem(Artist artist);
+        void onClickItem(Artist artist, int position);
     }
 
     public ArtistAdapter(List<Artist> artists, Context context, OnDetailClickListener detailClickListener, OnAddClickListener addClickListener, OnArtistClickListener artistClickListener) {
@@ -67,12 +71,23 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
     @Override
     public ArtistAdapter.ArtistViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.item_artist, parent, false);
+        Context context = parent.getContext(); // Adapter에 전달받은 context
+        Application app = (Application) context.getApplicationContext();
+        viewModel = new FavoriteArtistViewModel(app);
         return new ArtistAdapter.ArtistViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ArtistViewHolder holder, int position) {
         Artist artist = artists.get(position);
+
+        holder.addButton.setVisibility(View.VISIBLE);
+        viewModel.loadFavoriteArtistByArtistId(artist.artistId, favoriteArtist -> {
+            if (favoriteArtist != null){
+                holder.addButton.setVisibility(View.GONE);
+            }
+        });
+
         holder.nameTextView.setText(artist.artistName);
         //String followers = NumberFormat.getNumberInstance().format(artist.followers);
         String followers = NumberUtils.formatWithComma(artist.followers);
@@ -94,7 +109,7 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
         holder.detailButton.setOnClickListener(v -> {
             detailClickListener.onClickItem(artist);
         });
-        holder.addButton.setOnClickListener(v -> addClickListener.onClickItem(artist));
+        holder.addButton.setOnClickListener(v -> addClickListener.onClickItem(artist, holder.getAdapterPosition()));
 
 
         holder.itemView.setOnClickListener(v -> {
@@ -108,5 +123,11 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
     public int getItemCount() {
         return artists.size();
     }
+
+    public void updateData(List<Artist> newList){
+        this.artists = newList;
+        notifyDataSetChanged();
+    }
+
 
 }

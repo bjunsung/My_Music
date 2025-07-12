@@ -21,16 +21,15 @@ public class FavoriteArtistRepository {
         favoriteArtistDao = db.favoriteArtistDao();
     }
 
-    public void saveFavoriteArtist(Artist artist, String addedDate){
+    public long saveFavoriteArtist(Artist artist, String addedDate){
         FavoriteArtist favoriteArtist = new FavoriteArtist(artist, addedDate);
-        favoriteArtistDao.saveFavoriteArtist(favoriteArtist);
+        return favoriteArtistDao.saveFavoriteArtist(favoriteArtist);
     }
-    public String deleteFavoriteArtist(String artistId){
+    public int deleteFavoriteArtist(String artistId){
         FavoriteArtist favoriteArtist = favoriteArtistDao.getFavoriteArtist(artistId);
-        if (favoriteArtist == null) return null;
+        if (favoriteArtist == null) return -1;
         String artistName = favoriteArtist.artistName;
-        favoriteArtistDao.deleteFavoriteArtist(artistId);
-        return artistName;
+        return favoriteArtistDao.deleteFavoriteArtist(artistId);
     }
 
     public int getFavoriteArtistCount(){

@@ -79,6 +79,7 @@ public class SearchFragment extends Fragment {
     private static int retryRefreshTokenCount;
     private TrackAdapter trackAdapter;
     private FragmentSearchBinding binding;
+    private ArtistAdapter artistAdapter;
     private final String TAG = "SearchFragment";
 
     //ViewModel 연결, repository 연결
@@ -103,18 +104,14 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (searchViewModel.getTrackPosition() != -1) {
+        if (searchViewModel.getTrackPosition() != -1) { //reenter state
             postponeEnterTransition();
             RecyclerView recyclerView = binding.resultRecyclerView;
-            if (recyclerView != null){
-                recyclerView.post(() -> handleReenterTransitionTrack());
-            }
-        } else if(searchViewModel.getArtistPosition() != -1){
+            recyclerView.post(this::handleReenterTransitionTrack);
+        } else if(searchViewModel.getArtistPosition() != -1){ //reenter state
             postponeEnterTransition();
             RecyclerView recyclerView = binding.resultRecyclerView;
-            if (recyclerView != null){
-                recyclerView.post(() -> handleReenterTransitionArtist());
-            }
+            recyclerView.post(this::handleReenterTransitionArtist);
         }
 
         searchEditText = view.findViewById(R.id.searchEditText);
@@ -133,13 +130,13 @@ public class SearchFragment extends Fragment {
 
             recyclerView.setAdapter(trackAdapter);
         } else if (searchViewModel.selectedOption == 1 && !searchViewModel.searchArtistResults.isEmpty()) {
-            ArtistAdapter adapter = new ArtistAdapter(
+            artistAdapter = new ArtistAdapter(
                     searchViewModel.searchArtistResults,
                     getContext(),
                     this::showArtistDetails,
                     this::addFavoriteArtist,
                     this::onArtistClickListener);
-            recyclerView.setAdapter(adapter);
+            recyclerView.setAdapter(artistAdapter);
         }
         getTokenAndEnableSearch();
     }
@@ -392,14 +389,14 @@ public class SearchFragment extends Fragment {
 
                     //new Thread 백그라운드 작업이므로 requireActivity().runOnUiThread() 로 Fragment가 붙어있는 Activity를 반환
                     requireActivity().runOnUiThread(() -> {
-                        ArtistAdapter adapter = new ArtistAdapter(
+                        artistAdapter = new ArtistAdapter(
                                 artists,
                                 getContext(),
                                 this::showArtistDetails,
                                 this::addFavoriteArtist,
                                 this::onArtistClickListener);
                         RecyclerView recyclerView = requireView().findViewById(R.id.result_recycler_view);
-                        recyclerView.setAdapter(adapter);
+                        recyclerView.setAdapter(artistAdapter);
                         handleReenterTransitionArtist();
                     });
                 }
@@ -482,7 +479,7 @@ public class SearchFragment extends Fragment {
     }
 
 
-    private void addFavoriteArtist(Artist artist){
+    private void addFavoriteArtist(Artist artist, int position){
         new AlertDialog.Builder(getContext())
                 .setTitle("관심목록에 추가")
                 .setMessage(artist.artistName  + " 을(를) Favorites List 에 추가할까요?")
@@ -492,10 +489,20 @@ public class SearchFragment extends Fragment {
                         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                         new Thread(() -> {
                             try {
-                                favoriteArtistViewModel.insert(artist, today);
-                                requireActivity().runOnUiThread(() -> {
-                                    Toast.makeText(getContext(), artist.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                favoriteArtistViewModel.insert(artist, today, result -> {
+                                    if (result > 0){
+                                        requireActivity().runOnUiThread(() -> {
+                                            Toast.makeText(getContext(), artist.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                            artistAdapter.notifyItemChanged(position);
+                                        });
+                                    }
+                                    else{
+                                        requireActivity().runOnUiThread(() -> {
+                                            Toast.makeText(getContext(), "Artsit 추가 실패, 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
+                                        });
+                                    }
                                 });
+
                             } catch (SQLiteConstraintException e) {
                                 requireActivity().runOnUiThread(() -> {
                                     Toast.makeText(getContext(), artist.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
@@ -516,10 +523,20 @@ public class SearchFragment extends Fragment {
                 })
                 .setPositiveButton("확인", (dialog, which) -> {
                     String selectedText = options[searchViewModel.selectedOption];
-                    if (searchViewModel.selectedOption == 0)
+                    if (searchViewModel.selectedOption == 0) {
                         searchEditText.setHint("노래 제목을 입력하세요");
-                    else
+                        if (searchEditText.getText().toString().length() > 0){
+                            search(searchEditText.getText().toString(), accessToken, 0);
+                            hideKeyboard();
+                        }
+                    }
+                    else {
                         searchEditText.setHint("아티스트 이름을 입력하세요");
+                        if (searchEditText.getText().toString().length() > 0){
+                            search(searchEditText.getText().toString(), accessToken, 1);
+                            hideKeyboard();
+                        }
+                    }
                 })
                 .setNegativeButton("취소", null)
                 .show();

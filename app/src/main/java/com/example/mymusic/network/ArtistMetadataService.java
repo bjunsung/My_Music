@@ -26,7 +26,7 @@ public class ArtistMetadataService {
         bridge.setListener(new ArtistMetadataBridge.OnMetadataListener() {
             @Override
             public void onSuccess(ArtistMetadata metadata) {
-                Log.d(TAG, "onSuccess() called");
+                Log.d(TAG, "bridge - onSuccess() called");
                 if (!callbackInvoked[0]) {
                     callbackInvoked[0] = true;
                     callback.onSuccess(metadata);

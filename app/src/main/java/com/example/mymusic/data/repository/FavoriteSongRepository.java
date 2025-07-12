@@ -28,13 +28,6 @@ public class FavoriteSongRepository {
         Favorites song = new Favorites(track, addedDate);
         favoritesDao.saveFavoritesSong(song);
     }
-    public String deleteFavoritesSong(String trackId){
-        Favorites song = favoritesDao.getFavoritesSong(trackId);
-        if (song == null) return null;
-        String songName = song.trackName;
-        favoritesDao.deleteFavoritesSong(trackId);
-        return songName;
-    }
     public Favorite getFavoritesSong(String trackId){
         Favorites song = favoritesDao.getFavoritesSong(trackId);
         if(song == null) {

@@ -35,6 +35,7 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         super(application);
         repository = new FavoriteArtistRepository(application);
         artistMetadataRepository = new ArtistMetadataRepository(application);
+
     }
 
     /**
@@ -44,6 +45,25 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         new Thread(() -> {
             List<Artist> result = repository.getAllFavoriteArtist(); // 직접 반환하는 DAO 사용
             new Handler(Looper.getMainLooper()).post(() -> callback.accept(result)); // UI 스레드로 전달
+        }).start();
+    }
+
+    public void loadFavoritesOriginalForm(Consumer<List<com.example.mymusic.model.FavoriteArtist>> callback){
+        new Thread(() -> {
+            List<Artist> artists = repository.getAllFavoriteArtist(); // 직접 반환하는 DAO 사용
+            List<com.example.mymusic.model.FavoriteArtist> result = new ArrayList<>();
+            for (Artist artist : artists){
+                FavoriteArtist favoriteArtist = repository.getFavoriteArtist(artist.artistId);
+                String addedDate = "";
+                if (favoriteArtist != null && favoriteArtist.addedDate != null) {
+                    addedDate = favoriteArtist.addedDate;
+                }
+                ArtistMetadata metadata = artistMetadataRepository.getArtistMetadataBySpotifyId(artist.artistId);
+                if (addedDate.equals("")) addedDate = null;
+                result.add(new com.example.mymusic.model.FavoriteArtist(artist, addedDate, metadata));
+            }
+            if (result.isEmpty()) new Handler(Looper.getMainLooper()).post(() -> callback.accept(null));
+            else new Handler(Looper.getMainLooper()).post(() -> callback.accept(result));
         }).start();
     }
 
@@ -59,9 +79,10 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         }).start();
     }
 
-    public void deleteFavoriteArtist(String artistId){
+    public void deleteFavoriteArtist(String artistId, Consumer<Integer> callback){
         new Thread(() -> {
-            repository.deleteFavoriteArtist(artistId);
+            int result = repository.deleteFavoriteArtist(artistId);
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(result));
         }).start();
     }
 
@@ -72,8 +93,10 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         }).start();
     }
 
-    public void insert(Artist artist, String addedDate) {
-        repository.saveFavoriteArtist(artist, addedDate); // 내부에서 Thread 처리
+    public void insert(Artist artist, String addedDate, Consumer<Integer> callback) {
+        long result = repository.saveFavoriteArtist(artist, addedDate); // 내부에서 Thread 처리
+        Integer resultInt = (result) > 0 ? 1 : 0;
+        callback.accept(resultInt);
     }
 
     //백그라운드 Thread 에서 db접근 후 UI Thread 로 넘기기

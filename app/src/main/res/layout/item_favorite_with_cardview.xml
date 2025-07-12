@@ -15,15 +15,6 @@
         android:layout_height="match_parent"
         android:orientation="horizontal">
 
-        <!-- 체크박스 (필터 모드에서만 표시) -->
-        <CheckBox
-            android:id="@+id/select_checkbox"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginEnd="8dp"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
         <!-- 앨범 이미지 -->
         <ImageView
             android:id="@+id/imageView"

@@ -63,11 +63,6 @@ public class FavoritesViewModel extends AndroidViewModel {
         }).start();
     }
 
-    public void deleteFavoriteSong(Track track){
-        new Thread(() -> {
-            repository.deleteFavoritesSong(track.trackId);
-        }).start();
-    }
     public void insert(Track track, String addedDate) {
         repository.saveFavoritesSong(track, addedDate); // 내부에서 Thread 처리
     }

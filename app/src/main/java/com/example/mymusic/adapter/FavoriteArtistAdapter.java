@@ -17,11 +17,13 @@ import androidx.core.util.Consumer;
 import androidx.core.view.ViewCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
+import com.example.mymusic.model.FavoriteArtistDiffCallback;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
@@ -32,7 +34,7 @@ import java.util.List;
 
 public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAdapter.FavoriteArtistViewHolder> {
 
-    List<Artist> artistList;
+    List<FavoriteArtist> favoriteArtistList;
     OnDeleteClickListener deleteClickListener;
     OnMetadataClickListener metadataClickListener;
     FavoriteArtistViewModel viewModel;
@@ -61,14 +63,14 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         void onNavigateClick(FavoriteArtist favorite, ImageView sharedImageView, String transitionNameForm, int position);
     }
 
-    public FavoriteArtistAdapter(List<Artist> artistList,
+    public FavoriteArtistAdapter(List<FavoriteArtist> favoriteArtistList,
                                  OnDeleteClickListener deleteClickListener,
                                  OnMetadataClickListener metadataClickListener,
                                  FavoriteArtistViewModel viewModel,
                                  OnItemNavigateClickListener navigateClickListener,
                                  OnAddSelectedListener addSelectedListener,
                                  OnRemoveSelectedListener removeSelectedListener){
-        this.artistList = artistList;
+        this.favoriteArtistList = favoriteArtistList;
         this.deleteClickListener = deleteClickListener;
         this.metadataClickListener = metadataClickListener;
         this.viewModel = viewModel;
@@ -104,7 +106,8 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
     @Override
     public void onBindViewHolder(@NonNull FavoriteArtistViewHolder holder, int position){
-        Artist artist = artistList.get(position);
+        FavoriteArtist favorite = favoriteArtistList.get(position);
+        Artist artist = favorite.artist;
         FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
 
         if (viewModel.selectedList.contains(artist)){
@@ -192,12 +195,21 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
     @Override
     public int getItemCount() {
-        return artistList.size();
+        return favoriteArtistList.size();
     }
 
+
+    /*
     public void updateData(List<Artist> newList){
         this.artistList = newList;
         notifyDataSetChanged();
+    }
+     */
+
+    public void updateData(List<FavoriteArtist> newList){
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new FavoriteArtistDiffCallback(this.favoriteArtistList, newList));
+        this.favoriteArtistList = newList;
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public void setSelectionMode(boolean selectionMode){

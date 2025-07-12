@@ -1,7 +1,9 @@
 package com.example.mymusic.model;
 
+import java.io.ObjectStreamClass;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ArtistMetadata {
     public String vibeArtistId;
@@ -87,65 +89,60 @@ public class ArtistMetadata {
         return result.substring(0, result.length()-2);
     }
 
-/*
     @Override
     public String toString(){
-        return "spotify id: " + spotifyArtistId +
-                "\nvibe id:" + vibeArtistId +
-                "\ndebut date:" + debutDate +
-                "\n연대: " + String.join(", ", yearsOfActivity) +
-                "\n소속사: " + String.join(", ", agency) +
-                "\nbiography: " + biography +
-                "\nimages: " + String.join(", ", images) +
-                "\nmembers: " + membersToString() +
-                "\nids: " + memberIdsToString() +
-                "\n썸네일: " + memberTumbnailToString() +
-                "\n활동: " + activityToString() +
-                "\n활동2: " + activityIdsToString() ;
-     }
-*/
-@Override
-public String toString(){
-    StringBuilder result = new StringBuilder();
-    /*
-    if (spotifyArtistId != null && !spotifyArtistId.isEmpty())
-        result.append("Spotify id: " + spotifyArtistId);
+        StringBuilder result = new StringBuilder();
+        if (debutDate != null && !debutDate.isEmpty())
+            result.append("데뷔일: " + debutDate);
 
-    if (vibeArtistId != null && !vibeArtistId.isEmpty())
-        result.append("\nVibe id: " + vibeArtistId);
+        if (yearsOfActivity != null && !yearsOfActivity.isEmpty())
+            result.append("\n연대: " + String.join(", ", yearsOfActivity));
 
-     */
+        if (agency != null && !agency.isEmpty())
+            result.append("\n소속사: " + String.join(", ", agency));
 
-    if (debutDate != null && !debutDate.isEmpty())
-        result.append("데뷔일: " + debutDate);
+        if (members != null && !members.isEmpty())
+            result.append("\n\nmembers: " + membersToString());
 
-    if (yearsOfActivity != null && !yearsOfActivity.isEmpty())
-        result.append("\n연대: " + String.join(", ", yearsOfActivity));
+        if (activity != null && !activity.isEmpty())
+            result.append("\n활동: " + activityToString());
 
-    if (agency != null && !agency.isEmpty())
-        result.append("\n소속사: " + String.join(", ", agency));
+        if (biography != null && !biography.isEmpty())
+            result.append("\n\nbiography: " + biography);
+        return result.toString();
+    }
 
-    if (members != null && !members.isEmpty())
-        result.append("\n\nmembers: " + membersToString());
 
-    if (activity != null && !activity.isEmpty())
-        result.append("\n활동: " + activityToString());
+    public boolean isFetched(){
+        return (debutDate != null && !debutDate.isEmpty()) ||
+                (yearsOfActivity != null && !yearsOfActivity.isEmpty()) && yearsOfActivity.get(0) != null && !yearsOfActivity.get(0).isEmpty() ||
+                (agency != null && !agency.isEmpty() && agency.get(0) != null && !agency.get(0).isEmpty()) ||
+                (biography != null && !biography.isEmpty()) ||
+                (images != null && !images.isEmpty() && images.get(0) != null && !images.get(0).isEmpty()) ||
+                (members != null && !members.isEmpty() && members.get(0) != null && members.get(0).isEmpty() && members.get(0).get(0) != null &&  !members.get(0).get(0).isEmpty()) ||
+                (activity != null && !activity.isEmpty() && activity.get(0) != null && !activity.get(0).isEmpty());
+    }
 
-    if (biography != null && !biography.isEmpty())
-        result.append("\n\nbiography: " + biography);
 
-    return result.toString();
+    @Override
+    public boolean equals(Object obj){
+        if (this == obj) return true;
+        if (this.getClass() != obj.getClass()) return false;
+        ArtistMetadata other = (ArtistMetadata) obj;
 
-}
+        return Objects.equals(this.vibeArtistId, other.vibeArtistId)
+                && Objects.equals(this.spotifyArtistId, other.spotifyArtistId)
+                && Objects.equals(this.debutDate, other.debutDate)
+                && Objects.equals(this.yearsOfActivity, other.yearsOfActivity)
+                && Objects.equals(this.agency, other.agency)
+                && Objects.equals(this.biography, other.biography)
+                && Objects.equals(this.images, other.images)
+                && Objects.equals(this.members, other.members)
+                && Objects.equals(this.activity, other.activity);
+    }
 
-     public boolean isFetched(){
-         return (debutDate != null && !debutDate.isEmpty()) ||
-                 (yearsOfActivity != null && !yearsOfActivity.isEmpty()) && yearsOfActivity.get(0) != null && !yearsOfActivity.get(0).isEmpty() ||
-                 (agency != null && !agency.isEmpty() && agency.get(0) != null && !agency.get(0).isEmpty()) ||
-                 (biography != null && !biography.isEmpty()) ||
-                 (images != null && !images.isEmpty() && images.get(0) != null && !images.get(0).isEmpty()) ||
-                 (members != null && !members.isEmpty() && members.get(0) != null && members.get(0).isEmpty() && members.get(0).get(0) != null &&  !members.get(0).get(0).isEmpty()) ||
-                 (activity != null && !activity.isEmpty() && activity.get(0) != null && !activity.get(0).isEmpty());
-     }
-
+    @Override
+    public int hashCode(){
+        return Objects.hash(vibeArtistId, spotifyArtistId, debutDate, yearsOfActivity, agency, biography, images, members, activity);
+    }
 }

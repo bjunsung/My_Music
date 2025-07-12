@@ -33,10 +33,10 @@ public class SettingFragment extends Fragment {
     private TextView cancelButton, confirmButton;
     private SettingRepository settingRepository;
     private int originalTracksLimit, originalArtistsLimit, originalAlbumsLimit;
-    private SwitchCompat numericPadStateSwitch;
-    private boolean numericPadState;
+    private SwitchCompat numericPadStateSwitch, favoritesColorStateSwitch;
+    private boolean numericPadState, favoritesTrackColorUnificationState;
     private ImageView colorCircleStrawberryPink, colorCircleManchesterCity, colorCircleNavy, colorCirclePantone;
-
+    private SharedPreferences prefs;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -50,7 +50,7 @@ public class SettingFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         viewBind(view);
-        loadInitialValues();
+        loadUserSettingValues();
         setViewInitialState();
         setOnClickEvent(view);
     }
@@ -68,6 +68,7 @@ public class SettingFragment extends Fragment {
         colorCirclePantone = view.findViewById(R.id.color_circle_color_pantone_712c);
         colorCircleNavy = view.findViewById(R.id.color_circle_navy_blue);
         perSonalColorEditText = view.findViewById(R.id.personal_color);
+        favoritesColorStateSwitch = view.findViewById(R.id.favorites_color_state_switch);
     }
 
     private void setViewInitialState(){
@@ -133,6 +134,18 @@ public class SettingFragment extends Fragment {
             }
         }));
 
+        favoritesColorStateSwitch.setOnCheckedChangeListener(((buttonView, isChecked) -> {
+            if (prefs == null) {
+                prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+            }
+            if (isChecked){
+                prefs.edit().putBoolean("favorites_track_color_unification_state", true).apply();
+            }
+            else{
+                prefs.edit().putBoolean("favorites_track_color_unification_state", false).apply();
+            }
+        }));
+
         colorSetting();
 
         perSonalColorEditText.setOnEditorActionListener((v, actionId, event) -> {
@@ -162,7 +175,7 @@ public class SettingFragment extends Fragment {
 
 
 
-    private void loadInitialValues() {
+    private void loadUserSettingValues() {
         // 백그라운드 쓰레드에서 Room 접근
         new Thread(() -> {
             originalTracksLimit = settingRepository.getMaxSearchedTracks();
@@ -172,6 +185,12 @@ public class SettingFragment extends Fragment {
             // 여기서 호출해야 값이 정상적으로 표시됨
             requireActivity().runOnUiThread(this::setTextSync);
         }).start();
+
+        if (prefs == null) {
+            prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        }
+        favoritesTrackColorUnificationState = prefs.getBoolean("favorites_track_color_unification_state", false);
+
     }
 
     private void setTextSync(){
@@ -185,6 +204,7 @@ public class SettingFragment extends Fragment {
         maxSearchedArtistEditText.setText("");
 
         numericPadStateSwitch.setChecked(numericPadState);
+        favoritesColorStateSwitch.setChecked(favoritesTrackColorUnificationState);
     }
 
 
@@ -215,7 +235,7 @@ public class SettingFragment extends Fragment {
         String strAlbums = maxSearchedAlbumnsByArtistEditText.getText().toString().trim();
         if (!(isValid(strTracks) && isValid(strArtists) && isValid(strAlbums) )) {
             Toast.makeText(getContext(), "5이상 50이하의 숫자를 입력해주세요.", Toast.LENGTH_SHORT).show();
-            loadInitialValues();
+            loadUserSettingValues();
         }
 
         try {
@@ -280,7 +300,7 @@ public class SettingFragment extends Fragment {
                 if((finalMaxTrackUpdate || finalMaxAlbumUpdate || finalMaxArtistUpdate) && storeSuccess){
                     requireActivity().runOnUiThread(() -> {
                             Toast.makeText(getContext(), "저장되었습니다.", Toast.LENGTH_SHORT).show();
-                            loadInitialValues();
+                            loadUserSettingValues();
                     });
                 }
             }).start();
@@ -339,7 +359,9 @@ public class SettingFragment extends Fragment {
             bottomNav.setItemTextColor(colorStateList);
 
             // save color value
-            SharedPreferences prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+            if (prefs == null) {
+                prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+            }
             prefs.edit().putInt("selected_color", color).apply();
         }
     }

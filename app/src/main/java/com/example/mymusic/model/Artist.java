@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Artist implements Parcelable {
     public String artistId;
@@ -15,8 +16,6 @@ public class Artist implements Parcelable {
     public List<String> genres;
     public int followers;
     public int popularity;
-
-    public String debutDate;
 
     public Artist(String artistId, String artistName, String artworkUrl, List<String> genres, int followers, int popularity) {
         this.artistId = artistId;
@@ -77,6 +76,25 @@ public class Artist implements Parcelable {
                     joinedGenres.append("]");
             }
         return joinedGenres.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj){
+        if (this == obj) return true;
+        if (this.getClass() != obj.getClass()) return false;
+        Artist newArtist = (Artist) obj;
+
+        return Objects.equals(this.artistId, newArtist.artistId)
+                && Objects.equals(this.artistName, newArtist.artistName)
+                && Objects.equals(this.artworkUrl, newArtist.artworkUrl)
+                && Objects.equals(this.genres, newArtist.genres)
+                && Objects.equals(this.followers, newArtist.followers)
+                && Objects.equals(this.popularity, newArtist.popularity);
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hash(artistId, artistName, artworkUrl, genres, followers, popularity);
     }
 
 }

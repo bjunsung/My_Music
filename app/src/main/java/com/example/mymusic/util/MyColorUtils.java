@@ -57,6 +57,15 @@ public class MyColorUtils {
         }
     }
 
+    public static int blendColors(int from, int to, float ratio) {
+        final float inverseRatio = 1f - ratio;
 
+        float a = (Color.alpha(from) * inverseRatio) + (Color.alpha(to) * ratio);
+        float r = (Color.red(from) * inverseRatio) + (Color.red(to) * ratio);
+        float g = (Color.green(from) * inverseRatio) + (Color.green(to) * ratio);
+        float b = (Color.blue(from) * inverseRatio) + (Color.blue(to) * ratio);
+
+        return Color.argb((int) a, (int) r, (int) g, (int) b);
+    }
 
 }

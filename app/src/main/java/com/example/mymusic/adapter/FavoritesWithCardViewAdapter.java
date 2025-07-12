@@ -28,73 +28,42 @@ import java.util.List;
 
 public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<FavoritesWithCardViewAdapter.FavoritesWithCardViewHolder> {
     private final String TAG = "FavoritesWithCardViewAdapter";
-    private boolean isSelectionMode = false;
     List<Favorite> favoritesList;
-    OnDeleteClickListener deleteClickListener;
-    OnLyricClickListener lyricClickListener;
-    OnLyricLongClickListener lyricLongClickListener;
-    OnItemLongClickListener itemLongClickListener;
-    OnItemNavigateClickListener navigateClickListener;
     private final int invalidColor = -2;
     private int textColor = invalidColor;
     private int backgroundColor = invalidColor;
-    private boolean removeButtonVisibilityGone = false;
     private Context context;
+    private OnItemClickListener itemClickListener;
+    private boolean favoritesColorUnification = false;
 
     public void setTextColor(int textColor) {
         this.textColor = textColor;
     }
 
-    long lastClickTime = 0;
-
-    public void setRemoveButtonVisibilityGone(boolean removeButtonVisibilityGone) {
-        this.removeButtonVisibilityGone = removeButtonVisibilityGone;
-    }
-
-
-    public void setBackgroundColor(int backgroundColor) {
-        this.backgroundColor = backgroundColor;
-    }
-
-    public interface OnDeleteClickListener{
-        void onItemClick(Favorite favorite);
-    }
-
-    public interface OnLyricClickListener{
+    public interface OnItemClickListener{
         void onItemClick(String trackId, String trackName, int position);
     }
 
-    public interface OnLyricLongClickListener{
-        void onItemClick(String trackId, String trackName);
+    public void setPrimaryBackgroundColor(int backgroundColor) {
+        this.backgroundColor = backgroundColor;
     }
 
-    public interface OnItemLongClickListener{
-        void onItemClick();
-    }
 
-    public interface OnItemNavigateClickListener {
-        void onNavigateClick(Favorite favorite, ImageView sharedImageView, int position);
-    }
-    public FavoritesWithCardViewAdapter(Context context, List<Favorite> favoritesList,
-                                        OnDeleteClickListener deleteClickListener,
-                                        OnLyricClickListener lyricClickListener,
-                                        OnLyricLongClickListener lyricLongClickListener,
-                                        OnItemLongClickListener itemLongClickListener,
-                                        OnItemNavigateClickListener navigateClickListener){
+
+    public FavoritesWithCardViewAdapter(Context context,
+                                        List<Favorite> favoritesList,
+                                        OnItemClickListener itemClickListener,
+                                        boolean favoritesColorUnification
+                                        ){
         this.favoritesList = favoritesList;
-        this.deleteClickListener = deleteClickListener;
-        this.lyricClickListener = lyricClickListener;
-        this.lyricLongClickListener = lyricLongClickListener;
-        this.itemLongClickListener = itemLongClickListener;
-        this.navigateClickListener = navigateClickListener;
         this.context = context;
+        this.itemClickListener = itemClickListener;
+        this.favoritesColorUnification = favoritesColorUnification;
     }
 
     public class FavoritesWithCardViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView title, titleKr, artist, album, duration, releasedDate, addedDate;
-        ImageButton deleteButton, lyricButton;
-        CheckBox selectCheckBox;
         TextView textDash, textDuration, textReleaseDate;
         MaterialCardView containerCardView;
         public FavoritesWithCardViewHolder(@NonNull View itemView){
@@ -107,9 +76,6 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
             duration = itemView.findViewById(R.id.durationTextView);
             releasedDate = itemView.findViewById(R.id.releaseDateTextView);
             addedDate = itemView.findViewById(R.id.addedDateTextView);
-            deleteButton = itemView.findViewById(R.id.deleteButton);
-            lyricButton = itemView.findViewById(R.id.lyric_button);
-            selectCheckBox = itemView.findViewById(R.id.select_checkbox);
             textDash = itemView.findViewById(R.id.text_dash);
             textDuration = itemView.findViewById(R.id.text_duration);
             textReleaseDate = itemView.findViewById(R.id.text_release_date);
@@ -139,21 +105,23 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
 
 
         if (context != null) {
-            ImageColorAnalyzer.analyzePrimaryColor(context, track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
-                @Override
-                public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
-                    int darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
-                    int adjustedForWhiteText = MyColorUtils.adjustForWhiteText(darkenColor);
-                    holder.containerCardView.setCardBackgroundColor(adjustedForWhiteText);
-                    //holder.containerCardView.setCardBackgroundColor(primaryColor);
-                }
-
-                @Override
-                public void onFailure() {
-                    Log.d(TAG, "Fail to analyze primary color");
-                }
-            });
-
+            if (favoritesColorUnification){
+                holder.containerCardView.setCardBackgroundColor(backgroundColor);
+            }else {
+                ImageColorAnalyzer.analyzePrimaryColor(context, track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
+                    @Override
+                    public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                        int darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                        int adjustedForWhiteText = MyColorUtils.adjustForWhiteText(darkenColor);
+                        int blended = MyColorUtils.blendColors(adjustedForWhiteText, backgroundColor, 0.3141592f);
+                        holder.containerCardView.setCardBackgroundColor(blended);
+                    }
+                    @Override
+                    public void onFailure() {
+                        Log.d(TAG, "Fail to analyze primary color");
+                    }
+                });
+            }
         }
 
 
@@ -199,136 +167,24 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
         if (textColor != invalidColor){
             holder.releasedDate.setTextColor(textColor);
         }
-        // ✅ 체크박스 표시 여부
-        holder.selectCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
 
-        // ✅ 체크 상태 설정
-        if (holder.selectCheckBox.getVisibility() == View.VISIBLE) {
-            holder.selectCheckBox.setChecked(favorite.isSelected);
-        }
-
-        if (removeButtonVisibilityGone){
-            holder.deleteButton.setVisibility(View.GONE);
-        }
-
-        holder.deleteButton.setOnClickListener(v -> {
-            deleteClickListener.onItemClick(favorite);
-        });
 
         if (textColor != invalidColor){
-            holder.deleteButton.setColorFilter(textColor);
-
-        }
-
-        //lyrics button 클릭 이벤트
-        holder.lyricButton.setOnClickListener(v -> {
-            lyricClickListener.onItemClick(
-                    track.trackId,
-                    track.trackName,
-                    holder.getAdapterPosition());
-        });
-
-        //아이템 클릭 이벤트
-        holder.itemView.setOnClickListener(v -> {
-            lyricClickListener.onItemClick(
-                    track.trackId,
-                    track.trackName,
-                    holder.getAdapterPosition());
-        });
-
-        if (textColor != invalidColor){
-            holder.lyricButton.setColorFilter(textColor);
             holder.textReleaseDate.setTextColor(textColor);
             holder.textDuration.setTextColor(textColor);
             holder.textDash.setTextColor(textColor);
         }
 
-        //lyrics button long 클릭 이벤트
-        holder.lyricButton.setOnLongClickListener(v -> {
-            lyricLongClickListener.onItemClick(track.trackId, track.trackName);
-            return true;
-        });
 
-
-
-
-        /*
-        //아이템 클릭 이벤트
         holder.itemView.setOnClickListener(v -> {
-            if (isSelectionMode) {
-                if (holder.selectCheckBox.isChecked())
-                    favorite.isSelected = false;
-                else
-                    favorite.isSelected = true;
-                holder.selectCheckBox.setChecked(!holder.selectCheckBox.isChecked());
-                itemLongClickListener.onItemClick();
-            }
-            else {
-                if (navigateClickListener != null && ViewCompat.getTransitionName(holder.image) != null){
-                    navigateClickListener.onNavigateClick(
-                            favorite,
-                            holder.image,
-                            holder.getAdapterPosition()
-                    );
-                }
-            }
-        });
-
-         */
-
-        /*
-        //아이템 롤클릭 이벤트
-        holder.itemView.setOnLongClickListener(v -> {
-            if (!isSelectionMode) {
-                setSelectionMode(true);
-                itemLongClickListener.onItemClick();
-            }
-
-            if (!holder.selectCheckBox.isChecked()) {
-                holder.selectCheckBox.setChecked(true);     // UI 갱신
-                favorite.isSelected = true;                 // 상태 반영
-                favorite.recyclerViewPosition = holder.getAdapterPosition();
-                itemLongClickListener.onItemClick();
-            }
-
-            return true;
+            itemClickListener.onItemClick(track.trackId, track.trackName, holder.getAdapterPosition());
         });
 
 
 
-        holder.selectCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!buttonView.isPressed()) return; // 프로그래밍적으로 변경된 경우 무시
-            favorite.isSelected = isChecked;
-            favorite.recyclerViewPosition = holder.getAdapterPosition();
-            itemLongClickListener.onItemClick();
-        });
- */
     }
 
 
-    public List<Favorite> getSelectedList(){
-        List<Favorite> selectedList = new ArrayList<>();
-        for (Favorite item : favoritesList){
-            if (item.isSelected)
-                selectedList.add(item);
-        }
-        return selectedList;
-    }
-
-    public int getSelectedSize(){
-        List<Favorite> selectedList = new ArrayList<>();
-        for (Favorite item : favoritesList){
-            if (item.isSelected)
-                selectedList.add(item);
-        }
-        return selectedList.size();
-    }
-
-
-    public void setSelectionMode(boolean enable) {
-        isSelectionMode = enable;
-        notifyDataSetChanged(); // 전체 갱신
-    }
 
     @Override
     public int getItemCount() {
@@ -341,6 +197,7 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
         this.favoritesList = newList;
         notifyDataSetChanged();
     }
+
 
 
 }
