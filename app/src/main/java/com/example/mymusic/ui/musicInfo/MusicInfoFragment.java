@@ -308,47 +308,9 @@ public class MusicInfoFragment extends Fragment {
             }
 
             artworkImage.post(()->{
-                Context context = getContext();
-                if (context!=null){
-                    int[] pagerLocation = new int[2];
-                    artworkImage.getLocationOnScreen(pagerLocation);
-                    int pagerRightX = pagerLocation[0] + artworkImage.getWidth();    // Pager의 오른쪽 끝 X 좌표
-                    int pagerBottomY = pagerLocation[1] + artworkImage.getHeight();
-
-
-
-
-                    // 2. 버튼의 크기를 고려하여 위치 계산
-                    // (버튼의 너비와 높이를 알아야 정확한 위치에 놓을 수 있습니다)
-                    int buttonWidth = enlargeButton.getWidth();
-                    int buttonHeight = enlargeButton.getHeight();
-
-                    // 만약 버튼 크기가 0으로 나온다면, 임시로 크기를 지정해줍니다 (dp를 px로 변환)
-
-                    final float density = getResources().getDisplayMetrics().density; //여기에서 팅김
-                    if (buttonWidth == 0) buttonWidth = (int)(24 * density);
-                    if (buttonHeight == 0) buttonHeight = (int)(24 * density);
-
-                    int padding = (int)(6 * density); // 우측, 하단 여백
-
-                    // 3. LayoutParams에 적용
-                    FrameLayout.LayoutParams enlargeParams = (FrameLayout.LayoutParams) enlargeButton.getLayoutParams();
-                    enlargeParams.leftMargin = pagerRightX - buttonWidth - padding;
-                    enlargeParams.topMargin = pagerBottomY - buttonHeight - padding;
-
-                    enlargeButton.setLayoutParams(enlargeParams);
                     enlargeButton.setVisibility(View.VISIBLE);
-
-
                     ImageView enlargeButtonShadow =  binding.enlargeButtonShadow;
-                    FrameLayout.LayoutParams enlargeShadowParams = (FrameLayout.LayoutParams) enlargeButtonShadow.getLayoutParams();
-                    enlargeShadowParams.leftMargin = pagerRightX - buttonWidth - padding + 2;
-                    enlargeShadowParams.topMargin = pagerBottomY - buttonHeight - padding + 2;
-                    enlargeButtonShadow.setLayoutParams(enlargeShadowParams);
                     enlargeButtonShadow.setVisibility(View.VISIBLE);
-
-
-                }
             });
 
 

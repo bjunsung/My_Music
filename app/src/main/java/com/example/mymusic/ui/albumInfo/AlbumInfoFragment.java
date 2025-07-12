@@ -54,7 +54,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 
-public class AlbumInfoFragment extends Fragment {
+public class  AlbumInfoFragment extends Fragment {
     private final String TAG = "AlbumInfoFragment";
     private Album album;
 

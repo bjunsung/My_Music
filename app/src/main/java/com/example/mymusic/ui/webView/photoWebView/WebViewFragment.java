@@ -132,7 +132,20 @@ public class WebViewFragment extends Fragment {
     }
 
     private void extractImages() {
-        String extractionJs = "(function() { const images = document.querySelectorAll('.photoviewer .swiper-wrapper img'); const urls = Array.from(images).map(img => img.src.split('?')[0]); return JSON.stringify(urls); })();";
+        String extractionJs =
+                "(function() {" +
+                        "  const images = document.querySelectorAll('.photoviewer .swiper-wrapper img');" +
+                        "  const seen = new Set();" +
+                        "  const urls = Array.from(images)" +
+                        "    .map(img => img.src.split('?')[0])" +
+                        "    .filter(src => {" +
+                        "      if (seen.has(src)) return false;" +
+                        "      seen.add(src);" +
+                        "      return true;" +
+                        "    });" +
+                        "  return JSON.stringify(urls);" +
+                        "})();";
+
 
         webView.evaluateJavascript(extractionJs, jsonResult -> {
             if (jsonResult != null && !jsonResult.equals("null") && jsonResult.length() > 2) {
@@ -158,7 +171,7 @@ public class WebViewFragment extends Fragment {
                             }
 
                             // 1. Toast 메시지 표시
-                            Toast.makeText(getContext(), "이미지 " + urls.size() / 2 + "개 가져오기 성공!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getContext(), "이미지 " + urls.size() + "개 가져오기 성공!", Toast.LENGTH_LONG).show();
                             Log.d("WebViewFragment", "Extracted URLs: " + urls.toString());
 
                             // 2. 이전 프래그먼트로 결과 전달

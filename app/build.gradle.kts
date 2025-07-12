@@ -88,7 +88,7 @@ dependencies {    // Room core
     //annotationProcessor("com.github.bumptech.glide:compiler:4.16.0") // Java 프로젝트용 Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")    //Glide 설정
     kapt("com.github.bumptech.glide:compiler:4.16.0") //⬅️ annotationProcessor를 kapt로 변경
-    implementation("com.google.android.material:material:1.11.0") //cardView
+    //implementation("com.google.android.material:material:1.11.0") //cardView
     implementation("jp.wasabeef:recyclerview-animators:4.0.2") //recycler view item change animation
     implementation(libs.palette)  //Glide
     implementation(libs.appcompat)

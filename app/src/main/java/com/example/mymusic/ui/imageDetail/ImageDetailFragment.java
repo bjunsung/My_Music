@@ -98,21 +98,12 @@ public class ImageDetailFragment extends Fragment {
                     getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
                     transition.removeListener(this);
                 }
-
                 @Override
-                public void onTransitionCancel(@NonNull Transition transition) {
-
-                }
-
+                public void onTransitionCancel(@NonNull Transition transition) {}
                 @Override
-                public void onTransitionPause(@NonNull Transition transition) {
-
-                }
-
+                public void onTransitionPause(@NonNull Transition transition) {}
                 @Override
-                public void onTransitionResume(@NonNull Transition transition) {
-
-                }
+                public void onTransitionResume(@NonNull Transition transition) {}
             });
         }
 
@@ -331,20 +322,11 @@ public class ImageDetailFragment extends Fragment {
         if (isLightMode){
             detailContainer.setBackgroundColor(Color.WHITE);
             closeButton.setVisibility(View.VISIBLE);
-            /*
-            if (insetsController != null){
-                insetsController.show(WindowInsetsCompat.Type.systemBars());
-            }
-
-             */
+            sliderHandler.removeCallbacks(sliderRunnable);
         }else{
             detailContainer.setBackgroundColor(Color.BLACK);
             closeButton.setVisibility(View.GONE);
-            /*
-            if (insetsController != null){
-                insetsController.hide(WindowInsetsCompat.Type.systemBars());
-            }
-             */
+            sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
         }
     }
 

@@ -4,6 +4,7 @@ import android.app.Application;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class FavoriteArtistViewModel extends AndroidViewModel {
+    private final String TAG = "FavoriteArtistViewModel";
     private final FavoriteArtistRepository repository;
     private final ArtistMetadataRepository artistMetadataRepository;
     public Bundle reenterState = null;
@@ -28,6 +30,7 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
     private int reenterScrollPosition = 0;
     private int reenterScrollOffset = 0;
     public List<Artist> selectedList = new ArrayList<>();
+    private String sortOption;
 
     public FavoriteArtistViewModel(@NonNull Application application) {
         super(application);
@@ -254,6 +257,25 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
             if (result > 0) new Handler(Looper.getMainLooper()).post(() -> callback.accept(true));
             else new Handler(Looper.getMainLooper()).post(() -> callback.accept(false));
         }).start();
+    }
+
+    public String getSortOption() {
+        return sortOption;
+    }
+
+    public int getSortOptionTypeInt() {
+        if (sortOption == null) return -1;
+        if(sortOption.equals("MEMBER_COUNTS"))
+            return 1;
+        else if (sortOption.equals("IMAGE_COUNTS"))
+            return 2;
+        else{
+            return 0;
+        }
+    }
+    public void setSortOption(String sortOption) {
+        this.sortOption = sortOption;
+        Log.d(TAG, "set artist sort option: " + sortOption);
     }
 
 }

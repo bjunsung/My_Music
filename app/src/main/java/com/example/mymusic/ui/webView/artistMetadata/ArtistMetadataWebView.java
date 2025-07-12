@@ -18,9 +18,6 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentOnAttachListener;
-import androidx.navigation.NavHostController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.mymusic.R;
@@ -193,15 +190,18 @@ public class ArtistMetadataWebView extends Fragment {
     private String createExtractionJs() {
         return  "(function waitForArtist() {\n" +
                 "    const check = (retries) => {\n" +
+                "    const url = new URL(window.location.href);\n" +
+                "    const pathSegments = url.pathname.split('/');\n" +
+                "    let vibeArtistId = null;\n" +
+                "    if (pathSegments.includes('artist')){\n" +
+                "        const index = pathSegments.indexOf('artist');\n" +
+                "        vibeArtistId = pathSegments[index + 1];\n" +
+                "        console.log('vibeArtistId: ', vibeArtistId);\n" +
+                "    }\n" +
                 "        console.log('[JS] Checking for artist DOM, retries left: ' + retries);\n" +
-                "        const titleAnchor = document.querySelector('a.title_link');\n" +
-                "        let vibeArtistId = null;\n" +
+                "        const titleAnchor = document.querySelector('.title_link');\n" +
                 "        let artistName = null;\n" +
                 "        if (titleAnchor) {\n" +
-                "            const href = titleAnchor.getAttribute('href');\n" +
-                "            console.log('[JS] Found title link href: ' + href);\n" +
-                "            const match = href.match(/\\/artist\\/(\\d+)/);\n" +
-                "            if (match) vibeArtistId = match[1];\n" +
                 "            artistName = titleAnchor.innerText.trim();\n" +
                 "            console.log('[JS] Extracted artistId: ' + vibeArtistId + ', name: ' + artistName);\n" +
                 "        } else {\n" +
@@ -236,7 +236,11 @@ public class ArtistMetadataWebView extends Fragment {
                 "            let biography = bioElement ? bioElement.innerText.trim() : null;\n" +
                 "            console.log('[JS] Biography: ' + biography);\n" +
                 "            let images = Array.from(document.querySelectorAll('img.img_thumb'))\n" +
-                "                .map(img => img.src)\n" +
+                "                .map(img => {\n" +
+                "                    const src = img.src;\n" +
+                "                    const index = src.indexOf('?type=');\n" +
+                "                    return index !== -1 ? src.substring(0, index) : src;\n" +
+                "                })\n" +
                 "                  .filter(src => src && src.includes('music-phinf.pstatic.net') && !src.includes('musicmeta-phinf'));\n" +
                 "            console.log('[JS] Found images: ' + images.length);\n" +
                 "\n" +

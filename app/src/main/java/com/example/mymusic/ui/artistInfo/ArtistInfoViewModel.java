@@ -2,6 +2,7 @@ package com.example.mymusic.ui.artistInfo;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.widget.Switch;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -18,6 +19,8 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private boolean secondPostponeFlag = false; //return from detail fragment
     private boolean metadataExist = false;
     private int lastPositionAtImageDetailFragment = -1;
+
+
 
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);

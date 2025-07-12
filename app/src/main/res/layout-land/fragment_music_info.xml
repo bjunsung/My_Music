@@ -14,25 +14,52 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <!-- 기존 ImageView, ImageButton, ScrollView 등 여기 다 들어감 -->
-                <!--  <ImageView
-                    android:id="@+id/artworkImage"
+                <LinearLayout
+                    android:id="@+id/artwork_layout"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    app:layout_constraintDimensionRatio="1:1"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" /> -->
-
-                <ImageView
-                    android:id="@+id/artworkImage"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
+                    android:orientation="horizontal"
                     app:layout_constraintDimensionRatio="1:1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    android:layout_marginBottom="@dimen/navigation_bar_margin"/>
+                    android:layout_marginBottom="@dimen/navigation_bar_margin">
+
+                    <ImageView
+                        android:id="@+id/artworkImage"
+                        android:scaleType="centerCrop"
+                        android:layout_height="match_parent"
+                        android:layout_width="match_parent"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginLeft="-27dp"
+                        android:layout_marginTop="1dp"
+                        android:layout_gravity="bottom">
+                        <ImageView
+                            android:id="@+id/enlarge_button"
+                            android:layout_width="wrap_content"
+                            android:elevation="4dp"
+                            android:layout_height="wrap_content"
+                            android:scaleType="centerCrop"
+                            android:layout_marginLeft="-4dp"
+                            android:layout_marginBottom="-27dp"
+                            android:padding="4dp"
+                            android:layout_gravity="bottom"
+                            android:src="@drawable/ic_enlargement_white"/>
+
+                        <ImageView
+                            android:id="@+id/enlarge_button_shadow"
+                            android:layout_width="wrap_content"
+                            android:elevation="2dp"
+                            android:layout_height="wrap_content"
+                            android:scaleType="centerCrop"
+                            android:layout_marginLeft="1dp"
+                            android:layout_marginBottom="2dp"
+                            android:src="@drawable/ic_enlargement_gray" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <ImageButton
                     android:id="@+id/shadow_add_button"
@@ -99,7 +126,7 @@
                     android:fillViewport="true"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/artworkImage"
+                    app:layout_constraintStart_toEndOf="@+id/artwork_layout"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:paddingBottom="@dimen/navigation_bar_margin">
 
@@ -348,24 +375,6 @@
                 <!-- 생략: 지금까지 올리신 내부 내용 그대로 복붙 -->
 
             </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <ImageView
-            android:id="@+id/enlarge_button_shadow"
-            android:layout_width="wrap_content"
-            android:elevation="2dp"
-            android:layout_height="wrap_content"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_enlargement_gray" />
-
-
-        <ImageView
-            android:id="@+id/enlarge_button"
-            android:layout_width="wrap_content"
-            android:elevation="4dp"
-            android:layout_height="wrap_content"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_enlargement_white"/>
-
         </FrameLayout>
 
 

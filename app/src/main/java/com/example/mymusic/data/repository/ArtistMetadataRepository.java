@@ -103,6 +103,8 @@ public class ArtistMetadataRepository {
         ArtistMetadata existingMetadata = artistMetadataDao.getArtistMetadataBySpotifyId(spotifyId);
 
         if (existingMetadata != null) {
+            Log.d("Repository Debug", "exist images length: " +existingMetadata.images.size());
+            Log.d("Repository Debug", "new images length: " +newImages.size());
             // 순서 유지하며 중복 없이 합치기
             List<String> currentImages = existingMetadata.images != null
                     ? new ArrayList<>(existingMetadata.images)
@@ -116,6 +118,7 @@ public class ArtistMetadataRepository {
 
             // 업데이트 후 저장
             existingMetadata.images = currentImages;
+            Log.d("Repository Debug", "image length: " +currentImages.size());
             long result = artistMetadataDao.saveArtistMetadata(existingMetadata); // REPLACE 전략으로 저장
             return result;
         }

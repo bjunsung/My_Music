@@ -112,7 +112,8 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
             Picasso.get()
                     .load(track.artworkUrl)
-                    //.placeholder(R.drawable.default_artist_image) // 로딩 중 보여줄 이미지
+                    .resize(120, 120)
+                    //.placeholder(R.drawable.ic_image_not_found_foreground) // 로딩 중 보여줄 이미지
                     .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
                     .into(holder.image);
         } else {

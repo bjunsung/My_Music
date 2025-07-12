@@ -19,10 +19,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+
 import com.example.mymusic.R;
+import com.example.mymusic.util.DarkModeUtils;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.android.material.card.MaterialCardView;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -59,6 +64,8 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
     private TextView dateStart, dateEnd;
     private SharedPreferences prefs;
 
+    private MaterialCardView bottomSheetCardView;
+
     @Override
     public void onStart() {
         super.onStart();
@@ -69,6 +76,7 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
             BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
             behavior.setState(BottomSheetBehavior.STATE_EXPANDED); // ← 강제 확장
         }
+
     }
 
     @Override
@@ -167,6 +175,8 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
         customInputLayout = view.findViewById(R.id.custom_input_layout);
         dateStart = view.findViewById(R.id.date_start);
         dateEnd = view.findViewById(R.id.date_end);
+
+        bottomSheetCardView = view.findViewById(R.id.bottom_sheet_card_view);
     }
 
     private void setView(){
@@ -258,6 +268,7 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
 
             });
         }
+
     }
 
     private void setupHighlight(String selectedSort, String selectedFilter) {
@@ -271,6 +282,12 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
             if (sortTextViewMap.containsKey(selectedSort)) {
                 sortTextViewMap.get(selectedSort).setTypeface(null, Typeface.BOLD);
                 sortTextViewMap.get(selectedSort).setTextColor(Color.DKGRAY);
+                if (DarkModeUtils.isDarkMode(getContext())) {
+                    int color = Color.parseColor("#DBDBDB");
+                    sortTextViewMap.get(selectedSort).setTextColor(color);
+                } else{
+                    sortTextViewMap.get(selectedSort).setTextColor(Color.DKGRAY);
+                }
             }
             sortOpt = selectedSort;
         }
@@ -283,6 +300,10 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
             if (filterTextViewMap.containsKey(selectedFilter)) {
                 filterTextViewMap.get(selectedFilter).setTypeface(null, Typeface.BOLD);
                 filterTextViewMap.get(selectedFilter).setTextColor(Color.DKGRAY);
+                if (DarkModeUtils.isDarkMode(getContext())){
+                    int color = Color.parseColor("#DBDBDB");
+                    filterTextViewMap.get(selectedFilter).setTextColor(color);
+                }
             }
             filterOpt = selectedFilter;
         }

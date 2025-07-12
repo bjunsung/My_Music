@@ -244,6 +244,15 @@ public class SortFilterArtistUtil {
                             e.printStackTrace();
                         }
                         break;
+                    case "DEBUT_DATE":
+                        try{
+                            if (item.metadata != null && item.metadata.debutDate != null && !item.metadata.debutDate.isEmpty()){
+                                result.add(item);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
                     default:
                         result.add(item);
                         break;
@@ -260,7 +269,9 @@ public class SortFilterArtistUtil {
                 Collections.sort(list, Comparator.comparing(FavoriteArtist::getAddedDate, Comparator.nullsLast(Comparator.naturalOrder())));
                 break;
             case "DEBUT_DATE":
+                list = filterList(list, "DEBUT_DATE");
                 Collections.sort(list, Comparator.comparing(FavoriteArtist::getDebutDate, Comparator.nullsLast(Comparator.naturalOrder())));
+
                 break;
             case "FOLLOWERS":
                 Collections.sort(list, Comparator.comparing(FavoriteArtist::getFollowers));

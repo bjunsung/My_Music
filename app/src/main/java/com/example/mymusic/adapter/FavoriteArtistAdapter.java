@@ -1,7 +1,9 @@
 package com.example.mymusic.adapter;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -30,6 +32,7 @@ import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
+import java.util.Objects;
 
 public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAdapter.FavoriteArtistViewHolder> {
     private final String TAG = "FavoriteArtistAdapter";
@@ -92,6 +95,9 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         CheckBox selectCheckBox;
         LinearLayout debutLayout;
         TextView debutDateTextView;
+        private LinearLayout additionalLayout;
+        private TextView additionalStatement, additionalInfo;
+
         int position = -1;
 
         public int recyclerViewPosition = -1;
@@ -107,6 +113,9 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             imageAlbumButton = itemView.findViewById(R.id.image_album_button);
             debutLayout = itemView.findViewById(R.id.debut_layout);
             debutDateTextView = itemView.findViewById(R.id.debut_date);
+            additionalLayout = itemView.findViewById(R.id.additional_info_layout);
+            additionalStatement = itemView.findViewById(R.id.additional_statement);
+            additionalInfo = itemView.findViewById(R.id.additional_info);
         }
     }
 
@@ -117,6 +126,9 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         context = parent.getContext();
         return new FavoriteArtistViewHolder(view);
     }
+
+
+
 
     @Override
     public void onBindViewHolder(@NonNull FavoriteArtistViewHolder holder, int position){
@@ -137,6 +149,9 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                     } else{
                         holder.debutDateTextView.setText("정보없음");
                     }
+                    removeAdditionalInfo(holder);
+
+                    setAdditionalInfo(holder, metadata);
 
                 });
             }
@@ -148,8 +163,9 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                     holder.addButton.setColorFilter(Color.GRAY);
                     holder.imageAlbumButton.setVisibility(View.GONE);
                     holder.debutLayout.setVisibility(View.GONE);
+                    removeAdditionalInfo(holder);
+                    setAdditionalInfo(holder, null);
                 });
-
             }
         });
 
@@ -187,6 +203,9 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(artist));
 
         holder.selectCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
+
+
+
 
         holder.itemView.setOnClickListener(v -> {
             if (!isSelectionMode) {
@@ -256,13 +275,60 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         return favoriteArtistList.size();
     }
 
+    private void removeAdditionalInfo(@NonNull FavoriteArtistViewHolder holder){
+        holder.additionalLayout.setVisibility(View.GONE);
+    }
 
+    private void setAdditionalInfo(@NonNull FavoriteArtistViewHolder holder, ArtistMetadata metadata){
+        SharedPreferences prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+        String filterOption = prefs.getString("sort_option", "ADDED_DATE");
+        switch (filterOption) {
+            case "MEMBER_COUNTS":
+                if (metadata != null && metadata.members != null && !metadata.members.isEmpty()) {
+                    holder.additionalLayout.setVisibility(View.VISIBLE);
+                    holder.additionalStatement.setText("멤버");
+                    StringBuilder memberCount = new StringBuilder();
+                    memberCount.append(metadata.members.size());
+                    memberCount.append(" 명");
+                    holder.additionalInfo.setText(memberCount);
+                }
+                break;
+            case "IMAGE_COUNTS":
+                holder.additionalLayout.setVisibility(View.VISIBLE);
+                holder.additionalStatement.setText("PHOTO");
+                if (metadata != null && metadata.images != null && !metadata.images.isEmpty()) {
+                    int imageCount = metadata.images.size();
+                    holder.additionalInfo.setText(String.valueOf(imageCount));
+                } else{
+                    holder.additionalInfo.setText("1");
+                }
+                break;
+            default:
+                holder.additionalStatement.setText("OTHER CASE");
+                holder.additionalInfo.setText("OTHER CASE");
+                holder.additionalLayout.setVisibility(View.GONE);
+                break;
+        }
+    }
 
     public void updateData(List<FavoriteArtist> newList){
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new FavoriteArtistDiffCallback(this.favoriteArtistList, newList));
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
+                new FavoriteArtistDiffCallback(this.favoriteArtistList, newList, 0, 0)
+        );
         this.favoriteArtistList = newList;
         diffResult.dispatchUpdatesTo(this);
     }
+
+    public void updateData(List<FavoriteArtist> newList, int oldSortOpt, int newSortOpt){
+
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
+                new FavoriteArtistDiffCallback(this.favoriteArtistList, newList, oldSortOpt, newSortOpt)
+        );
+        this.favoriteArtistList = newList;
+        diffResult.dispatchUpdatesTo(this);
+    }
+
+
 
     public void setSelectionMode(boolean selectionMode){
         this.isSelectionMode = selectionMode;

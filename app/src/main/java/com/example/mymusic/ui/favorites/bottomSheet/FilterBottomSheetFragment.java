@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mymusic.R;
+import com.example.mymusic.util.DarkModeUtils;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -271,7 +272,12 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
                 // 선택된 항목만 Bold 처리
             if (sortTextViewMap.containsKey(selectedSort)) {
                 sortTextViewMap.get(selectedSort).setTypeface(null, Typeface.BOLD);
-                sortTextViewMap.get(selectedSort).setTextColor(Color.DKGRAY);
+                if (DarkModeUtils.isDarkMode(getContext())){
+                    int color = Color.parseColor("#DBDBDB");
+                    sortTextViewMap.get(selectedSort).setTextColor(color);
+                }else {
+                    sortTextViewMap.get(selectedSort).setTextColor(Color.DKGRAY);
+                }
             }
             sortOpt = selectedSort;
         }
@@ -284,6 +290,10 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
             if (filterTextViewMap.containsKey(selectedFilter)) {
                 filterTextViewMap.get(selectedFilter).setTypeface(null, Typeface.BOLD);
                 filterTextViewMap.get(selectedFilter).setTextColor(Color.DKGRAY);
+                if (DarkModeUtils.isDarkMode(getContext())){
+                    int color = Color.parseColor("#DBDBDB");
+                    filterTextViewMap.get(selectedFilter).setTextColor(color);
+                }
             }
             filterOpt = selectedFilter;
         }

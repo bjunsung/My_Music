@@ -62,6 +62,7 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
 
         Picasso.get()
                 .load(album.artworkUrl)
+                .resize(400, 400)
                 .error(R.drawable.ic_image_not_found_foreground)
                 .into(holder.albumImage);
         holder.albumName.setText(album.albumName);

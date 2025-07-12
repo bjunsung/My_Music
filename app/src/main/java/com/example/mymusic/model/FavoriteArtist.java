@@ -103,7 +103,7 @@ public class FavoriteArtist implements Parcelable {
 
     public int getImageCount(){
         if (metadata != null && metadata.images != null && !metadata.images.isEmpty())
-            return metadata.members.size();
+            return metadata.images.size();
         else
             return 1;
     }

@@ -308,24 +308,7 @@ public class FavoritesFragment extends Fragment {
 
 
 
-        //switch toggle event
-        favoriteOptionSwitch = view.findViewById(R.id.favorite_option_switch);
-        favoriteOptionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (!isChecked) {
-                favoriteOption = 0; //track
-                trackRecyclerView.setVisibility(View.VISIBLE);
-                artistRecyclerView.setVisibility(View.GONE);
-                onLyricsContainer.setVisibility(View.GONE);
 
-            }
-            else {
-                favoriteOption = 1; //artist
-                artistRecyclerView.setVisibility(View.VISIBLE);
-                trackRecyclerView.setVisibility(View.GONE);
-                onLyricsContainer.setVisibility(View.GONE);
-            }
-            loadFavoritesAndUpdateUI();
-        });
 
 
         emptyFavoriteSongTextView = view.findViewById(R.id.empty_favorite_song);
@@ -361,8 +344,32 @@ public class FavoritesFragment extends Fragment {
         }
 
 
+        //switch toggle event
+        favoriteOptionSwitch = view.findViewById(R.id.favorite_option_switch);
+
+
         trackRecyclerView.setAdapter(favoriteTrackAdapter);
         artistRecyclerView.setAdapter(favoriteArtistAdapter);
+
+
+
+
+        if (context != null) {
+            SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
+            if (favoriteOption == 1){
+                prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+                updateArtistSortOption(prefs);
+            }
+            boolean isDescending = prefs.getBoolean("isDescending", false);
+            if (isDescending) {
+                dropUpImageButton.setVisibility(View.GONE);
+                dropDownImageButton.setVisibility(View.VISIBLE);
+            } else {
+                dropDownImageButton.setVisibility(View.GONE);
+                dropUpImageButton.setVisibility(View.VISIBLE);
+            }
+        }
+
 
         if(favoriteOption == 0) {//track
             Log.d(TAG, "OnViewCreatied-  option 0 (Favorites Tracks)");
@@ -375,21 +382,24 @@ public class FavoritesFragment extends Fragment {
             loadFavoritesAndUpdateUI();
         }
 
-
-        if (context != null) {
-            SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
-            if (favoriteOption == 1){
-                prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+        favoriteOptionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isSelectionMode){
+                handleCancelSelectionMode();
             }
-            boolean isDescending = prefs.getBoolean("isDescending", false);
-            if (isDescending) {
-                dropUpImageButton.setVisibility(View.GONE);
-                dropDownImageButton.setVisibility(View.VISIBLE);
-            } else {
-                dropDownImageButton.setVisibility(View.GONE);
-                dropUpImageButton.setVisibility(View.VISIBLE);
+            if (!isChecked) {
+                favoriteOption = 0; //track
+                trackRecyclerView.setVisibility(View.VISIBLE);
+                artistRecyclerView.setVisibility(View.GONE);
+                onLyricsContainer.setVisibility(View.GONE);
             }
-        }
+            else {
+                favoriteOption = 1; //artist
+                artistRecyclerView.setVisibility(View.VISIBLE);
+                trackRecyclerView.setVisibility(View.GONE);
+                onLyricsContainer.setVisibility(View.GONE);
+            }
+            loadFavoritesAndUpdateUI();
+        });
 
         lyricsModeCancelButton.setOnClickListener(v -> {
             cancelLyricsMode();
@@ -540,12 +550,17 @@ public class FavoritesFragment extends Fragment {
                     .addSharedElement(focusedImageView, transitionName)
                     .build();
 
+            NavHostFragment.findNavController(this).navigate(R.id.musicInfoFragment, bundle, null, extras);
+
+            /*
             Navigation.findNavController(requireView()).navigate(
                     R.id.action_favoritesFragment_to_musicInfoFragment,
                     bundle,
                     null,
                     extras
             );
+
+             */
         });
 
 
@@ -564,9 +579,7 @@ public class FavoritesFragment extends Fragment {
 
         bottomSheet.setApplyListener(new FilterBottomSheetFragment.OnApplyListener() {
             @Override
-            public void onApply() {
-                loadFavoritesAndUpdateUI();
-            }
+            public void onApply() { loadFavoritesAndUpdateUI(); }
         });
 
         bottomSheetArtist.setApplyListener(new ArtistFilterBottomSheetFragment.OnApplyListener() {
@@ -575,6 +588,12 @@ public class FavoritesFragment extends Fragment {
                 loadFavoritesAndUpdateUI();
             }
         });
+
+
+
+
+
+
 
         filterImageButton.setOnClickListener(v -> {
             if (favoriteOption == 0) {
@@ -635,6 +654,10 @@ public class FavoritesFragment extends Fragment {
 //onViewCreated
     }
 
+    private void updateArtistSortOption(SharedPreferences prefs){
+        String sortOpt = prefs.getString("sort_option", "ADDED_DATE");
+        favoriteArtistViewModel.setSortOption(sortOpt);
+    }
 
     private void setArtistRecyclerViewAnimation(){
         LandingAnimator artistAnimator = new LandingAnimator();
@@ -696,7 +719,19 @@ public class FavoritesFragment extends Fragment {
                 handleReenterTransition();
             });
         } else {  //Favorite Artist
+            SharedPreferences prefs = getContext().getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+            int oldSortOpt = favoriteArtistViewModel.getSortOptionTypeInt();
+            updateArtistSortOption(prefs);
+            int newSortOpt = favoriteArtistViewModel.getSortOptionTypeInt();
+            Log.d(TAG, "old sort option: " +oldSortOpt + " new sort opt: " + newSortOpt);
+
+            if (oldSortOpt == -1){
+                oldSortOpt = newSortOpt;
+            }
+
+
             trackRecyclerView.setVisibility(View.GONE);
+            int finalOldSortOpt = oldSortOpt;
             favoriteArtistViewModel.loadFavoritesOriginalForm(favoriteArtistList -> {
                 if (favoriteArtistList != null) {
                     if (!favoriteArtistList.isEmpty())
@@ -709,7 +744,7 @@ public class FavoritesFragment extends Fragment {
 
 
                     updateEmptyState(filterd.isEmpty());
-                    favoriteArtistAdapter.updateData(filterd);
+                    favoriteArtistAdapter.updateData(filterd, finalOldSortOpt, newSortOpt);
 
                     LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
                     if (layoutManager != null) {
@@ -1035,7 +1070,9 @@ public class FavoritesFragment extends Fragment {
         focusedDurationTextView.setText(track.durationToString());
         focusedReleaseDateTextView.setText(track.releaseDate);
 
-        lyricsTextView.setText(favorite.metadata.lyrics);
+        StringBuilder lyrics = new StringBuilder(favorite.metadata.lyrics);
+        lyrics.append("\n\n\n\n\n");
+        lyricsTextView.setText(lyrics);
     }
 
 
@@ -1712,12 +1749,10 @@ public class FavoritesFragment extends Fragment {
                 .addSharedElement(sharedImageView, transitionName)
                 .build();
 
-        Navigation.findNavController(requireView()).navigate(
-                R.id.action_favoritesFragment_to_artistInfoFragment,
-                bundle,
-                null,
-                extras
-        );
+
+        NavHostFragment.findNavController(this).navigate(R.id.artist_info, bundle, null, extras);
+
+
     }
 
     OnBackPressedCallback callback = new OnBackPressedCallback(true) {

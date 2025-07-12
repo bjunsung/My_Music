@@ -348,7 +348,6 @@
                                 android:layout_marginTop="30dp"
                                 android:text="Biography"
                                 android:textSize="@dimen/text_size_sector_in_artist_info"
-                                android:lineSpacingExtra="8dp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -357,8 +356,18 @@
                                 android:layout_height="wrap_content"
                                 android:padding="10dp"
                                 android:layout_marginRight="@dimen/margin_right_value_of_biography_in_artist_info"
+                                android:lineSpacingExtra="8dp"
                                 android:text="statement"
                                 android:textSize="@dimen/text_size_biography_in_artist_info" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/empty_space_layout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingBottom="@dimen/navigation_bar_margin"
+                            android:orientation="vertical">
 
                             <TextView
                                 android:layout_width="match_parent"

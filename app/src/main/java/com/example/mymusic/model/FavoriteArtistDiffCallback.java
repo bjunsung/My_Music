@@ -1,17 +1,27 @@
 package com.example.mymusic.model;
 
+import android.os.Bundle;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
 
 import java.util.List;
 import java.util.Objects;
 
 public class FavoriteArtistDiffCallback extends DiffUtil.Callback {
+    private final String TAG = "FavoriteArtistDiffCallback";
     private final List<FavoriteArtist> oldList;
     private final List<FavoriteArtist> newList;
+    private final int oldSortOpt;
+    private final int newSortOpt;
 
-    public FavoriteArtistDiffCallback(List<FavoriteArtist> oldList, List<FavoriteArtist> newList){
+
+    public FavoriteArtistDiffCallback(List<FavoriteArtist> oldList, List<FavoriteArtist> newList, int oldSortOpt, int newSortOpt){
         this.oldList = oldList;
         this.newList = newList;
+        this.oldSortOpt = oldSortOpt;
+        this.newSortOpt = newSortOpt;
     }
 
     @Override
@@ -38,7 +48,10 @@ public class FavoriteArtistDiffCallback extends DiffUtil.Callback {
 
         return Objects.equals(oldItem.artist, newItem.artist)
                 && Objects.equals(oldItem.addedDate, newItem.addedDate)
-                && Objects.equals(oldItem.metadata, newItem.metadata);
+                && Objects.equals(oldItem.metadata, newItem.metadata)
+                && oldSortOpt == newSortOpt;
     }
+
+
 
 }

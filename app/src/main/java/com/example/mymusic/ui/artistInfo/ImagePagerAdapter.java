@@ -74,27 +74,17 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
-    public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ImageViewHolder holder, @SuppressLint("RecyclerView") int position) {
         String url = imageUrls.get(position);
-        if (!viewModel.isSecondPostponeFlag()) {
+        if (holder.getAdapterPosition() == 0) {
             String transitionName = transitionNameForm + recyclerviewPosition + "_" + artist.artistName + "_" + artist.artistId + "_" + url;
             Log.d(TAG, "setting transition name for (ViewPager2) position at " + position + " transitionName: " + transitionName);
             ViewCompat.setTransitionName(holder.imageView, transitionName);
-
-        }else{
-            Log.d(TAG, "reenter from image detail fragment");
-            if (viewModel.getCurrentTransitionName().contains(url)){
-                ViewCompat.setTransitionName(holder.imageView, viewModel.getCurrentTransitionName());
-                Log.d(TAG, "FIND TRANSITION VIEW position at " + position + " transitionName: " + viewModel.getCurrentTransitionName());
-            }
-            else{
-                ViewCompat.setTransitionName(holder.imageView, "basic_transition_name_" + holder.getAdapterPosition());
-
-            }
         }
         if (ViewCompat.getTransitionName(holder.imageView) != null) {
             Glide.with(context)
                     .load(imageUrls.get(position))
+                    .placeholder(R.drawable.ic_image_not_found_foreground)
                     .override(480, 480)
                     .centerCrop()
                     .listener(new RequestListener<Drawable>() {
@@ -110,6 +100,14 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
                             return false;
                         }
                     })
+                    .error(R.drawable.ic_image_not_found_foreground)
+                    .into(holder.imageView);
+        } else{
+            Glide.with(context)
+                    .load(imageUrls.get(position))
+                    .placeholder(R.drawable.ic_image_not_found_foreground)
+                    .override(480, 480)
+                    .centerCrop()
                     .error(R.drawable.ic_image_not_found_foreground)
                     .into(holder.imageView);
         }

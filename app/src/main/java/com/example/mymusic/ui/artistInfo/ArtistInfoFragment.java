@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -30,6 +31,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.transition.Transition;
 import androidx.transition.TransitionInflater;
@@ -135,6 +137,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             }
         });
 
+
         //ImageDetailFragment to ArtistFragment
         getParentFragmentManager().setFragmentResultListener(ImageDetailFragment.REQUEST_KEY, this, (requestKey, bundle) -> {
             // B 프래그먼트에서 보낸 키와 일치하는지 확인
@@ -160,9 +163,13 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             }
         });
 
+
+
         getParentFragmentManager().setFragmentResultListener(WebViewFragment.REQUEST_KEY, this, (requestKey, bundle) -> {
             if (requestKey.equals(WebViewFragment.REQUEST_KEY)) {
                 List<String> fetchedImageUrls = bundle.getStringArrayList(WebViewFragment.BUNDLE_KEY_IMAGE_URLS);
+                Log.d(TAG, "Images Length: " + fetchedImageUrls.size()/2);
+
                 ArtistMetadataRepository metadataRepository = new ArtistMetadataRepository(getContext());
                 new Thread(() -> {
                     long result = metadataRepository.updateImagesBySpotifyId(artist.artistId, fetchedImageUrls);
@@ -249,23 +256,46 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         setExitSharedElementCallback(new SharedElementCallback() {
             @Override
             public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
+                postponeEnterTransition();
                 Log.d(TAG, "onMapSharedElemnts called");
                 // A -> B로 올 때 사용했던 transitionName을 찾습니다.
                 RecyclerView recyclerView = (RecyclerView) pager.getChildAt(0);
                 ImagePagerAdapter.ImageViewHolder holder = (ImagePagerAdapter.ImageViewHolder) recyclerView.findViewHolderForAdapterPosition(viewModel.getLastPositionAtImageDetailFragment());
                 if (holder == null) {
                     Log.d(TAG, "holder is null, cannot find imageView in onMapSharedElements");
+                    startPostponedEnterTransition();
                     return;
                 }
+
                 ImageView imageView = holder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
                 Log.d(TAG, "image view connected");
                 ViewCompat.setTransitionName(imageView, viewModel.getInitialTransitionName());
                 Log.d(TAG, "set first imageview TransitionName to initial transition name");
                 sharedElements.put(viewModel.getCurrentTransitionName(), imageView);
+
+
+
+                ImagePagerAdapter.ImageViewHolder firstHolder = (ImagePagerAdapter.ImageViewHolder) recyclerView.findViewHolderForAdapterPosition(0);
+                if (firstHolder != null) {
+                    ImageView firstImageView = firstHolder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
+                    Log.d(TAG, "image view connected");
+                    ViewCompat.setTransitionName(firstImageView, viewModel.getInitialTransitionName());
+                    Log.d(TAG, "set first imageview TransitionName to initial transition name");
+                }else{
+                    Log.d(TAG, "holder is null, cannot find imageView");
+                }
+
+
+                startPostponedEnterTransition();
+
             }
         });
 
  */
+
+
+
+
 
 
         albumRecyclerView = binding.albumResultRecyclerView;
@@ -417,6 +447,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition() at reenter to fragment");
             onDataReady();
             return;
+        } else if(viewModel.isSecondPostponeFlag()){
+            startPostponedEnterTransition();
         }
 
         String transitionNameForm = getArguments().getString("transitionNameForm");
@@ -492,6 +524,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                         Log.d(TAG, "Artist main Image Load completed");
 
                         onDataReady();
+                    } else if(viewModel.getInitialTransitionName() == null){
+                        //startPostponedEnterTransition();
                     }
                 }
 
@@ -787,7 +821,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
                         // 2. NavController를 사용해 action 실행
                         NavController navController = NavHostFragment.findNavController(ArtistInfoFragment.this);
-                        navController.navigate(R.id.action_artistInfoFragment_to_webViewFragment, bundle);
+                        navController.navigate(R.id.fragment_web_view, bundle);
                     });
 
                 }
@@ -916,7 +950,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         Log.d(TAG, "handleReenterTransitionFromImageDetail() 호출됨");
         viewModel.setSecondPostponeFlag(false);
         startPostponedEnterTransition();
-
         Log.d(TAG, "onDataReady Debug - initial enter");
     }
     private void handleReenterTransitionForTrack() {
