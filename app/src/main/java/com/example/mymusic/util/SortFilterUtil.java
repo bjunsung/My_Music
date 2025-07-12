@@ -30,6 +30,19 @@ public class SortFilterUtil {
         List<Favorite> filteredList = filterList(originalList, filter, track);
         return sortList(filteredList, sort, isDescending);
     }
+
+    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList) {
+        SortFilterUtil.context = context;
+        if (context == null || originalList == null) return originalList;
+
+        SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
+        String sort = prefs.getString("sort_option", "ADDED_DATE");
+        String filter = prefs.getString("filter_option", "ALL");
+        boolean isDescending = prefs.getBoolean("isDescending", false);
+
+        List<Favorite> filteredList = filterList(originalList, filter, null);
+        return sortList(filteredList, sort, isDescending);
+    }
     public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, String filterOption, Track track, String sortOption, boolean isDescending) {
         SortFilterUtil.context = context;
         if (context == null || originalList == null) return originalList;

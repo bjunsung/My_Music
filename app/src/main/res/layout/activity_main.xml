@@ -22,13 +22,14 @@
 
     <ImageButton
         android:id="@+id/empty_space"
-        android:layout_width="146dp"
+        android:layout_width="wrap_content"
         android:layout_height="48dp"
         android:elevation="4dp"
         android:stateListAnimator="@null"
         app:tint="?attr/colorOnSurface"
         android:background="?android:attr/windowBackground"
-        android:paddingRight="50dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="@dimen/bottom_bar_back_space_margin"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="@id/nav_view"
         app:layout_constraintBottom_toBottomOf="@id/nav_view" />
@@ -36,7 +37,7 @@
 
     <ImageButton
         android:id="@+id/back_button"
-        android:layout_width="146dp"
+        android:layout_width="wrap_content"
         android:layout_height="48dp"
         android:elevation="4dp"
         android:stateListAnimator="@null"
@@ -45,7 +46,8 @@
         android:background="?android:attr/windowBackground"
         android:foreground="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/side_sheet_behavior"
-        android:paddingRight="50dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="@dimen/bottom_bar_back_space_margin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/nav_view"
         app:layout_constraintBottom_toBottomOf="@id/nav_view" />

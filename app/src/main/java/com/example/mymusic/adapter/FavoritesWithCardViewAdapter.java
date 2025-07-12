@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
+import com.example.mymusic.util.DarkModeUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.google.android.material.card.MaterialCardView;
@@ -38,7 +39,7 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
     }
 
     public interface OnItemClickListener{
-        void onItemClick(String trackId, String trackName, int position);
+        void onItemClick(String trackId, String trackName, String albumName, String artistName, int position);
     }
 
     public void setPrimaryBackgroundColor(int backgroundColor) {
@@ -108,7 +109,12 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
                 ImageColorAnalyzer.analyzePrimaryColor(context, track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
                     @Override
                     public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
-                        int darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                        int darkenColor;
+                        if (DarkModeUtils.isDarkMode(context)){
+                            darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.45f);
+                        }else{
+                            darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                        }
                         int adjustedForWhiteText = MyColorUtils.adjustForWhiteText(darkenColor);
                         int blended = MyColorUtils.blendColors(adjustedForWhiteText, backgroundColor, 0.3141592f);
                         holder.containerCardView.setCardBackgroundColor(blended);
@@ -174,7 +180,7 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
 
 
         holder.itemView.setOnClickListener(v -> {
-            itemClickListener.onItemClick(track.trackId, track.trackName, holder.getAdapterPosition());
+            itemClickListener.onItemClick(track.trackId, track.trackName, track.albumName, track.artistName, holder.getAdapterPosition());
         });
 
 

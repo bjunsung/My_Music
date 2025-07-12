@@ -18,8 +18,8 @@
 
             <ImageView
                 android:id="@+id/artwork_image"
-                android:layout_width="400dp"
-                android:layout_height="400dp"
+                android:layout_width="@dimen/artwork_size"
+                android:layout_height="@dimen/artwork_size"
                 android:layout_marginTop="12dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_image_not_found_foreground"

@@ -1,13 +1,18 @@
 package com.example.mymusic.model;
 
 import android.os.Build;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
-public class TrackMetadata {
+public class TrackMetadata implements Parcelable {
     public String vibeTrackId;
     public String title;
     public String artistLink;
@@ -30,6 +35,26 @@ public class TrackMetadata {
     }
 
 
+    protected TrackMetadata(Parcel in) {
+        vibeTrackId = in.readString();
+        title = in.readString();
+        artistLink = in.readString();
+        lyrics = in.readString();
+        lyricists = in.createStringArrayList();
+        composers = in.createStringArrayList();
+    }
+
+    public static final Creator<TrackMetadata> CREATOR = new Creator<TrackMetadata>() {
+        @Override
+        public TrackMetadata createFromParcel(Parcel in) {
+            return new TrackMetadata(in);
+        }
+
+        @Override
+        public TrackMetadata[] newArray(int size) {
+            return new TrackMetadata[size];
+        }
+    };
 
     public void addVocalists(List<String> vocalistsName){
         if (vocalists == null)
@@ -124,5 +149,54 @@ public class TrackMetadata {
                 vocalists, lyricists, composers);
     }
 
+    public List<String> getVocalistNames() {
+        if (vocalists == null || vocalists.isEmpty()) {
+            return new ArrayList<>();
+        }
 
+        return vocalists.stream()
+                .filter(pair -> pair != null && !pair.isEmpty())
+                .map(pair -> pair.get(0))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 이름으로 보컬리스트를 찾아 ID를 업데이트합니다.
+     * @param name   ID를 업데이트할 보컬리스트의 이름
+     * @param artistId 새로 저장할 Vibe 아티스트 ID
+     */
+    public void updateVocalistId(String name, String artistId) {
+        if (vocalists == null || name == null) {
+            return;
+        }
+
+        for (List<String> pair : vocalists) {
+            // 페어가 유효하고, 이름이 일치하는지 확인
+            if (pair != null && !pair.isEmpty() && name.equals(pair.get(0))) {
+                if (pair.size() > 1) {
+                    // ID가 이미 존재하면, 값을 업데이트
+                    pair.set(1, artistId);
+                } else {
+                    // 이름만 존재하면, ID를 추가
+                    pair.add(artistId);
+                }
+                break; // 일치하는 항목을 찾았으므로 중단
+            }
+        }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(vibeTrackId);
+        dest.writeString(title);
+        dest.writeString(artistLink);
+        dest.writeString(lyrics);
+        dest.writeStringList(lyricists);
+        dest.writeStringList(composers);
+    }
 }

@@ -32,7 +32,7 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAdapter.FavoriteArtistViewHolder> {
-
+    private final String TAG = "FavoriteArtistAdapter";
     List<FavoriteArtist> favoriteArtistList;
     OnDeleteClickListener deleteClickListener;
     OnMetadataClickListener metadataClickListener;
@@ -85,6 +85,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         CheckBox selectCheckBox;
         LinearLayout debutLayout;
         TextView debutDateTextView;
+        int position = -1;
 
         public int recyclerViewPosition = -1;
         public FavoriteArtistViewHolder(@NonNull View itemView){
@@ -150,7 +151,8 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         }
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
-            String transitionName = transitionNameForm  + holder.getAdapterPosition()  + "_" + artist.artistName + "_" + artist.artistId  + "_" + artist.artworkUrl;
+            holder.position = holder.getAdapterPosition();
+            String transitionName = transitionNameForm  + holder.position  + "_" + artist.artistName + "_" + artist.artistId  + "_" + artist.artworkUrl;
             ViewCompat.setTransitionName(holder.image, transitionName);
             Log.d("FavoriteArtistAdapter", "transition name for position " + holder.getAdapterPosition() + " is " + transitionName);
 
@@ -182,11 +184,17 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         holder.itemView.setOnClickListener(v -> {
             if (!isSelectionMode) {
                 if (navigateClickListener != null && ViewCompat.getTransitionName(holder.image) != null) {
+                    int tempPosition = holder.getAdapterPosition();
+                    if (tempPosition != holder.position){
+                        Log.d(TAG + "DEBUG", "position change occurred, adjust holder.image transition name from old position(" +  holder.position + ") to latest position(" + tempPosition + ")");
+                        String adjustedTransitionName = transitionNameForm  + tempPosition  + "_" + artist.artistName + "_" + artist.artistId  + "_" + artist.artworkUrl;
+                        ViewCompat.setTransitionName(holder.image, adjustedTransitionName);
+                    }
                     navigateClickListener.onNavigateClick(
                             favoriteArtist,
                             holder.image,
                             transitionNameForm,
-                            holder.getAdapterPosition()
+                            tempPosition
                     );
                 }
             }
@@ -209,7 +217,6 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                 setSelectionMode(true);
             }
             if (!holder.selectCheckBox.isChecked()) {
-                Log.d("sex", "sex");
                 holder.selectCheckBox.setChecked(true);
                 addSelectedListener.onItemClick(artist);// UI 갱신// 상태 반영
             }

@@ -19,7 +19,6 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.mymusic.R;
-import com.example.mymusic.network.PhotoDetectorBridge;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -156,8 +155,7 @@ public class WebViewFragment extends Fragment {
                             result.putStringArrayList(BUNDLE_KEY_IMAGE_URLS, new ArrayList<>(urls));
                             getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
 
-                            // 3. WebView 정리 및 화면 닫기 (popBackStack)
-                            webView.loadUrl("about:blank");
+                            // 3. WebView 화면 닫기 (popBackStack)
                             NavHostFragment.findNavController(WebViewFragment.this).popBackStack();
                         });
 

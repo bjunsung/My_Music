@@ -29,6 +29,15 @@ public class FavoritesViewModel extends AndroidViewModel {
     private int reenterScrollPosition = 0;
     private int reenterScrollOffset = 0;
     private int transitionPosition = -1;
+    private String lyricsSearchTrackId;
+
+    public void setLyricsSearchTrackId(String trackId){
+        this.lyricsSearchTrackId = trackId;
+    }
+
+    public String getLyricsSearchTrackId(){
+        return this.lyricsSearchTrackId;
+    }
 
     public void setLyricsMode(boolean value) {
         isLyricsMode.setValue(value);

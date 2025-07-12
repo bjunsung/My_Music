@@ -47,8 +47,8 @@
 
                             <androidx.viewpager2.widget.ViewPager2
                                 android:id="@+id/image_pager"
-                                android:layout_width="400dp"
-                                android:layout_height="400dp"
+                                android:layout_width="@dimen/artwork_size"
+                                android:layout_height="@dimen/artwork_size"
                                 android:scaleType="centerCrop"
                                 android:clipToPadding="false"
                                 android:clipChildren="false"

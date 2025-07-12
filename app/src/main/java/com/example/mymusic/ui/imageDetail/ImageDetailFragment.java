@@ -191,20 +191,48 @@ public class ImageDetailFragment extends Fragment {
         super.onResume();
         sliderHandler.removeCallbacks(sliderRunnable);
         sliderHandler.postDelayed(sliderRunnable, 3000);
-        // 전체 화면 모드 설정 (상태 바, 내비게이션 바 숨기기)
-        if (getActivity() != null && getActivity().getWindow() != null) {
+
+        Activity activity = requireActivity();
+        if (activity == null || activity.getWindow() == null) return;
+
+        // backButtonImageButton이 null이면 다시 시도하여 가져오기
+        if (backButtonImageButton == null) {
+            backButtonImageButton = activity.findViewById(R.id.back_button);
+        }
+
+        if (backButtonImageButton != null) {
             backButtonImageButton.setVisibility(View.GONE);
-            emptySpaceImageButton.setVisibility(View.GONE);
-            Activity activity = getActivity();
-            if (activity != null) {
-                insetsController = WindowCompat.getInsetsController(activity.getWindow(), activity.getWindow().getDecorView());
-                if (insetsController != null) {
-                    insetsController.hide(WindowInsetsCompat.Type.systemBars());
-                    insetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-                }
+        } else {
+            // 여전히 null인 경우 다시 시도 (한 번 더)
+            backButtonImageButton = activity.findViewById(R.id.back_button);
+            if (backButtonImageButton != null) {
+                backButtonImageButton.setVisibility(View.GONE);
             }
         }
+
+        // emptySpaceImageButton도 같은 방식 적용
+        if (emptySpaceImageButton == null) {
+            emptySpaceImageButton = activity.findViewById(R.id.empty_space);
+        }
+
+        if (emptySpaceImageButton != null) {
+            emptySpaceImageButton.setVisibility(View.GONE);
+        }
+
+        // 시스템 바 숨기기
+        insetsController = WindowCompat.getInsetsController(
+                activity.getWindow(),
+                activity.getWindow().getDecorView()
+        );
+
+        if (insetsController != null) {
+            insetsController.hide(WindowInsetsCompat.Type.systemBars());
+            insetsController.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            );
+        }
     }
+
 
     @Override
     public void onPause() {
@@ -213,8 +241,8 @@ public class ImageDetailFragment extends Fragment {
         if (insetsController != null) {
             insetsController.show(WindowInsetsCompat.Type.systemBars());
         }
-        backButtonImageButton.setVisibility(View.VISIBLE);
-        emptySpaceImageButton.setVisibility(View.VISIBLE);
+        if (backButtonImageButton != null) { backButtonImageButton.setVisibility(View.VISIBLE); }
+        if (emptySpaceImageButton != null) { emptySpaceImageButton.setVisibility(View.VISIBLE); }
         sliderHandler.removeCallbacks(sliderRunnable);
     }
 

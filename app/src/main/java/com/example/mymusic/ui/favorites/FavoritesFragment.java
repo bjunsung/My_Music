@@ -38,6 +38,8 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.NavHostController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -62,6 +64,8 @@ import com.example.mymusic.ui.artistInfo.ArtistInfoFragment;
 import com.example.mymusic.ui.favorites.bottomSheet.ArtistFilterBottomSheetFragment;
 import com.example.mymusic.ui.favorites.bottomSheet.FilterBottomSheetFragment;
 import com.example.mymusic.ui.musicInfo.MusicInfoFragment;
+import com.example.mymusic.ui.webView.lyricsSearch.LyricsSearchAutoFragment;
+import com.example.mymusic.util.DarkModeUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.example.mymusic.util.SortFilterArtistUtil;
@@ -71,14 +75,15 @@ import com.google.android.material.card.MaterialCardView;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import android.widget.LinearLayout;
 
 
+import jp.wasabeef.recyclerview.animators.LandingAnimator;
 import jp.wasabeef.recyclerview.animators.OvershootInLeftAnimator;
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
+
 
 public class FavoritesFragment extends Fragment {
     private final String TAG = "FavoriteFragment";
@@ -96,7 +101,7 @@ public class FavoritesFragment extends Fragment {
     private FilterBottomSheetFragment bottomSheet;
     private ArtistFilterBottomSheetFragment bottomSheetArtist;
 
-    TextView lyricsTextView, onLyricsTitleTextView, getOnLyricsArtistTextView;
+    TextView lyricsTextView;
     ScrollView scrollAreaView;
     LinearLayout countLayout, onLyricsContainer;
     ImageButton lyricsModeCancelButton;
@@ -135,6 +140,31 @@ public class FavoritesFragment extends Fragment {
                 }
             }
         });
+
+        //Auto Lyrics Search
+        getParentFragmentManager().setFragmentResultListener(LyricsSearchAutoFragment.REQUEST_KEY, this, (requestKey, bundle) -> {
+            if (requestKey.equals(LyricsSearchAutoFragment.REQUEST_KEY)){
+                TrackMetadata metadata = bundle.getParcelable(LyricsSearchAutoFragment.BUNDLE_KEY);
+                String trackId = favoritesViewModel.getLyricsSearchTrackId();
+                favoritesViewModel.updateMetadata(trackId, metadata, result -> {
+                    if (result > 0) new Handler(Looper.getMainLooper()).post(() -> {
+                        int position = favoritesViewModel.getScrollPosition();
+                        onLyricsClick(trackId, null, null, null, position);
+                    });
+                    else new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(getContext(), "가사 저장 실패, 다시 시도해주세요.", Toast.LENGTH_SHORT).show());
+                    //int position = favoritesViewModel.getFocusedPosition();
+                    if (favoriteTrackAdapter != null) {
+                        favoritesViewModel.loadAllFavorites(favorites -> {
+                            List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(getContext(), favorites);
+                            new Handler(Looper.getMainLooper()).post(() -> favoriteTrackAdapter.updateData(filtered));
+                        });
+                    }
+                });
+            }
+        });
+
+
+
     }
 
     @Override
@@ -191,8 +221,6 @@ public class FavoritesFragment extends Fragment {
         elementCountTextView.setText("Songs");
 
         lyricsTextView = view.findViewById(R.id.metadata_lyrics);
-        onLyricsTitleTextView = view.findViewById(R.id.on_lyrics_title);
-        getOnLyricsArtistTextView = view.findViewById(R.id.on_lyrics_artist);
         scrollAreaView = view.findViewById(R.id.scroll_area);
         if (scrollAreaView != null)
             OverScrollDecoratorHelper.setUpOverScroll(scrollAreaView);
@@ -600,8 +628,8 @@ public class FavoritesFragment extends Fragment {
     private void setRecyclerViewAnimation() {
         //SlideInUpAnimator animator = new SlideInUpAnimator();
         //SlideInLeftAnimator animator = new SlideInLeftAnimator();
-        //LandingAnimator animator = new LandingAnimator();
-        OvershootInLeftAnimator animator = new OvershootInLeftAnimator();
+        LandingAnimator animator = new LandingAnimator();
+        //OvershootInLeftAnimator animator = new OvershootInLeftAnimator();
         animator.setRemoveDuration(200); // 제거 애니메이션 시간
         animator.setAddDuration(200); // 추가 애니메이션 시간
         if (trackRecyclerView != null)
@@ -647,25 +675,32 @@ public class FavoritesFragment extends Fragment {
         } else {
             trackRecyclerView.setVisibility(View.GONE);
             favoriteArtistViewModel.loadFavoritesOriginalForm(favoriteArtistList -> {
-                if (!favoriteArtistList.isEmpty())
-                    artistRecyclerView.setVisibility(View.VISIBLE);
-                else {
+                if (favoriteArtistList != null) {
+                    if (!favoriteArtistList.isEmpty())
+                        artistRecyclerView.setVisibility(View.VISIBLE);
+                    else {
+                        Log.d(TAG, "Artist List is empty");
+                        artistRecyclerView.setVisibility(View.GONE);
+                    }
+                    List<FavoriteArtist> filterd = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favoriteArtistList);
+
+
+                    updateEmptyState(filterd.isEmpty());
+                    favoriteArtistAdapter.updateData(filterd);
+
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        layoutManager.scrollToPositionWithOffset(favoriteArtistViewModel.getScrollPosition(), favoriteArtistViewModel.getScrollOffset());
+                    }
+
+                    setFavoritesCountText(filterd.size());
+                    handleReenterTransition();
+                }else{
                     Log.d(TAG, "Artist List is empty");
                     artistRecyclerView.setVisibility(View.GONE);
+                    updateEmptyState(true);
+                    setFavoritesCountText(0);
                 }
-                List<FavoriteArtist> filterd = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favoriteArtistList);
-
-
-                updateEmptyState(filterd.isEmpty());
-                favoriteArtistAdapter.updateData(filterd);
-
-                LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
-                if (layoutManager != null){
-                    layoutManager.scrollToPositionWithOffset(favoriteArtistViewModel.getScrollPosition(), favoriteArtistViewModel.getScrollOffset());
-                }
-
-                setFavoritesCountText(filterd.size());
-                handleReenterTransition();
             });
         }
     }
@@ -834,24 +869,29 @@ public class FavoritesFragment extends Fragment {
     private void onLyricLongClick(String trackIdDb, String trackName){
         favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
             if (favorite != null && favorite.metadata != null && favorite.metadata.lyrics != null){
-                addLyric(trackIdDb, trackName, true);
+                addLyricManually(trackIdDb, trackName, true);
             } else {
-                new AlertDialog.Builder(getContext())
-                        .setTitle("가사정보 없음")
-                        .setMessage("링크를 입력해 가사를 추가하세요")
-                        .setPositiveButton("닫기", null)
-                        .show();
+                addLyricManually(trackIdDb, trackName, false);
             }
         });
 
     }
-    private void onLyricsClick(String trackIdDb, String trackName, int recyclerViewPosition){
+    private void onLyricsClick(String trackIdDb, String trackName, String albumName, String artistName, int recyclerViewPosition){
 
         favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
             if (favorite != null && favorite.metadata != null && favorite.metadata.lyrics != null && !favorite.metadata.lyrics.isEmpty()){
                 LyricsOnMode(favorite, recyclerViewPosition);
             } else {
-                addLyric(trackIdDb, trackName, false);
+                favoritesViewModel.setLyricsSearchTrackId(trackIdDb);
+                favoritesViewModel.setFocusedPosition(recyclerViewPosition);
+
+                Bundle bundle = new Bundle();
+                bundle.putString("track_name", trackName);
+                bundle.putString("album_name", albumName);
+                bundle.putString("artist_name", artistName);
+
+                Navigation.findNavController(requireView()).navigate(R.id.action_favoritesFragment_to_autoLyricsSearchFragment, bundle);
+
             }
         });
     }
@@ -884,13 +924,23 @@ public class FavoritesFragment extends Fragment {
             @Override
             public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
                 currentPrimaryColor[0] = primaryColor;
+                Context context = getContext();
+                int darkenColor;
+                if (context != null && DarkModeUtils.isDarkMode(context)){
+                    darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.3f);
+                    int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.7f);
+                    musicInfoContainer.setCardBackgroundColor(adjustedPrimaryColorForDarkMode);
+                    lyricsContainer.setCardBackgroundColor(adjustedPrimaryColorForDarkMode);
+                }else{
+                    darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                    musicInfoContainer.setCardBackgroundColor(primaryColor);
+                    lyricsContainer.setCardBackgroundColor(primaryColor);
+                }
 
-                int darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
                 int adjustedForWhiteText = MyColorUtils.adjustForWhiteText(darkenColor);
                 simpleMusicInfoContainer.setCardBackgroundColor(adjustedForWhiteText);
                 lyricsTextContainer.setCardBackgroundColor(adjustedForWhiteText);
-                musicInfoContainer.setCardBackgroundColor(primaryColor);
-                lyricsContainer.setCardBackgroundColor(primaryColor);
+
                 lyricsTextView.setTextColor(MyColorUtils.adjustForWhiteText(MyColorUtils.getSoftWhiteTextColor(adjustedForWhiteText)));
                 //lyricsTextView.setShadowLayer(0.25f, 0.25f, 0.25f, Color.BLACK);
                 artistsOtherMusicAdapter.setTextColor(MyColorUtils.adjustForWhiteText(MyColorUtils.getSoftWhiteTextColor(adjustedForWhiteText)));
@@ -946,12 +996,6 @@ public class FavoritesFragment extends Fragment {
         focusedReleaseDateTextView.setText(track.releaseDate);
 
         lyricsTextView.setText(favorite.metadata.lyrics);
-        if (favorite.metadata != null && favorite.metadata.title != null && !favorite.metadata.title.isEmpty()) {
-            onLyricsTitleTextView.setText(favorite.metadata.title);
-        } else {
-            onLyricsTitleTextView.setText(favorite.track.trackName);
-        }
-        getOnLyricsArtistTextView.setText(favorite.track.artistName);
     }
 
 
@@ -1095,7 +1139,7 @@ public class FavoritesFragment extends Fragment {
 
     }
 
-    private void addLyric(String trackIdDb, String trackName, boolean editMode){
+    private void addLyricManually(String trackIdDb, String trackName, boolean editMode){
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(50, 40, 50, 10);

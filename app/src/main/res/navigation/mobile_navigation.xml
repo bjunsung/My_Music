@@ -68,6 +68,9 @@
         <action
             android:id="@+id/action_favoritesFragment_to_musicInfoFragment"
             app:destination="@id/musicInfoFragment" />
+        <action
+            android:id="@+id/action_favoritesFragment_to_autoLyricsSearchFragment"
+            app:destination="@+id/fragment_auto_lyrics_search" />
     </fragment>
 
     <fragment
@@ -131,6 +134,16 @@
     <argument
         android:name="artist_id"
         app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragment_auto_lyrics_search"
+        android:name="com.example.mymusic.ui.webView.lyricsSearch.LyricsSearchAutoFragment"
+        android:label="Auto Lyrics Search"
+        tools:layout="@layout/fragment_web_view" >
+        <argument
+            android:name="track_metadata"
+            app:argType="com.example.mymusic.model.TrackMetadata" />
     </fragment>
 
 

@@ -332,6 +332,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         int initialRecyclerViewPosition = getArguments().getInt("position");
 
         if(viewModel.getInitialTransitionName() == null){
+            Log.d(TAG, "set initial transition name first (view model) : " + transitionName);
+            Log.d(TAG, "set initial transition position first (view model) : " + initialRecyclerViewPosition);
             viewModel.setInitialTransitionName(transitionName);
             viewModel.setInitialTransitionNameForm(transitionNameForm);
             viewModel.setInitialPosition(initialRecyclerViewPosition);
@@ -394,6 +396,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 public void onLoadSuccess(ImageView imageView) {
                     Log.d(TAG, "onImageLoadListener success call");
                     String transitionName = ViewCompat.getTransitionName(imageView);
+                    Log.d(TAG + " DEBUG", "transitionName: " + transitionName +", viemodel.getInitialTransName: " + viewModel.getInitialTransitionName());
                     if (transitionName != null && (transitionName.equals(viewModel.getInitialTransitionName()) || transitionName.equals(viewModel.getCurrentTransitionName()))){
                         Log.d(TAG, "Artist main Image Load completed");
                         onDataReady();

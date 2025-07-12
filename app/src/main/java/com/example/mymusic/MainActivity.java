@@ -1,17 +1,21 @@
 package com.example.mymusic;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.util.Size;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.view.WindowMetrics;
 import android.webkit.WebView;
 import android.widget.ImageButton;
 
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private long lastClickTime = 0;
     //더블클릭시 해당 Fragment로 강제이동
     private static final long DOUBLE_CLICK_THRESHOLD = 500; // 0.5초
+    public Size screenSize;;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,7 +137,20 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+        getScreenSize(this);
 
+    }
+
+
+    public void getScreenSize(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowMetrics windowMetrics = getWindowManager().getCurrentWindowMetrics();
+            screenSize = new Size(windowMetrics.getBounds().width(), windowMetrics.getBounds().height());
+        } else {
+            DisplayMetrics metrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(metrics);
+            screenSize = new Size(metrics.widthPixels, metrics.heightPixels);
+        }
     }
 
     @SuppressLint("ResourceAsColor")

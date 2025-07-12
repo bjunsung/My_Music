@@ -50,7 +50,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     }
 
     public interface OnLyricClickListener{
-        void onItemClick(String trackId, String trackName, int position);
+        void onItemClick(String trackId, String trackName, String albumName, String artistName, int position);
     }
 
     public interface OnLyricLongClickListener{
@@ -123,7 +123,11 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             ViewCompat.setTransitionName(holder.image, null);
         }
 
-        Picasso.get().load(track.artworkUrl).into(holder.image);
+        Picasso.get()
+                .load(track.artworkUrl)
+                .resize(160, 160)
+                .centerCrop()
+                .into(holder.image);
         holder.title.setText(track.trackName);
         if (favorite.metadata != null && favorite.metadata.title != null){
             holder.titleKr.setText(favorite.metadata.title);
@@ -193,6 +197,8 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             lyricClickListener.onItemClick(
                     track.trackId,
                     track.trackName,
+                    track.albumName,
+                    track.artistName,
                     holder.getAdapterPosition());
         });
 

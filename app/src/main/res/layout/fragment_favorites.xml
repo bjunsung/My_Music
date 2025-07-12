@@ -194,9 +194,8 @@
                     android:layout_width="match_parent"
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="6dp"
-                    android:layout_weight="10"
                     app:cardElevation="4dp"
                     app:cardCornerRadius="14dp">
 
@@ -374,8 +373,7 @@
                     app:cardCornerRadius="14dp"
                     android:id="@+id/lyrics_container"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="90"
+                    android:layout_height="match_parent"
                     android:layout_marginRight="10dp"
                     android:layout_marginLeft="8dp">
                     <com.google.android.material.card.MaterialCardView
@@ -396,36 +394,19 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
-                                android:orientation="horizontal">
-
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
                                 <TextView
-                                    android:id="@+id/on_lyrics_title"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="하늘바라기 (Feat.하림)"
+                                    android:text="가사"
                                     android:textColor="#FFFFFF"
                                     android:textSize="18sp"
+                                    android:singleLine="true"
                                     android:maxLines="1"
-                                    android:textStyle="bold"
                                     android:ellipsize="end" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="  -  "
-                                    android:textColor="#FFFFFF"
-                                    android:textSize="18sp" />
-
-                                <TextView
-                                    android:id="@+id/on_lyrics_artist"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="JEONG EUN JI"
-                                    android:textColor="#FFFFFF"
-                                    android:textStyle="italic|bold"
-                                    android:textSize="18sp"
-                                    android:textIsSelectable="false" />
                             </LinearLayout>
+
 
                             <ScrollView
                                 android:id="@+id/scroll_area"

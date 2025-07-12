@@ -1,4 +1,4 @@
-package com.example.mymusic.network;
+package com.example.mymusic.ui.webView.photoWebView;
 
 // PhotoDetectorBridge.java
 import android.os.Handler;
