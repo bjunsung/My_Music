@@ -95,7 +95,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private AtomicInteger readyCounter = new AtomicInteger(0);
     private boolean isTransitionStarted = false;
 
-    private long currentOnDataReadyTime = 0;
     public static final String REQUEST_KEY = "artist_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_artist_artwork_ended";
     private CardView imageFetchButton, setRepresentativeImageButton;
@@ -132,7 +131,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         getParentFragmentManager().setFragmentResultListener(ImageDetailFragment.REQUEST_KEY_POSITION, this, (requestKey, bundle) -> {
             if (requestKey.equals(ImageDetailFragment.REQUEST_KEY_POSITION)){
                 int position = bundle.getInt("position", 0);
-                pager.setCurrentItem(position);
+                pager.postDelayed(()->  pager.setCurrentItem(position, true), 600);
                 Log.d(TAG , "position set to " + position);
             }
         });
@@ -246,56 +245,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         super.onViewCreated(view, savedInstanceState);
         readyCounter.set(0);
         isTransitionStarted = false;
-        currentOnDataReadyTime = 0;
         //전환 연기
         postponeEnterTransition();
-
-
-/*
-        // ✅ 돌아가는 트랜지션을 위해 이 콜백을 반드시 설정해야 합니다.
-        setExitSharedElementCallback(new SharedElementCallback() {
-            @Override
-            public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
-                postponeEnterTransition();
-                Log.d(TAG, "onMapSharedElemnts called");
-                // A -> B로 올 때 사용했던 transitionName을 찾습니다.
-                RecyclerView recyclerView = (RecyclerView) pager.getChildAt(0);
-                ImagePagerAdapter.ImageViewHolder holder = (ImagePagerAdapter.ImageViewHolder) recyclerView.findViewHolderForAdapterPosition(viewModel.getLastPositionAtImageDetailFragment());
-                if (holder == null) {
-                    Log.d(TAG, "holder is null, cannot find imageView in onMapSharedElements");
-                    startPostponedEnterTransition();
-                    return;
-                }
-
-                ImageView imageView = holder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
-                Log.d(TAG, "image view connected");
-                ViewCompat.setTransitionName(imageView, viewModel.getInitialTransitionName());
-                Log.d(TAG, "set first imageview TransitionName to initial transition name");
-                sharedElements.put(viewModel.getCurrentTransitionName(), imageView);
-
-
-
-                ImagePagerAdapter.ImageViewHolder firstHolder = (ImagePagerAdapter.ImageViewHolder) recyclerView.findViewHolderForAdapterPosition(0);
-                if (firstHolder != null) {
-                    ImageView firstImageView = firstHolder.imageView; // 어댑터의 ViewHolder에 있는 이미지 뷰
-                    Log.d(TAG, "image view connected");
-                    ViewCompat.setTransitionName(firstImageView, viewModel.getInitialTransitionName());
-                    Log.d(TAG, "set first imageview TransitionName to initial transition name");
-                }else{
-                    Log.d(TAG, "holder is null, cannot find imageView");
-                }
-
-
-                startPostponedEnterTransition();
-
-            }
-        });
-
- */
-
-
-
-
 
 
         albumRecyclerView = binding.albumResultRecyclerView;
@@ -445,10 +396,9 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             return;
         } else if(!viewModel.isFirstFragmentCreation() && transitionName == null && !viewModel.isSecondPostponeFlag()){
             Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition() at reenter to fragment");
-            onDataReady();
             return;
         } else if(viewModel.isSecondPostponeFlag()){
-            startPostponedEnterTransition();
+            //handleReenterTransitionFromImageDetail();
         }
 
         String transitionNameForm = getArguments().getString("transitionNameForm");
@@ -471,8 +421,9 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         apiHelper.searchAlbumsByArtist(null, artist.artistId, albumList -> {
             albumAdapter.updateData(albumList);
             binding.albumResultRecyclerView.post(() -> {
+                handleReenterTransitionAlbum();
                 Log.d(TAG, "Album load completed");
-                onDataReady();
+
             });
         });
     }
@@ -482,9 +433,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         apiHelper.searchTrackByArtist(null, artist.artistId, tracks -> {
             trackAdapter.updateData(tracks);
             binding.trackResultRecyclerView.post(() -> {
-                //handleReenterTransitionTrack();
+                handleReenterTransitionForTrack();
                 Log.d(TAG, "Track load completed");
-                onDataReady();
             });
 
         });
@@ -513,28 +463,43 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             imageUrls.add(artist.artworkUrl);
         }
 
-        favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
-            ImagePagerAdapter.OnImageLoadListener imageLoadListener = new ImagePagerAdapter.OnImageLoadListener() {
-                @Override
-                public void onLoadSuccess(ImageView imageView) {
-                    Log.d(TAG, "onImageLoadListener success call");
-                    String transitionName = ViewCompat.getTransitionName(imageView);
-                    Log.d(TAG + " DEBUG", "transitionName: " + transitionName +", viemodel.getInitialTransName: " + viewModel.getInitialTransitionName());
-                    if (transitionName != null && (transitionName.equals(viewModel.getInitialTransitionName()) || transitionName.equals(viewModel.getCurrentTransitionName()))){
-                        Log.d(TAG, "Artist main Image Load completed");
-
-                        onDataReady();
-                    } else if(viewModel.getInitialTransitionName() == null){
-                        //startPostponedEnterTransition();
+        ImagePagerAdapter.OnImageLoadListener imageLoadListener = new ImagePagerAdapter.OnImageLoadListener() {
+            @Override
+            public void onLoadSuccess(ImageView imageView) {
+                Log.d(TAG, "onImageLoadListener success call");
+                String transitionName = ViewCompat.getTransitionName(imageView);
+                Log.d(TAG + " DEBUG", "transitionName: " + transitionName +", viemodel.getInitialTransName: " + viewModel.getInitialTransitionName());
+                if (transitionName != null && (transitionName.equals(viewModel.getInitialTransitionName()) || transitionName.equals(viewModel.getCurrentTransitionName()))){
+                    Log.d(TAG, "Artist main Image Load completed");
+                    if (viewModel.isFirstFragmentCreation()) {
+                        startPostponedEnterTransition();
+                        Log.d(TAG, "is first first fragment creation and startPostponedEnterTransition");
+                    }
+                    else if(viewModel.isSecondPostponeFlag()){
+                        handleReenterTransitionFromImageDetail();
+                        Log.d(TAG, "is reenter from detail fragment");
+                    }
+                } else if(viewModel.getInitialTransitionName() == null){
+                    if (viewModel.isFirstFragmentCreation()) {
+                        startPostponedEnterTransition();
+                        Log.d(TAG, "is first first fragment creation and startPostponedEnterTransition");
                     }
                 }
+            }
 
-                @Override
-                public void onLoadFailed() {
-                    Log.d(TAG, "Artist main Image Load Failed");
-                    onDataReady();
+            @Override
+            public void onLoadFailed() {
+                Log.d(TAG, "Artist main Image Load Failed");
+                if (viewModel.isFirstFragmentCreation()) {
+                    startPostponedEnterTransition();
+                    Log.d(TAG, "is first first fragment creation and startPostponedEnterTransition");
                 }
-            };
+            }
+        };
+
+
+        favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
+
             @Override
             public void onSuccess(ArtistMetadata metadata){
                 requireActivity().runOnUiThread(() -> {
@@ -711,7 +676,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         });
 
 
-
         enlargeButton.setOnClickListener(v -> {
             int currentPosition = pager.getCurrentItem();
 
@@ -733,6 +697,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             ViewCompat.setTransitionName(currentImageView, transitionName);
             viewModel.setCurrentTransitionName(transitionName);
             viewModel.setSecondPostponeFlag(true);
+            viewModel.setFirstFragmentCreation(false);
             Log.d(TAG, "set 2nd postpone flag true");
 
             // 4. 전달할 데이터 준비 (전체 URL 리스트, 현재 위치)
@@ -917,40 +882,11 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 .show();
     }
 
-    private void onDataReady(){
-        int currentCount = readyCounter.incrementAndGet();
-        if (currentOnDataReadyTime != 0){
-            long temp = System.currentTimeMillis();
-            Log.d(TAG, "시간차이: " + (temp - currentOnDataReadyTime) + "ms");
-            currentOnDataReadyTime = temp;
-        }else{
-            currentOnDataReadyTime = System.currentTimeMillis();
-        }
-        Log.d(TAG, "onDataReady() 호출됨 - readyCounter num: " + currentCount);
-        Log.d(TAG, "transition started state: " + isTransitionStarted);
-        if (currentCount == 3 && !isTransitionStarted){
-            Log.d(TAG, "every data is ready, now start transition first time");
-            isTransitionStarted = true;
-            if (viewModel.getTrackPosition() != -1) {
-                Log.d(TAG, "onDataReady Debug - viewModel.getTrackPosition() != -1");
-                handleReenterTransitionForTrack();
-            } else if (viewModel.getAlbumPosition() != -1){
-                Log.d(TAG, "onDataReady Debug - viewModel.getAlbumPosition() != -1");
-                handleReenterTransitionAlbum();
-            } else if (viewModel.isSecondPostponeFlag()){
-                Log.d(TAG, "onDataReady Debug - reenter from image detail fragment");
-                handleReenterTransitionFromImageDetail();
-            } else {
-                pager.post(() -> startPostponedEnterTransition());
-            }
-        }
-    }
 
     private void handleReenterTransitionFromImageDetail(){
         Log.d(TAG, "handleReenterTransitionFromImageDetail() 호출됨");
         viewModel.setSecondPostponeFlag(false);
         startPostponedEnterTransition();
-        Log.d(TAG, "onDataReady Debug - initial enter");
     }
     private void handleReenterTransitionForTrack() {
         Log.d(TAG, "handleReenterAndStartTransition() 호출됨");
@@ -1025,7 +961,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         String transitionName = ViewCompat.getTransitionName(sharedImageView);
         viewModel.setTrackPosition(position);
         //viewModel.setAlbumPosition(-1);
-
+        viewModel.setFirstFragmentCreation(false);
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                 .addSharedElement(sharedImageView, transitionName)
@@ -1043,6 +979,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         args.putParcelable("album", album);
         String transitionName = ViewCompat.getTransitionName(sharedImageView);
         viewModel.setAlbumPosition(position);
+        viewModel.setFirstFragmentCreation(false);
+
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                 .addSharedElement(sharedImageView, transitionName)

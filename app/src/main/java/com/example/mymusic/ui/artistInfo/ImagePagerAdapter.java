@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
@@ -75,27 +76,45 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        Log.d(TAG, "onBindViewHolder for position " + position + "(" + holder.getAdapterPosition() + ")");
         String url = imageUrls.get(position);
-        if (holder.getAdapterPosition() == 0) {
+
+
+        if (viewModel.isSecondPostponeFlag() && viewModel.getCurrentTransitionName().contains(url)){
+            ViewCompat.setTransitionName(holder.imageView, viewModel.getCurrentTransitionName());
+        }
+        else if (holder.getAdapterPosition() == 0) {
             String transitionName = transitionNameForm + recyclerviewPosition + "_" + artist.artistName + "_" + artist.artistId + "_" + url;
             Log.d(TAG, "setting transition name for (ViewPager2) position at " + position + " transitionName: " + transitionName);
             ViewCompat.setTransitionName(holder.imageView, transitionName);
         }
+
+
         if (ViewCompat.getTransitionName(holder.imageView) != null) {
             Glide.with(context)
                     .load(imageUrls.get(position))
-                    .placeholder(R.drawable.ic_image_not_found_foreground)
+                    .thumbnail(
+                            Glide.with(context)
+                                    .load(imageUrls.get(position))
+                                    .override(100) // 또는 .override(100, 100)
+                                    .centerCrop()
+                    )
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .dontAnimate()
+                    //.placeholder(R.drawable.ic_image_not_found_foreground)
                     .override(480, 480)
                     .centerCrop()
                     .listener(new RequestListener<Drawable>() {
                         @Override
                         public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @androidx.annotation.NonNull Target<Drawable> target, boolean isFirstResource) {
+                            Log.d(TAG, "Image load failed at " + holder.getAdapterPosition());
                             imageLoadListener.onLoadFailed();
                             return false;
                         }
 
                         @Override
                         public boolean onResourceReady(@androidx.annotation.NonNull Drawable resource, @androidx.annotation.NonNull Object model, Target<Drawable> target, @androidx.annotation.NonNull DataSource dataSource, boolean isFirstResource) {
+                            Log.d(TAG, "Image resourceReady for position " + holder.getAdapterPosition());
                             imageLoadListener.onLoadSuccess(holder.imageView);
                             return false;
                         }
@@ -105,7 +124,7 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
         } else{
             Glide.with(context)
                     .load(imageUrls.get(position))
-                    .placeholder(R.drawable.ic_image_not_found_foreground)
+                    //.placeholder(R.drawable.ic_image_not_found_foreground)
                     .override(480, 480)
                     .centerCrop()
                     .error(R.drawable.ic_image_not_found_foreground)
