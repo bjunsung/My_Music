@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".ui.search.SearchFragment"
-        android:clipChildren="false"
+        android:clipChildren="true"
         android:clipToPadding="false">
 
         <androidx.recyclerview.widget.RecyclerView
@@ -36,6 +36,7 @@
             app:layout_constraintBottom_toBottomOf="@id/searchEditText"
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginStart="8dp"
+            android:padding="2dp"
             android:layout_marginTop="2dp"/>
 
         <EditText
@@ -46,12 +47,12 @@
             android:hint="노래 제목을 입력하세요"
             android:inputType="text"
             android:focusable="true"
+            android:layout_marginTop="-8dp"
             android:focusableInTouchMode="true"
             android:imeOptions="actionSearch"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toEndOf="@+id/searchModeButton"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp"/>
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <ImageButton
             android:id="@+id/deleteKeywordButton"

@@ -12,6 +12,7 @@
     <color name="navy_blue">#002852</color>
     <color name="pantone">#FCC89B</color>
     <color name="navBarBasic">#FFFFFFFF</color>
+    <color name="basic">#FFFFFFFF</color>
 
 
 </resources>

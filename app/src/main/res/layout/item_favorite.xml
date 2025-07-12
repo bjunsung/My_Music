@@ -4,7 +4,9 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:clipChildren="false"
+    android:clipToPadding="false" >
 
     <!-- 체크박스 (필터 모드에서만 표시) -->
     <CheckBox
@@ -16,12 +18,23 @@
         android:visibility="gone" />
 
     <!-- 앨범 이미지 -->
-    <ImageView
-        android:id="@+id/imageView"
+
+
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginEnd="12dp"
-        android:scaleType="centerCrop" />
+        app:cardCornerRadius="10dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp"
+        app:cardPreventCornerOverlap="false"
+        app:cardUseCompatPadding="false">
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="centerCrop" />
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- 텍스트 정보 (제목, 아티스트) -->
     <LinearLayout
@@ -188,9 +201,8 @@
         app:layout_constraintTop_toTopOf="@id/artistTextView"
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
-        android:layout_marginEnd="4dp"
         android:layout_marginBottom="4dp"
-        android:padding="4dp"/>
+        android:padding="8dp"/>
     <ImageButton
         android:id="@+id/lyric_button"
         android:layout_width="wrap_content"
@@ -202,6 +214,5 @@
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
         android:layout_marginBottom="4dp"
-        android:padding="4dp"
-        android:layout_marginEnd="4dp"/>
+        android:padding="8dp" />
 </LinearLayout>

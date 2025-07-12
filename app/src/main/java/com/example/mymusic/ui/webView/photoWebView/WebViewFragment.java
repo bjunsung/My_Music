@@ -55,18 +55,23 @@ public class WebViewFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        Log.d("WebViewFragment", "onViewCreated() called");
+
         webView = view.findViewById(R.id.photo_webview);
         importButton = view.findViewById(R.id.import_button);
 
         setupWebView();
 
         importButton.setOnClickListener(v -> {
+            Log.d("WebViewFragment", "Import button clicked");
             extractImages();
         });
     }
 
 
+
     private void setupWebView() {
+        Log.d("WebViewFragment", "setupWebView() called");
         // 1. 웹뷰 설정
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
@@ -77,12 +82,14 @@ public class WebViewFragment extends Fragment {
         bridge.setListener(new PhotoDetectorBridge.Listener() {
             @Override
             public void onPhotoViewerOpened() {
+                Log.d("WebViewFragment", "Photo viewer opened");
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> importButton.setVisibility(View.VISIBLE));
                 }
             }
             @Override
             public void onPhotoViewerClosed() {
+                Log.d("WebViewFragment", "Photo viewer closed");
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> importButton.setVisibility(View.GONE));
                 }
@@ -95,6 +102,7 @@ public class WebViewFragment extends Fragment {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                Log.d("WebViewFragment", "WebView page finished loading: " + url);
                 String monitoringJs =
                         "(function() {\n" +
                                 "    let isViewerVisible = false;\n" +
@@ -116,7 +124,10 @@ public class WebViewFragment extends Fragment {
 
         // 4. 페이지 로드
         if (artistId != null && !artistId.isEmpty()) {
+            Log.d("WebViewFragment", "Loading URL: https://vibe.naver.com/artist/" + artistId + "/detail");
             webView.loadUrl("https://vibe.naver.com/artist/" + artistId + "/detail");
+        }else{
+            Log.w("WebViewFragment", "artistId is null or empty!");
         }
     }
 

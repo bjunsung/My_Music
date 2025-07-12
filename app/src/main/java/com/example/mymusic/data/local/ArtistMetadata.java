@@ -11,6 +11,7 @@ public class ArtistMetadata {
     @NonNull
     @PrimaryKey
     public String vibeArtistId;
+    public String artistNameKr;
     public String spotifyArtistId;
     public String debutDate;
     public List<String> yearsOfActivity;
@@ -21,6 +22,7 @@ public class ArtistMetadata {
     public List<List<String>> activity;
 
     public ArtistMetadata(String vibeArtistId,
+                          String artistNameKr,
                           String spotifyArtistId,
                           String debutDate,
                           List<String> yearsOfActivity,
@@ -30,6 +32,7 @@ public class ArtistMetadata {
                           List<List<String>> members,
                           List<List<String>> activity){
         this.vibeArtistId = vibeArtistId;
+        this.artistNameKr = artistNameKr;
         this.spotifyArtistId = spotifyArtistId;
         this.debutDate = debutDate;
         this.yearsOfActivity = yearsOfActivity;

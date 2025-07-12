@@ -2,6 +2,8 @@ package com.example.mymusic.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -63,6 +65,7 @@ public class Artist implements Parcelable {
     }
 
     public String getJoinedGenres(){
+        Log.d("Debug", "size: " + genres.size());
         StringBuilder joinedGenres = new StringBuilder();
         joinedGenres.append("[");
         if (this.genres.isEmpty())

@@ -53,7 +53,6 @@ public class LyricsSearchAutoFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate: Fragment created.");
 
         requireActivity()
                 .getOnBackPressedDispatcher()
@@ -88,6 +87,9 @@ public class LyricsSearchAutoFragment extends Fragment {
         importButton = view.findViewById(R.id.import_button);
 
         setupMainWebView();
+        loadInitialSearchPage();
+
+        importButton.setText("가사 가져오기");
 
         importButton.setOnClickListener(v -> {
             Log.i(TAG, "IMPORT BUTTON CLICKED");
@@ -100,7 +102,7 @@ public class LyricsSearchAutoFragment extends Fragment {
      */
     private void setupMainWebView() {
         Log.d(TAG, "setupMainWebView: Configuring main WebView for user interaction.");
-        importButton.setText("가사 가져오기");
+
         mainBridge = new AutoLyricsBridge();
 
         mainWebView.getSettings().setJavaScriptEnabled(true);
@@ -141,7 +143,6 @@ public class LyricsSearchAutoFragment extends Fragment {
                 view.evaluateJavascript(createMonitoringJs(), null);
             }
         });
-        loadInitialSearchPage();
     }
 
     // =====================================================================================
@@ -267,8 +268,6 @@ public class LyricsSearchAutoFragment extends Fragment {
                 mainWebView.loadUrl("https://vibe.naver.com");
             }
         }
-
-
     }
 
     // --- JavaScript Code Generators ---

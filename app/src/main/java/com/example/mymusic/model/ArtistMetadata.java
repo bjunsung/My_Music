@@ -1,11 +1,16 @@
 package com.example.mymusic.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
+
 import java.io.ObjectStreamClass;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class ArtistMetadata {
+public class ArtistMetadata implements Parcelable {
     public String vibeArtistId;
     public String spotifyArtistId;
     public String debutDate;
@@ -15,9 +20,10 @@ public class ArtistMetadata {
     public List<String> images;
     public List<List<String>> members;
     public List<List<String>> activity;
+    public String artistNameKr;
 
     public ArtistMetadata(){}
-    public ArtistMetadata(String vibeArtistId, String spotifyArtistId, String debutDate, List<String> yearsOfActivity, List<String> agency, String biography, List<String> images, List<List<String>> members, List<List<String>> activity){
+    public ArtistMetadata(String vibeArtistId, String artistNameKr, String spotifyArtistId, String debutDate, List<String> yearsOfActivity, List<String> agency, String biography, List<String> images, List<List<String>> members, List<List<String>> activity){
         this.spotifyArtistId = spotifyArtistId;
         this.vibeArtistId = vibeArtistId;
         this.debutDate = debutDate;
@@ -27,6 +33,7 @@ public class ArtistMetadata {
         this.images = images;
         this.members = members;
         this.activity = activity;
+        this.artistNameKr = artistNameKr;
     }
 
     public ArtistMetadata(String vibeArtistId, String spotifyArtistId){
@@ -38,7 +45,28 @@ public class ArtistMetadata {
         this.vibeArtistId = vibeArtistId;
     }
 
+    protected ArtistMetadata(Parcel in) {
+        vibeArtistId = in.readString();
+        spotifyArtistId = in.readString();
+        debutDate = in.readString();
+        yearsOfActivity = in.createStringArrayList();
+        agency = in.createStringArrayList();
+        biography = in.readString();
+        images = in.createStringArrayList();
+        artistNameKr = in.readString();
+    }
 
+    public static final Creator<ArtistMetadata> CREATOR = new Creator<ArtistMetadata>() {
+        @Override
+        public ArtistMetadata createFromParcel(Parcel in) {
+            return new ArtistMetadata(in);
+        }
+
+        @Override
+        public ArtistMetadata[] newArray(int size) {
+            return new ArtistMetadata[size];
+        }
+    };
 
     public String membersToString(){
         if (members.isEmpty()) return null;
@@ -92,6 +120,8 @@ public class ArtistMetadata {
     @Override
     public String toString(){
         StringBuilder result = new StringBuilder();
+        if (artistNameKr != null && !artistNameKr.isEmpty())
+            result.append("이름: " + artistNameKr);
         if (debutDate != null && !debutDate.isEmpty())
             result.append("데뷔일: " + debutDate);
 
@@ -126,11 +156,13 @@ public class ArtistMetadata {
 
     @Override
     public boolean equals(Object obj){
+        if (obj == null) return false;
         if (this == obj) return true;
         if (this.getClass() != obj.getClass()) return false;
         ArtistMetadata other = (ArtistMetadata) obj;
 
         return Objects.equals(this.vibeArtistId, other.vibeArtistId)
+                && Objects.equals(this.artistNameKr, other.artistNameKr)
                 && Objects.equals(this.spotifyArtistId, other.spotifyArtistId)
                 && Objects.equals(this.debutDate, other.debutDate)
                 && Objects.equals(this.yearsOfActivity, other.yearsOfActivity)
@@ -143,6 +175,27 @@ public class ArtistMetadata {
 
     @Override
     public int hashCode(){
-        return Objects.hash(vibeArtistId, spotifyArtistId, debutDate, yearsOfActivity, agency, biography, images, members, activity);
+        return Objects.hash(artistNameKr, vibeArtistId, spotifyArtistId, debutDate, yearsOfActivity, agency, biography, images, members, activity);
+    }
+    public void addMembers(List<String> list) {
+
+
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(vibeArtistId);
+        dest.writeString(spotifyArtistId);
+        dest.writeString(debutDate);
+        dest.writeStringList(yearsOfActivity);
+        dest.writeStringList(agency);
+        dest.writeString(biography);
+        dest.writeStringList(images);
+        dest.writeString(artistNameKr);
     }
 }

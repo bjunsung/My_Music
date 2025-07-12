@@ -71,6 +71,9 @@
         <action
             android:id="@+id/action_favoritesFragment_to_autoLyricsSearchFragment"
             app:destination="@+id/fragment_auto_lyrics_search" />
+        <action
+            android:id="@+id/action_favoritesFragment_to_ArtistMetadataWebView"
+            app:destination="@+id/fragment_fetch_artist_metadata" />
     </fragment>
 
     <fragment
@@ -144,6 +147,13 @@
         <argument
             android:name="track_metadata"
             app:argType="com.example.mymusic.model.TrackMetadata" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragment_fetch_artist_metadata"
+        android:name="com.example.mymusic.ui.webView.artistMetadata.ArtistMetadataWebView"
+        android:label="Artist Metadata Fetching Web View"
+        tools:layout="@layout/fragment_web_view" >
     </fragment>
 
 

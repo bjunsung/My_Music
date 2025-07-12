@@ -42,7 +42,12 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     private boolean isSelectionMode = false;
     private OnAddSelectedListener addSelectedListener;
     private OnRemoveSelectedListener removeSelectedListener;
+    private OnMetadataLongClickListener metadataLongClickListener;
+
     private Context context;
+    public interface OnMetadataLongClickListener{
+        void onItemLongClick(String artistId, String artistName);
+    }
     public interface OnAddSelectedListener{
         void onItemClick(Artist artist);
     }
@@ -56,7 +61,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     }
 
     public interface OnMetadataClickListener{
-        void onItemClick(String artistId);
+        void onItemClick(String artistId, String artistName);
     }
 
     public interface OnItemNavigateClickListener {
@@ -66,6 +71,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     public FavoriteArtistAdapter(List<FavoriteArtist> favoriteArtistList,
                                  OnDeleteClickListener deleteClickListener,
                                  OnMetadataClickListener metadataClickListener,
+                                 OnMetadataLongClickListener metadataLongClickListener,
                                  FavoriteArtistViewModel viewModel,
                                  OnItemNavigateClickListener navigateClickListener,
                                  OnAddSelectedListener addSelectedListener,
@@ -77,6 +83,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         this.navigateClickListener = navigateClickListener;
         this.addSelectedListener = addSelectedListener;
         this.removeSelectedListener = removeSelectedListener;
+        this.metadataLongClickListener = metadataLongClickListener;
     }
     public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
@@ -210,7 +217,14 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             }
         });
 
-        holder.addButton.setOnClickListener(v -> metadataClickListener.onItemClick(artist.artistId));
+        holder.addButton.setOnClickListener(v -> metadataClickListener.onItemClick(artist.artistId, artist.artistName));
+        holder.addButton.setOnLongClickListener(v -> {
+            Log.d(TAG, "artist: " + artist);
+            Log.d(TAG + "Debug", "artist id: " + artist.artistId);
+            Log.d(TAG + "Debug", "artist name: " + artist.artistName);
+            metadataLongClickListener.onItemLongClick(artist.artistId, artist.artistName);
+            return true;
+        });
 
         holder.itemView.setOnLongClickListener(v -> {
             if (!isSelectionMode) {

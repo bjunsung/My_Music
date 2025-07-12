@@ -7,33 +7,43 @@ import androidx.fragment.app.Fragment;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.transition.ChangeBounds;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.transition.Explode;
 import androidx.transition.Transition;
 import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.mymusic.R; // 자신의 R 클래스 경로
 import com.example.mymusic.databinding.FragmentImageDetailBinding;
+import com.example.mymusic.ui.artistInfo.ImagePagerAdapter;
+import com.example.mymusic.util.ImageOverlayManager;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ImageDetailFragment extends Fragment {
 
@@ -49,11 +59,18 @@ public class ImageDetailFragment extends Fragment {
     private String transitionName;
     private final String TAG = "ImageDetailFragment";
     public static final String REQUEST_KEY = "details_fragment_request";
+    public static final String REQUEST_KEY_POSITION = "details_fragment_request_position";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_ended";
     private Handler sliderHandler = new Handler(Looper.getMainLooper());
     private Runnable sliderRunnable;
+    private AtomicBoolean isUserScrolling = new AtomicBoolean(false);
+    private AtomicInteger lastConfirmedPosition = new AtomicInteger(0);
 
-
+    private AtomicInteger selectedPosition = new AtomicInteger(0);
+    private static final long AUTO_SLIDER_DELAY_TIME = 5000L;
+    private String currentTransitionName;
+    private int lastPosition;
+    private Map<String, View> sharedElements;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,17 +82,17 @@ public class ImageDetailFragment extends Fragment {
         setSharedElementReturnTransition(new MaterialContainerTransform());
 
 
-
         Transition returnTransition = (Transition) getSharedElementReturnTransition();
         if (returnTransition != null) {
             returnTransition.addListener(new Transition.TransitionListener() {
                 @Override
                 public void onTransitionStart(@NonNull Transition transition) {
-
+                    Log.d(TAG, "transition start");
                 }
 
                 @Override
                 public void onTransitionEnd(@NonNull Transition transition) {
+                    Log.d(TAG, "transition end");
                     Bundle result = new Bundle();
                     result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
                     getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
@@ -106,6 +123,7 @@ public class ImageDetailFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentImageDetailBinding.inflate(inflater, container, false);
+
         return binding.getRoot();
     }
 
@@ -125,7 +143,7 @@ public class ImageDetailFragment extends Fragment {
 
         bindView(view);
         setView();
-        DetailImagePagerAdapter adapter = new DetailImagePagerAdapter(imageUrls, (v) -> toggleUiMode());
+        DetailImagePagerAdapter adapter = new DetailImagePagerAdapter(getContext(), imageUrls, (v) -> toggleUiMode());
         adapter.setZoomListener(new DetailImagePagerAdapter.ZoomListener() {
             @Override
             public void onZoomIn() {
@@ -157,14 +175,49 @@ public class ImageDetailFragment extends Fragment {
                 }
         );
 
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) { //페이지 전환 감지
+                super.onPageSelected(position);
+                lastConfirmedPosition.set(selectedPosition.get());
+                selectedPosition.set(position);
+            }
+        });
 
+
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+                if (state == ViewPager2.SCROLL_STATE_DRAGGING){ //사용자 터치 감지
+                    sliderHandler.removeCallbacks(sliderRunnable);
+                    isUserScrolling.set(true);
+                }
+                else if (state == ViewPager2.SCROLL_STATE_IDLE){ //스크롤 정지 상태 감지
+                    if (isUserScrolling.get()){ // 유저 컨트롤
+                        isUserScrolling.set(false);
+                        int prevPos = lastConfirmedPosition.get();
+                        int newPos = selectedPosition.get();
+                        if (newPos != prevPos){
+                            lastConfirmedPosition.set(newPos);
+                            sliderHandler.postDelayed(sliderRunnable, 7500L);
+                        } else{
+                            sliderHandler.postDelayed(sliderRunnable, 10000L);
+                        }
+                    } else{ //자동 스크롤
+                        sliderHandler.removeCallbacks(sliderRunnable);
+                        sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
+                    }
+                }
+            }
+        });
 
 
         sliderRunnable = () -> {
             if (viewPager != null && adapter != null){
                 int nextItem = (viewPager.getCurrentItem() + 1) % adapter.getItemCount();
                 viewPager.setCurrentItem(nextItem, true);
-                sliderHandler.postDelayed(sliderRunnable, 5000);
+                sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
             }
         };
 
@@ -184,16 +237,24 @@ public class ImageDetailFragment extends Fragment {
     private void setView(){
         closeButton.setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        Log.d(TAG, "onResume called");
+
         sliderHandler.removeCallbacks(sliderRunnable);
         sliderHandler.postDelayed(sliderRunnable, 3000);
 
         Activity activity = requireActivity();
         if (activity == null || activity.getWindow() == null) return;
+
+
+        //keep screen on
+        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // backButtonImageButton이 null이면 다시 시도하여 가져오기
         if (backButtonImageButton == null) {
@@ -237,6 +298,24 @@ public class ImageDetailFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+
+        Log.d(TAG, "onPause called");
+
+        Bundle bundle = new Bundle();
+        int position =  viewPager.getCurrentItem();
+        bundle.putInt("position", position);
+        lastPosition = position;
+
+        getParentFragmentManager().setFragmentResult(REQUEST_KEY_POSITION, bundle);
+        Log.d(TAG, "position 전달 " + viewPager.getCurrentItem());
+
+
+        Activity activity = requireActivity();
+        if (activity != null){
+            //keep screen off
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        }
         // 프래그먼트를 떠날 때 전체 화면 모드 해제
         if (insetsController != null) {
             insetsController.show(WindowInsetsCompat.Type.systemBars());
@@ -244,6 +323,7 @@ public class ImageDetailFragment extends Fragment {
         if (backButtonImageButton != null) { backButtonImageButton.setVisibility(View.VISIBLE); }
         if (emptySpaceImageButton != null) { emptySpaceImageButton.setVisibility(View.VISIBLE); }
         sliderHandler.removeCallbacks(sliderRunnable);
+
     }
 
     private void toggleUiMode(){
@@ -251,16 +331,22 @@ public class ImageDetailFragment extends Fragment {
         if (isLightMode){
             detailContainer.setBackgroundColor(Color.WHITE);
             closeButton.setVisibility(View.VISIBLE);
+            /*
             if (insetsController != null){
                 insetsController.show(WindowInsetsCompat.Type.systemBars());
             }
+
+             */
         }else{
             detailContainer.setBackgroundColor(Color.BLACK);
             closeButton.setVisibility(View.GONE);
+            /*
             if (insetsController != null){
                 insetsController.hide(WindowInsetsCompat.Type.systemBars());
             }
+             */
         }
     }
+
 
 }

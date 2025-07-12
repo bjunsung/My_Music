@@ -6,4 +6,16 @@
     <dimen name="text_size_basic">20sp</dimen>
     <dimen name="bottom_bar_back_space_margin">90dp</dimen>
     <dimen name="artwork_size">400dp</dimen>
+
+
+    <!-- Artist info. -->
+    <dimen name="text_size_artist_name_in_artist_info">28sp</dimen>
+    <dimen name="text_size_sector_in_artist_info">30sp</dimen>
+    <dimen name="text_size_biography_in_artist_info">20sp</dimen>
+    <dimen name="margin_right_value_of_biography_in_artist_info">60sp</dimen>
+
+    <!-- Favorites. -->
+    <dimen name="artwork_size_on_lyrics_in_favorites_fragment">128dp</dimen>
+
+
 </resources>

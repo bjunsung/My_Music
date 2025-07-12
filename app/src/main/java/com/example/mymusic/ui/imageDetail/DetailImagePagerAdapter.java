@@ -1,6 +1,11 @@
 package com.example.mymusic.ui.imageDetail;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.os.Handler;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -24,11 +29,17 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
     }
     private List<String> imageUrls;
     private View.OnClickListener onClickListener;
+    private Context context;
 
     // 생성자에서 이미지 리스트와 클릭 리스너를 받음
-    public DetailImagePagerAdapter(List<String> imageUrls, View.OnClickListener listener) {
+    public DetailImagePagerAdapter(Context context, List<String> imageUrls, View.OnClickListener listener) {
+        this.context = context;
         this.imageUrls = imageUrls;
         this.onClickListener = listener;
+    }
+
+    public interface OnImageLongClickListener {
+        void onLongClick(ImageView imageView, MotionEvent event, String imageUrl);
     }
 
     @NonNull
@@ -38,11 +49,13 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
         return new DetailImageViewHolder(view);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull DetailImageViewHolder holder, int position) {
         // 이전 프래그먼트에서 설정한 transitionName과 동일하게 설정
         String imageUrl = imageUrls.get(position);
         holder.imageView.setTransitionName("Transition_" + imageUrl);
+        holder.imageUrl = imageUrl;
 
         Glide.with(holder.itemView.getContext())
                 .load(imageUrl)
@@ -50,6 +63,8 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
 
 
         holder.imageView.setOnClickListener(onClickListener);
+
+        //holder.imageView.setOnTouchListener();
 
         holder.imageView.setOnScaleChangeListener((ScaleFactor, focusX, focusY) -> {
             float currentScale = holder.imageView.getScale();
@@ -60,6 +75,7 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
             }
         });
 
+
     }
 
     @Override
@@ -69,6 +85,7 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
 
     static class DetailImageViewHolder extends RecyclerView.ViewHolder {
         PhotoView imageView;
+        String imageUrl;
         DetailImageViewHolder(View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.detail_image);

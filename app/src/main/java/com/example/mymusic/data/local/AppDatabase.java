@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.mymusic.data.local.converter.Converters;
 
-@Database(entities = {Token.class, Favorites.class, FavoriteArtist.class, Settings.class, ArtistMetadata.class} , version = 5)
+@Database(entities = {Token.class, Favorites.class, FavoriteArtist.class, Settings.class, ArtistMetadata.class} , version = 6)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase instance;
@@ -26,7 +26,7 @@ public abstract class AppDatabase extends RoomDatabase {
                     context.getApplicationContext(),
                     AppDatabase.class,
                     "app_database"
-            ).addMigrations(Migrations.MIGRATION_4_5).addCallback(roomCallback).build();
+            ).addMigrations(Migrations.MIGRATION_5_6).addCallback(roomCallback).build();
         }
         return instance;
     }

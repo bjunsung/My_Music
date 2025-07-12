@@ -22,6 +22,7 @@ public class ArtistMetadataRepository {
     public void addArtistMetadata(com.example.mymusic.model.ArtistMetadata artistMetadata){
         com.example.mymusic.data.local.ArtistMetadata metadataDb = new com.example.mymusic.data.local.ArtistMetadata(
                 artistMetadata.vibeArtistId,
+                artistMetadata.artistNameKr,
                 artistMetadata.spotifyArtistId,
                 artistMetadata.debutDate,
                 artistMetadata.yearsOfActivity,
@@ -50,6 +51,7 @@ public class ArtistMetadataRepository {
         }
         return new com.example.mymusic.model.ArtistMetadata(
                 metadata.vibeArtistId,
+                metadata.artistNameKr,
                 metadata.spotifyArtistId,
                 metadata.debutDate,
                 metadata.yearsOfActivity,
@@ -64,17 +66,18 @@ public class ArtistMetadataRepository {
         ArtistMetadata metadata = artistMetadataDao.getArtistMetadataBySpotifyId(spotifyId);
         if (metadata != null)
             return new com.example.mymusic.model.ArtistMetadata(
-                metadata.vibeArtistId,
-                metadata.spotifyArtistId,
-                metadata.debutDate,
-                metadata.yearsOfActivity,
-                metadata.agency,
-                metadata.biography,
-                metadata.images,
-                metadata.members,
-                metadata.activity);
-        else
-            return null;
+                    metadata.vibeArtistId,
+                    metadata.artistNameKr,
+                    metadata.spotifyArtistId,
+                    metadata.debutDate,
+                    metadata.yearsOfActivity,
+                    metadata.agency,
+                    metadata.biography,
+                    metadata.images,
+                    metadata.members,
+                    metadata.activity);
+            else
+                return null;
     }
 
 
@@ -82,6 +85,7 @@ public class ArtistMetadataRepository {
     public void updateArtistMetadata(com.example.mymusic.model.ArtistMetadata artistMetadata, Consumer<Boolean> callback){
         com.example.mymusic.data.local.ArtistMetadata metadataDb = new com.example.mymusic.data.local.ArtistMetadata(
                 artistMetadata.vibeArtistId,
+                artistMetadata.artistNameKr,
                 artistMetadata.spotifyArtistId,
                 artistMetadata.debutDate,
                 artistMetadata.yearsOfActivity,

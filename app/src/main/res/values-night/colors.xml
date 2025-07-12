@@ -2,4 +2,5 @@
 <resources>
     <color name="textPrimary">#A6A6A6</color>
     <color name="navBarBasic">#FF000000</color>
+    <color name="basic">#FF000000</color>
 </resources>

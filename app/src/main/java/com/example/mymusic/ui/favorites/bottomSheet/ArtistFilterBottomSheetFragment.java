@@ -265,7 +265,7 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
             // 모든 텍스트뷰 초기화
             for (TextView tv : sortTextViewMap.values()) {
                 tv.setTypeface(null, Typeface.NORMAL);
-                sortTextViewMap.get(selectedSort).setTextColor(Color.GRAY);
+                tv.setTextColor(Color.GRAY);
             }
             // 선택된 항목만 Bold 처리
             if (sortTextViewMap.containsKey(selectedSort)) {
@@ -278,7 +278,7 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
         if (selectedFilter != null){
             for (TextView tv : filterTextViewMap.values()) {
                 tv.setTypeface(null, Typeface.NORMAL);
-                filterTextViewMap.get(selectedFilter).setTextColor(Color.GRAY);
+                tv.setTextColor(Color.GRAY);
             }
             if (filterTextViewMap.containsKey(selectedFilter)) {
                 filterTextViewMap.get(selectedFilter).setTypeface(null, Typeface.BOLD);

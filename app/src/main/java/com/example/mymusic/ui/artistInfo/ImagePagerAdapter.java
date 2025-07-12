@@ -82,11 +82,14 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
             ViewCompat.setTransitionName(holder.imageView, transitionName);
 
         }else{
+            Log.d(TAG, "reenter from image detail fragment");
             if (viewModel.getCurrentTransitionName().contains(url)){
                 ViewCompat.setTransitionName(holder.imageView, viewModel.getCurrentTransitionName());
-                Log.d(TAG, "setting transition name for (ViewPager2) position at " + position + " transitionName: " + viewModel.getCurrentTransitionName());
-            } else{
+                Log.d(TAG, "FIND TRANSITION VIEW position at " + position + " transitionName: " + viewModel.getCurrentTransitionName());
+            }
+            else{
                 ViewCompat.setTransitionName(holder.imageView, "basic_transition_name_" + holder.getAdapterPosition());
+
             }
         }
         if (ViewCompat.getTransitionName(holder.imageView) != null) {

@@ -1,9 +1,11 @@
 package com.example.mymusic.ui.artistInfo;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class ArtistInfoViewModel extends AndroidViewModel {
     private String initialTransitionName = null;
@@ -13,8 +15,9 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private int trackPosition = -1;
     private int albumPosition = -1;
     private boolean firstFragmentCreation = true;
-    private boolean secondPostponeFlag = false;
+    private boolean secondPostponeFlag = false; //return from detail fragment
     private boolean metadataExist = false;
+    private int lastPositionAtImageDetailFragment = -1;
 
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
@@ -91,4 +94,13 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     public void setMetadataExist(boolean metadataExist) {
         this.metadataExist = metadataExist;
     }
+
+    public int getLastPositionAtImageDetailFragment() {
+        return lastPositionAtImageDetailFragment;
+    }
+
+    public void setLastPositionAtImageDetailFragment(int lastPositionAtImageDetailFragment) {
+        this.lastPositionAtImageDetailFragment = lastPositionAtImageDetailFragment;
+    }
+
 }

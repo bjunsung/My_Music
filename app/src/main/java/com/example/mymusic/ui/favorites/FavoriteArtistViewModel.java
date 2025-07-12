@@ -181,6 +181,22 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         }).start();
     }
 
+    public void deleteArtistMetadata(String vibeId, Consumer<String> callback){
+        new Thread(() -> {
+            int removed = artistMetadataRepository.removeArtistMetadata(vibeId);
+            if (removed > 0){
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    callback.accept("Remove Success");
+                });
+            }
+            else{
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    callback.accept("Remove Fail");
+                });
+            }
+        }).start();
+    }
+
     public int getScrollPosition() {
         return scrollPosition;
     }

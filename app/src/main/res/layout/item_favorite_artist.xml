@@ -4,6 +4,8 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:padding="8dp">
 
     <!-- 체크박스 (필터 모드에서만 표시) -->
@@ -16,12 +18,22 @@
         android:visibility="gone" />
 
     <!-- 앨범 이미지 -->
-    <ImageView
-        android:id="@+id/imageView"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginEnd="12dp"
-        android:scaleType="centerCrop" />
+        app:cardCornerRadius="40dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp"
+        app:cardPreventCornerOverlap="false"
+        app:cardUseCompatPadding="false">
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+    </com.google.android.material.card.MaterialCardView>
+
 
     <!-- 텍스트 정보 (제목, 아티스트) -->
     <LinearLayout
@@ -125,22 +137,20 @@
         app:layout_constraintTop_toTopOf="@id/artistTextView"
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
-        android:layout_marginEnd="4dp"
         android:layout_marginBottom="4dp"
-        android:padding="4dp"/>
+        android:padding="8dp"/>
     <ImageButton
         android:id="@+id/add_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_rounded_add_photo_alternate"
+        android:src="@drawable/ic_rounded_artist"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_gravity="center_vertical"
         app:layout_constraintTop_toTopOf="@id/artistTextView"
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
         android:layout_marginBottom="4dp"
-        android:padding="4dp"
-        android:layout_marginEnd="4dp"/>
+        android:padding="8dp" />
     <ImageButton
         android:id="@+id/image_album_button"
         android:layout_width="wrap_content"
@@ -152,7 +162,6 @@
         app:layout_constraintBottom_toBottomOf="@id/artistTextView"
         app:layout_constraintEnd_toEndOf="@id/parent"
         android:layout_marginBottom="4dp"
-        android:padding="4dp"
-        android:layout_marginEnd="4dp"
+        android:padding="8dp"
         android:visibility="gone"/>
 </LinearLayout>

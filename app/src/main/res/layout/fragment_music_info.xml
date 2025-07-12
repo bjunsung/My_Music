@@ -114,7 +114,7 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="아티스트: "
-                                        android:textSize="24sp"
+                                        android:textSize="@dimen/text_size_basic"
                                         android:maxLines="1"
                                         android:ellipsize="end"/>
                                     <TextView
@@ -123,7 +123,7 @@
                                         android:layout_height="wrap_content"
                                         android:text="Apink"
                                         android:textStyle="italic|bold"
-                                        android:textSize="24sp"
+                                        android:textSize="@dimen/text_size_basic"
                                         android:textIsSelectable="false"/>
                                 </LinearLayout>
 
@@ -138,14 +138,14 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="앨범: "
-                                        android:textSize="24sp" />
+                                        android:textSize="@dimen/text_size_basic"/>
                                     <TextView
                                         android:id="@+id/albumName"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="LOOK"
                                         android:textStyle="italic|bold"
-                                        android:textSize="24sp"
+                                        android:textSize="@dimen/text_size_basic"
                                         android:textIsSelectable="false"/>
                                 </LinearLayout>
 
@@ -161,14 +161,14 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="보컬: "
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic"/>
                                     <TextView
                                         android:id="@+id/vocalists"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="정은지, 김남주, 윤보미, 박초롱, 손나은, 오하영"
                                         android:textStyle="italic"
-                                        android:textSize="22sp"
+                                        android:textSize="@dimen/text_size_basic"
                                         android:textIsSelectable="false"/>
                                 </LinearLayout>
 
@@ -184,7 +184,7 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="작사: "
-                                        android:textSize="22sp"
+                                        android:textSize="@dimen/text_size_basic"
                                         android:maxLines="1"
                                         android:ellipsize="end"/>
                                     <TextView
@@ -192,7 +192,7 @@
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
                                         android:text="이단옆차기, 데이데이(Dayday), 박장근, 챈슬러"
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic" />
                                 </LinearLayout>
 
                                 <!-- 작곡 -->
@@ -207,7 +207,7 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="작곡: "
-                                        android:textSize="22sp"
+                                        android:textSize="@dimen/text_size_basic"
                                         android:maxLines="1"
                                         android:ellipsize="end"/>
                                     <TextView
@@ -215,7 +215,7 @@
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
                                         android:text="이단옆차기, SEION, 박장근, 챈슬러"
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic"/>
                                 </LinearLayout>
 
                                 <!-- 발매일 -->
@@ -229,13 +229,13 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="발매일: "
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic"/>
                                     <TextView
                                         android:id="@+id/releaseDate"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="2020-04-13"
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic" />
                                     <LinearLayout
                                         android:id="@+id/days_between_layout"
                                         android:layout_width="match_parent"
@@ -245,20 +245,20 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="  (D + "
-                                            android:textSize="22sp" />
+                                            android:textSize="@dimen/text_size_basic"/>
 
                                         <TextView
                                             android:id="@+id/days_between"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="null"
-                                            android:textSize="22sp" />
+                                            android:textSize="@dimen/text_size_basic" />
 
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text=")"
-                                            android:textSize="22sp" />
+                                            android:textSize="@dimen/text_size_basic" />
                                     </LinearLayout>
                                 </LinearLayout>
 
@@ -273,13 +273,13 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="재생시간: "
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic" />
                                     <TextView
                                         android:id="@+id/durationMs"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="3분 28초"
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic"/>
                                 </LinearLayout>
 
                                 <!-- 추가 날짜 -->
@@ -294,13 +294,13 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="추가한 날짜: "
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic" />
                                     <TextView
                                         android:id="@+id/added_date"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:text="2025-06-29"
-                                        android:textSize="22sp" />
+                                        android:textSize="@dimen/text_size_basic"/>
                                 </LinearLayout>
 
                             </LinearLayout>
