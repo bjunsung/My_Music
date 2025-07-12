@@ -52,6 +52,7 @@ import com.example.mymusic.databinding.FragmentFavoritesBinding;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistMetadataService;
@@ -64,6 +65,7 @@ import com.example.mymusic.ui.musicInfo.MusicInfoFragment;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.example.mymusic.util.SortFilterArtistUtil;
+import com.example.mymusic.util.SortFilterUtil;
 import com.example.mymusic.util.VerticalSpaceItemDecoration;
 import com.google.android.material.card.MaterialCardView;
 import com.squareup.picasso.Picasso;
@@ -325,11 +327,14 @@ public class FavoritesFragment extends Fragment {
 
         if (context != null) {
             SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
+            if (favoriteOption == 1){
+                prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+            }
             boolean isDescending = prefs.getBoolean("isDescending", false);
-            if (isDescending){
+            if (isDescending) {
                 dropUpImageButton.setVisibility(View.GONE);
                 dropDownImageButton.setVisibility(View.VISIBLE);
-            }else{
+            } else {
                 dropDownImageButton.setVisibility(View.GONE);
                 dropUpImageButton.setVisibility(View.VISIBLE);
             }
@@ -372,7 +377,7 @@ public class FavoritesFragment extends Fragment {
                                     new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(requireContext(), result + "개의 노래가 삭제되었습니다.", Toast.LENGTH_SHORT));
                                     favoritesViewModel.loadAllFavorites(favorites -> {
                                         if (context != null) {
-                                            List<Favorite> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(context, favorites, null);
+                                            List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, favorites, null);
                                             favoriteTrackAdapter.updateData(filtered);
                                             //count 업데이트
                                             setFavoritesCountText(filtered.size());
@@ -426,11 +431,11 @@ public class FavoritesFragment extends Fragment {
                                 if (result > 0) {
                                     new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(requireContext(), result + "팀의 아티스트가 삭제되었습니다.", Toast.LENGTH_SHORT));
                                     favoriteArtistViewModel.loadFavoritesOriginalForm(favorites -> {
-                                        List<FavoriteArtist> copy = new ArrayList<>(favorites);
-                                        Collections.reverse(copy);
-                                        favoriteArtistAdapter.updateData(copy);
+                                        List<FavoriteArtist> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favorites);
+
+                                        favoriteArtistAdapter.updateData(filtered);
                                         //count 업데이트
-                                        setFavoritesCountText(favorites.size());
+                                        setFavoritesCountText(filtered.size());
 
                                     });
                                 } else {
@@ -536,10 +541,21 @@ public class FavoritesFragment extends Fragment {
             dropDownImageButton.setVisibility(View.GONE);
             dropUpImageButton.setVisibility(View.VISIBLE);
             if (context != null){
-                SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putBoolean("isDescending", false);
-                editor.apply();
+                if (favoriteOption == 0) {
+                    SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
+                    if (favoriteOption == 1)
+                        prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean("isDescending", false);
+                    editor.apply();
+                }else{
+                    SharedPreferences prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+                    if (favoriteOption == 1)
+                        prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean("isDescending", false);
+                    editor.apply();
+                }
                 Log.d(TAG, "isDescending false preference stored");
                 loadFavoritesAndUpdateUI();
             }else{
@@ -551,10 +567,17 @@ public class FavoritesFragment extends Fragment {
             dropUpImageButton.setVisibility(View.GONE);
             dropDownImageButton.setVisibility(View.VISIBLE);
             if (context != null){
-                SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putBoolean("isDescending", true);
-                editor.apply();
+                if (favoriteOption == 0) {
+                    SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean("isDescending", true);
+                    editor.apply();
+                }else{
+                    SharedPreferences prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean("isDescending", true);
+                    editor.apply();
+                }
                 Log.d(TAG, "isDescending true preference stored");
                 loadFavoritesAndUpdateUI();
             }else{
@@ -597,7 +620,7 @@ public class FavoritesFragment extends Fragment {
 
                 Context context = getContext();
                 if (context != null) {
-                    List<Favorite> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(context, favoritesList, null);
+                    List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, favoritesList, null);
                     favoriteTrackAdapter.updateData(filtered);
                     //count 업데이트
                     int size = filtered.size();
@@ -630,17 +653,18 @@ public class FavoritesFragment extends Fragment {
                     Log.d(TAG, "Artist List is empty");
                     artistRecyclerView.setVisibility(View.GONE);
                 }
-                List<FavoriteArtist> reversed = new ArrayList<>(favoriteArtistList);
-                Collections.reverse(reversed);
-                updateEmptyState(reversed.isEmpty());
-                favoriteArtistAdapter.updateData(reversed);
+                List<FavoriteArtist> filterd = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favoriteArtistList);
+
+
+                updateEmptyState(filterd.isEmpty());
+                favoriteArtistAdapter.updateData(filterd);
 
                 LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
                 if (layoutManager != null){
                     layoutManager.scrollToPositionWithOffset(favoriteArtistViewModel.getScrollPosition(), favoriteArtistViewModel.getScrollOffset());
                 }
 
-                setFavoritesCountText(reversed.size());
+                setFavoritesCountText(filterd.size());
                 handleReenterTransition();
             });
         }
@@ -700,7 +724,7 @@ public class FavoritesFragment extends Fragment {
                                     }
                                     Context context = getContext();
                                     if (context != null){
-                                        List<Favorite> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(context, updatedList, null);
+                                        List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, updatedList, null);
                                         favoriteTrackAdapter.updateData(filtered);
                                         updateEmptyState(filtered.isEmpty());
                                         setFavoritesCountText(filtered.size());
@@ -786,18 +810,18 @@ public class FavoritesFragment extends Fragment {
                         if (result > 0){
                             // 삭제 후 즐겨찾기 목록 새로고침 (공통 로직)
                             favoriteArtistViewModel.loadFavoritesOriginalForm(updatedList -> {
-                                List<FavoriteArtist> reversed = new ArrayList<>(updatedList);
-                                Collections.reverse(reversed);
+
+                                List<FavoriteArtist> filterd = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), updatedList);
 
                                 // 목록 상태에 따라 UI 업데이트 (empty/visible)
-                                if (updatedList.isEmpty()) {
+                                if (filterd.isEmpty()) {
                                     emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
                                 } else {
                                     emptyFavoriteSongTextView.setVisibility(View.GONE);
                                 }
-                                favoriteArtistAdapter.updateData(reversed); // RecyclerView 데이터 업데이트
+                                favoriteArtistAdapter.updateData(filterd); // RecyclerView 데이터 업데이트
                                 // updateEmptyState(updatedList.isEmpty()); // 이 메서드가 별도로 있다면 호출
-                                setFavoritesCountText(reversed.size());
+                                setFavoritesCountText(filterd.size());
                             });
                         }
                     });
@@ -882,7 +906,7 @@ public class FavoritesFragment extends Fragment {
                     favoritesViewModel.loadAllFavorites(favoriteList -> {
                         if (!favoriteList.isEmpty()){
                             boolean isDescending = true;
-                            List<Favorite> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favoriteList, "ARTIST", track, "RELEASE_DATE", isDescending);
+                            List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(getContext(), favoriteList, "ARTIST", track, "RELEASE_DATE", isDescending);
                             artistsOtherMusicAdapter.updateData(filtered);
                             if (filtered.isEmpty()){
                                 artistsOtherMusicCardView.setVisibility(View.GONE);
@@ -1633,7 +1657,7 @@ public class FavoritesFragment extends Fragment {
             favoritesViewModel.loadAllFavorites(favorites -> {
                 Context context = getContext();
                 if (context != null){
-                    int count = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favorites, null).size();
+                    int count = SortFilterUtil.sortAndFilterFavoritesList(getContext(), favorites, null).size();
                     setFavoritesCountText(count);
                 }
             });
@@ -1656,15 +1680,19 @@ public class FavoritesFragment extends Fragment {
             favoritesViewModel.setFocusedTransitionName(null);
             favoritesViewModel.setTransitionPosition(0);
             favoritesViewModel.loadAllFavorites(favoritesList -> {
-                if (!favoritesList.isEmpty())
+
+                List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(getContext(), favoritesList, null);
+
+                if (!filtered.isEmpty())
                     trackRecyclerView.setVisibility(View.VISIBLE);
                 else
                     trackRecyclerView.setVisibility(View.GONE);
-                Collections.reverse(favoritesList);
-                updateEmptyState(favoritesList.isEmpty());
-                favoriteTrackAdapter.updateData(favoritesList);
 
-                setFavoritesCountText(favoritesList.size());
+                updateEmptyState(filtered.isEmpty());
+                favoriteTrackAdapter.updateData(filtered);
+
+
+                setFavoritesCountText(filtered.size());
                 binding.trackRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
                     @Override
                     public boolean onPreDraw() {

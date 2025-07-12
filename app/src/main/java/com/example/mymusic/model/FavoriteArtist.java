@@ -52,4 +52,60 @@ public class FavoriteArtist implements Parcelable {
         dest.writeParcelable(artist, flags);
         dest.writeString(addedDate);
     }
+
+    public String getArtistName(){
+        if (artist != null && artist.artistName != null && !artist.artistName.isEmpty()){
+            return artist.artistName;
+        }
+        else return null;
+    }
+
+    public int getFollowers(){
+        if (artist != null &&  artist.followers > 0){
+            return artist.followers;
+        }
+        else return -1;
+    }
+
+    public String getAddedDate(){
+        if (addedDate != null && !addedDate.isEmpty())
+            return addedDate;
+        else
+            return null;
+    }
+
+    public String getDebutDate() {
+        if (metadata != null && metadata.debutDate != null && !metadata.debutDate.isEmpty()) {
+            try {
+                // 기존 형식: 2024.12.31
+                java.text.SimpleDateFormat inputFormat = new java.text.SimpleDateFormat("yyyy.MM.dd");
+                java.text.SimpleDateFormat outputFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+
+                java.util.Date date = inputFormat.parse(metadata.debutDate);
+                return outputFormat.format(date);
+
+            } catch (java.text.ParseException e) {
+                e.printStackTrace(); // 또는 로그 처리
+                return metadata.debutDate; // 파싱 실패 시 원본 그대로 반환
+            }
+        } else {
+            return null;
+        }
+    }
+
+
+    public int getMemberCount(){
+        if (metadata != null && metadata.members != null && !metadata.members.isEmpty())
+            return metadata.members.size();
+        else
+            return 0;
+    }
+
+    public int getImageCount(){
+        if (metadata != null && metadata.images != null && !metadata.images.isEmpty())
+            return metadata.members.size();
+        else
+            return 1;
+    }
+
 }

@@ -42,6 +42,7 @@ import com.example.mymusic.databinding.FragmentArtistInfoBinding;
 import com.example.mymusic.model.Album;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.ui.imageDetail.ImageDetailFragment;
 import com.example.mymusic.ui.webView.photoWebView.WebViewFragment;
 import com.example.mymusic.util.ImageOverlayManager;
@@ -319,7 +320,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         if (viewModel.isFirstFragmentCreation() && transitionName == null){
             Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition() at FIRST CREATION of fragment");
             viewModel.setFirstFragmentCreation(false);
-            viewModel.artistId = artist.artistId;
             startPostponedEnterTransition();
             return;
         } else if(!viewModel.isFirstFragmentCreation() && transitionName == null && !viewModel.isSecondPostponeFlag()){

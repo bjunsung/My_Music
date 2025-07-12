@@ -42,7 +42,7 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
     private TextView addedDateTextView, debutDateTextView, followersTextView, memberCountsTextView, artistNameTextView, imageCountsTextView;
 
 
-    private TextView allTextView, over10YearTextView,
+    private TextView allTextView, over10YearsTextView,
             last5YearsTextView, last10YearsTextView, decade2020sTextView, decade2010sTextView, decade2000sTextView,
             before2000sTextView, seasonSpringTextView, seasonSummerTextView, seasonAutumnTextView, seasonWinterTextView,
             customInputTextView;
@@ -128,7 +128,7 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
         imageCountsTextView = view.findViewById(R.id.image_counts);
 
         allTextView = view.findViewById(R.id.all);
-        over10YearTextView = view.findViewById(R.id.over_10_year);
+        over10YearsTextView = view.findViewById(R.id.over_10_year);
         last5YearsTextView = view.findViewById(R.id.last_5_years);
         last10YearsTextView = view.findViewById(R.id.last_10_years);
         decade2020sTextView = view.findViewById(R.id.decade_2020s);
@@ -152,7 +152,7 @@ public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
         filterTextViewMap.put("ALL", allTextView);
         filterTextViewMap.put("LAST_5_YEARS", last5YearsTextView);
         filterTextViewMap.put("LAST_10_YEARS", last10YearsTextView);
-        filterTextViewMap.put("OVER_10_YEAR", over10YearTextView);
+        filterTextViewMap.put("OVER_10_YEARS", over10YearsTextView);
         filterTextViewMap.put("DECADE_2020S", decade2020sTextView);
         filterTextViewMap.put("DECADE_2010S", decade2010sTextView);
         filterTextViewMap.put("DECADE_2000S", decade2000sTextView);

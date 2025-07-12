@@ -16,7 +16,6 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private boolean secondPostponeFlag = false;
     private boolean metadataExist = false;
 
-    public String artistId;
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
     }

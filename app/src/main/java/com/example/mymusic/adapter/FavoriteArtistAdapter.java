@@ -1,6 +1,7 @@
 package com.example.mymusic.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -136,6 +137,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             public void onFailure(String reason) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     holder.addButton.setVisibility(View.VISIBLE);
+                    holder.addButton.setColorFilter(Color.GRAY);
                     holder.imageAlbumButton.setVisibility(View.GONE);
                     holder.debutLayout.setVisibility(View.GONE);
                 });
