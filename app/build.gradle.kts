@@ -81,15 +81,16 @@ dependencies {    // Room core
     implementation("androidx.core:core-ktx:1.12.0") // Kotlin DSL 필요
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
-    implementation("com.squareup.picasso:picasso:2.71828")
     implementation("androidx.webkit:webkit:1.8.0") // WebView 지원 향상
     implementation("com.github.chrisbanes:PhotoView:2.3.0") // 이미지 확대 가능
     implementation("com.google.android.material:material:1.12.0") //layout 모서리 둥글게
     //annotationProcessor("com.github.bumptech.glide:compiler:4.16.0") // Java 프로젝트용 Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")    //Glide 설정
     kapt("com.github.bumptech.glide:compiler:4.16.0") //⬅️ annotationProcessor를 kapt로 변경
-    //implementation("com.google.android.material:material:1.11.0") //cardView
     implementation("jp.wasabeef:recyclerview-animators:4.0.2") //recycler view item change animation
+    implementation("com.squareup.picasso:picasso:2.71828")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0")
     implementation(libs.palette)  //Glide
     implementation(libs.appcompat)
     implementation(libs.material)

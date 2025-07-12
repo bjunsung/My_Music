@@ -1,6 +1,7 @@
 package com.example.mymusic.adapter;
 
-import android.os.Bundle;
+import android.content.Context;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,20 +11,20 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
+
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Album;
-import com.example.mymusic.model.Track;
-import com.squareup.picasso.Picasso;
+
 
 import java.util.List;
 
 public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.AlbumViewHolder> {
 
     private final String TAG = "SimpleAlbumAdapter";
+    private Context context;
     List<Album> albumList;
     public interface OnAlbumClickListener{
         void onItemClick(Album album, ImageView sharedImageView, int position);
@@ -50,6 +51,7 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
     @NonNull
     public AlbumViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType){
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_album_simple, parent, false);
+        context = parent.getContext();
         return new AlbumViewHolder(view);
     }
 
@@ -60,9 +62,9 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
         ViewCompat.setTransitionName(holder.albumImage, transitionName);
         Log.d(TAG, "set transitionName at position " + holder.getAdapterPosition() + " : " + transitionName);
 
-        Picasso.get()
+        Glide.with(context)
                 .load(album.artworkUrl)
-                .resize(400, 400)
+                .override(400, 400)
                 .error(R.drawable.ic_image_not_found_foreground)
                 .into(holder.albumImage);
         holder.albumName.setText(album.albumName);

@@ -2,22 +2,29 @@ package com.example.mymusic.ui.imageDetail;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Handler;
-import android.view.GestureDetector;
+import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R; // 자신의 R 클래스 경로
+import com.example.mymusic.cache.ImagePreloader;
+import com.example.mymusic.ui.artistInfo.ArtistInfoFragment;
 import com.github.chrisbanes.photoview.PhotoView;
 
 import java.util.List;
 
 public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePagerAdapter.DetailImageViewHolder> {
+    private final String TAG = "DetailImagePagerAdapter";
     public interface ZoomListener {
         void onZoomIn();
         void onZoomOut();
@@ -33,7 +40,6 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
 
     // 생성자에서 이미지 리스트와 클릭 리스너를 받음
     public DetailImagePagerAdapter(Context context, List<String> imageUrls, View.OnClickListener listener) {
-        this.context = context;
         this.imageUrls = imageUrls;
         this.onClickListener = listener;
     }
@@ -46,6 +52,7 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
     @Override
     public DetailImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_detail_image, parent, false);
+        context = parent.getContext();
         return new DetailImageViewHolder(view);
     }
 
@@ -57,10 +64,10 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
         holder.imageView.setTransitionName("Transition_" + imageUrl);
         holder.imageUrl = imageUrl;
 
+
         Glide.with(holder.itemView.getContext())
                 .load(imageUrl)
                 .into(holder.imageView);
-
 
         holder.imageView.setOnClickListener(onClickListener);
 
@@ -74,6 +81,7 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
                 if (zoomListener != null) zoomListener.onZoomOut();
             }
         });
+
 
 
     }
@@ -91,4 +99,12 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
             imageView = itemView.findViewById(R.id.detail_image);
         }
     }
+
+    public String getImageUrl(int position){
+        if (position < 0 || position >= imageUrls.size())
+            return null;
+        return imageUrls.get(position);
+    }
+
+
 }

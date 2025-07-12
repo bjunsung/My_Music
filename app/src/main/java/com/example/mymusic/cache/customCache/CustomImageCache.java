@@ -1,0 +1,95 @@
+package com.example.mymusic.cache.customCache;
+
+import android.graphics.Bitmap;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.collection.LruCache;
+
+import java.util.HashSet;
+import java.util.Set;
+
+public class CustomImageCache {
+    private static final String TAG = "CustomImageCache";
+    private static CustomImageCache instance;
+    private final LruCache<String, Bitmap> memoryCache;
+    private String pinnedKey = null;
+
+    private static int cacheSize;
+
+    private CustomImageCache(int cacheSize) {
+        CustomImageCache.cacheSize = cacheSize;
+        memoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
+                return 1; // 모든 항목의 크기를 1로 설정 → 개수 기준
+            }
+
+            @Override
+            protected void entryRemoved(boolean evicted, @NonNull String key, @NonNull Bitmap oldValue, @Nullable Bitmap newValue) {
+                if (key.equals(pinnedKey)){
+                    Log.d("CustomImageCache", "Pinned key tried to be evicted. Restoring: " + key);
+                    memoryCache.put(key, oldValue);
+                }
+            }
+        };
+    }
+
+    public static synchronized CustomImageCache getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("CustomImageCache is not initialized. Call init() first.");
+        }
+        return instance;
+    }
+
+    public void put(String key, Bitmap bitmap) {
+        if (memoryCache.get(key) == null) {
+            Log.d(TAG, "image cache saved, key: " + key);
+            memoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap get(String key) {
+        return memoryCache.get(key);
+    }
+
+
+    public void remove(String key) {
+        memoryCache.remove(key);
+    }
+
+    public void clear() {
+        memoryCache.evictAll();
+    }
+
+    public static synchronized void init(int size) {
+        if (instance == null) {
+            instance = new CustomImageCache(size);
+        }
+    }
+
+    public int getSize(){
+        return memoryCache.size(); //현재 저장된 항목 개수 반환.
+    }
+
+    public int getMaxSize() {
+        return memoryCache.maxSize(); // 최대 크기
+    }
+
+    public void pin(String key){
+        Log.d(TAG, "image cache pinned, key: " + key);
+        pinnedKey = key;
+    }
+
+    public void unpin(String key){
+        Log.d(TAG, "image cache unpinned, key: " + key);
+        pinnedKey = null;
+    }
+
+    public boolean isPinned(String key) {
+        return key != null && key.equals(pinnedKey);
+    }
+
+
+}

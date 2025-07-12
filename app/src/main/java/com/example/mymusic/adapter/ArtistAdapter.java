@@ -13,12 +13,12 @@ import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
-import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -97,8 +97,11 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
         ViewCompat.setTransitionName(holder.artworkImage, transitionName);
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
-            Picasso.get()
+            Glide.with(context)
                     .load(artist.artworkUrl)
+                    .override(120, 120)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     //.placeholder(R.drawable.default_artist_image) // 로딩 중 보여줄 이미지
                     .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
                     .into(holder.artworkImage);

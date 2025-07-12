@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
@@ -20,7 +22,7 @@ import com.example.mymusic.util.DarkModeUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.google.android.material.card.MaterialCardView;
-import com.squareup.picasso.Picasso;
+
 
 import java.util.List;
 
@@ -85,6 +87,7 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
     @Override
     public FavoritesWithCardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType){
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_favorite_with_cardview, parent, false);
+        context = parent.getContext();
         return new FavoritesWithCardViewHolder(view);
     }
 
@@ -132,7 +135,12 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
             holder.containerCardView.setCardBackgroundColor(backgroundColor);
         }
 
-        Picasso.get().load(track.artworkUrl).into(holder.image);
+        Glide.with(context)
+                .load(track.artworkUrl)
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .into(holder.image);
+
+
         holder.title.setText(track.trackName);
         if (favorite.metadata != null && favorite.metadata.title != null){
             holder.titleKr.setText(favorite.metadata.title);

@@ -47,10 +47,14 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.FavoriteArtistAdapter;
 import com.example.mymusic.adapter.FavoritesAdapter;
 import com.example.mymusic.adapter.FavoritesWithCardViewAdapter;
+import com.example.mymusic.cache.ImagePreloader;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.databinding.FragmentFavoritesBinding;
 import com.example.mymusic.model.Artist;
@@ -75,20 +79,20 @@ import com.example.mymusic.util.SortFilterArtistUtil;
 import com.example.mymusic.util.SortFilterUtil;
 import com.example.mymusic.util.VerticalSpaceItemDecoration;
 import com.google.android.material.card.MaterialCardView;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import android.widget.LinearLayout;
 
 
 import jp.wasabeef.recyclerview.animators.LandingAnimator;
-import jp.wasabeef.recyclerview.animators.OvershootInLeftAnimator;
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
 
 public class FavoritesFragment extends Fragment {
+    public static int FAVORITE_ARTIST_REPRESENTATIVE_ARTWORK_SIZE = 160;
     private final String TAG = "FavoriteFragment";
     private RecyclerView trackRecyclerView, artistRecyclerView;
     private FavoritesViewModel favoritesViewModel;
@@ -118,7 +122,7 @@ public class FavoritesFragment extends Fragment {
     private String currentCount = "";
     private RecyclerView artistsOtherMusicRecyclerView;
     private MaterialCardView artistsOtherMusicCardView;
-
+    private Context viewGroupContext;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
@@ -187,11 +191,14 @@ public class FavoritesFragment extends Fragment {
             }
         });
 
+
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         binding = FragmentFavoritesBinding.inflate(inflater, container, false);
+        viewGroupContext = container.getContext();
         return binding.getRoot();
     }
 
@@ -687,7 +694,6 @@ public class FavoritesFragment extends Fragment {
                     trackRecyclerView.setVisibility(View.VISIBLE);
                 else
                     trackRecyclerView.setVisibility(View.GONE);
-
                 Context context = getContext();
                 if (context != null) {
                     List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, favoritesList, null);
@@ -742,9 +748,14 @@ public class FavoritesFragment extends Fragment {
                     }
                     List<FavoriteArtist> filterd = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favoriteArtistList);
 
-
                     updateEmptyState(filterd.isEmpty());
                     favoriteArtistAdapter.updateData(filterd, finalOldSortOpt, newSortOpt);
+
+                    //PRELOAD
+                    artistRecyclerView.post(() -> {
+                        ImagePreloader.preloadRepresentativeFavoriteArtistImage(viewGroupContext, filterd, ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE);
+                    });
+
 
                     LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
                     if (layoutManager != null) {
@@ -935,6 +946,8 @@ public class FavoritesFragment extends Fragment {
             favoriteArtistAdapter.updateData(filterd); // RecyclerView 데이터 업데이트
             // updateEmptyState(updatedList.isEmpty()); // 이 메서드가 별도로 있다면 호출
             setFavoritesCountText(filterd.size());
+
+
         });
     }
 
@@ -1053,8 +1066,7 @@ public class FavoritesFragment extends Fragment {
         });
 
 
-
-        Picasso.get()
+        Glide.with(getContext())
                 .load(track.artworkUrl)
                 .error(R.drawable.ic_image_not_found_foreground)
                 .into(focusedImageView);

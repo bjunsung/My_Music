@@ -19,7 +19,7 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private boolean secondPostponeFlag = false; //return from detail fragment
     private boolean metadataExist = false;
     private int lastPositionAtImageDetailFragment = -1;
-
+    private int startPositionAtImageDetailFragment = -1;
 
 
     public ArtistInfoViewModel(@NonNull Application application) {
@@ -106,4 +106,11 @@ public class ArtistInfoViewModel extends AndroidViewModel {
         this.lastPositionAtImageDetailFragment = lastPositionAtImageDetailFragment;
     }
 
+    public int getStartPositionAtImageDetailFragment() {
+        return startPositionAtImageDetailFragment;
+    }
+
+    public void setStartPositionAtImageDetailFragment(int startPositionAtImageDetailFragment) {
+        this.startPositionAtImageDetailFragment = startPositionAtImageDetailFragment;
+    }
 }

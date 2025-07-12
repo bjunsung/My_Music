@@ -12,31 +12,36 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
+
 
 import java.io.OutputStream;
 
 public class ImageSaveUtil {
 
+
     public static void saveImageFromUrl(Context context, String imageUrl) {
-        Picasso.get().load(imageUrl).into(new Target() {
+        Glide.with(context).asBitmap().load(imageUrl).into(new CustomTarget<Bitmap>() {
             @Override
-            public void onBitmapLoaded(@NonNull Bitmap bitmap, @Nullable Picasso.LoadedFrom from) {
-                saveImageToGallery(context, bitmap);
+            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                saveImageToGallery(context, resource);
             }
 
             @Override
-            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+            public void onLoadCleared(@Nullable Drawable placeholder) {}
+
+
+
+            @Override
+            public void onLoadFailed(@Nullable Drawable errorDrawable) {
                 Toast.makeText(context, "이미지를 불러오지 못했습니다", Toast.LENGTH_SHORT).show();
             }
 
-            @Override
-            public void onPrepareLoad(@Nullable Drawable placeHolderDrawable) {
-                // No-op
-            }
         });
     }
+
 
     private static void saveImageToGallery(Context context, Bitmap bitmap) {
         String filename = "IMG_" + System.currentTimeMillis() + ".jpg";

@@ -3,7 +3,8 @@ package com.example.mymusic.adapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Bundle;
+
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -17,22 +18,29 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.mymusic.R;
-import com.example.mymusic.data.repository.ArtistMetadataRepository;
+
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.FavoriteArtistDiffCallback;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
-import com.squareup.picasso.Picasso;
+
 
 import java.util.List;
-import java.util.Objects;
+
 
 public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAdapter.FavoriteArtistViewHolder> {
     private final String TAG = "FavoriteArtistAdapter";
@@ -88,6 +96,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         this.removeSelectedListener = removeSelectedListener;
         this.metadataLongClickListener = metadataLongClickListener;
     }
+
     public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView artistName, followers, addedDate;
@@ -135,6 +144,47 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         FavoriteArtist favoriteArtist = favoriteArtistList.get(position);
         Artist artist = favoriteArtist.artist;
 
+        if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
+            holder.position = holder.getAdapterPosition();
+            String transitionName = transitionNameForm  + holder.position  + "_" + artist.artistName + "_" + artist.artistId  + "_" + artist.artworkUrl;
+            ViewCompat.setTransitionName(holder.image, transitionName);
+            Log.d("FavoriteArtistAdapter", "transition name for position " + holder.getAdapterPosition() + " is " + transitionName);
+
+        } else {
+            ViewCompat.setTransitionName(holder.image, null);
+        }
+
+
+
+        Glide.with(context)
+                .load(artist.artworkUrl)
+                .override(160, 160)
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .error(R.drawable.ic_image_not_found_foreground)
+                .listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                        Log.d(TAG, "Image resourceReady for position " + holder.getAdapterPosition() + " and load from " + dataSource.toString());
+                        return false;
+                    }
+                })
+                .into(holder.image);
+
+/*
+        Glide.with(context)
+                .load(artist.artworkUrl)
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .centerCrop()
+                .error(R.drawable.ic_image_not_found_foreground)
+                .preload(480, 480);
+
+ */
 
         viewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
             @Override
@@ -173,15 +223,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             holder.selectCheckBox.setChecked(true);
         }
 
-        if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
-            holder.position = holder.getAdapterPosition();
-            String transitionName = transitionNameForm  + holder.position  + "_" + artist.artistName + "_" + artist.artistId  + "_" + artist.artworkUrl;
-            ViewCompat.setTransitionName(holder.image, transitionName);
-            Log.d("FavoriteArtistAdapter", "transition name for position " + holder.getAdapterPosition() + " is " + transitionName);
 
-        } else {
-            ViewCompat.setTransitionName(holder.image, null);
-        }
 
         holder.artistName.setText(artist.artistName);
         holder.followers.setText(NumberUtils.formatWithComma(artist.followers));
@@ -193,12 +235,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             favoriteArtist.addedDate = addedDate;
         });
 
-        Picasso.get()
-                .load(artist.artworkUrl)
-                .resize(160, 160)
-                .centerCrop()
-                .error(R.drawable.ic_image_not_found_foreground)
-                .into(holder.image);
+
 
         holder.deleteButton.setOnClickListener(v -> deleteClickListener.onItemClick(artist));
 
@@ -336,6 +373,8 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     }
 
 
-
+    public Context getRecyclerViewContext(){
+        return context;
+    }
 
 }

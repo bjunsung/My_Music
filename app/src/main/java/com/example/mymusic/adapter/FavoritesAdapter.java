@@ -1,5 +1,6 @@
 package com.example.mymusic.adapter;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,11 +15,12 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteDiffCallback;
 import com.example.mymusic.model.Track;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +36,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     private final int invalidColor = -2;
     private int textColor = invalidColor;
     private boolean removeButtonVisibilityGone = false;
+    private Context context;
 
     public void setTextColor(int textColor) {
         this.textColor = textColor;
@@ -107,6 +110,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     @Override
     public FavoriteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType){
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_favorite, parent, false);
+        context = parent.getContext();
         return new FavoriteViewHolder(view);
     }
 
@@ -123,11 +127,18 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             ViewCompat.setTransitionName(holder.image, null);
         }
 
-        Picasso.get()
+
+
+        Glide.with(context)
                 .load(track.artworkUrl)
-                .resize(160, 160)
+                .override(160, 160)
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                 .centerCrop()
                 .into(holder.image);
+
+
+
+
         holder.title.setText(track.trackName);
         if (favorite.metadata != null && favorite.metadata.title != null){
             holder.titleKr.setText(favorite.metadata.title);

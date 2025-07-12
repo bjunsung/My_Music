@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
@@ -37,9 +39,13 @@ import androidx.transition.Transition;
 import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
+import com.example.mymusic.cache.customCache.CustomImageCache;
 import com.example.mymusic.data.repository.ArtistMetadataRepository;
 import com.example.mymusic.databinding.FragmentArtistInfoBinding;
 import com.example.mymusic.model.Album;
@@ -67,6 +73,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.OnImageLongClickListener{
+    private final String TAG = "ArtistInfoFragment";
+    public static int ARTIST_ARTWORK_SIZE = 480;
 
     private FavoriteArtistViewModel favoriteArtistViewModel;
     private FavoritesViewModel favoritesViewModel;
@@ -78,7 +86,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private ImageButton addArtistButton;
     private LinearLayout debutLayout, activityYearsLayout, membersLayout, agencyLayout, activityLayout, genresLayout, followersLayout, biographyLayout, addedDataLayout;
     private TextView debutTextView, activityYearsTextView, membersTextView, agencyTextView, activityTextView, biographyTextView, addedDateTextView;
-    private final String TAG = "ArtistInfoFragment";
+
 
     private ViewPager2 pager;
     private List<String> imageUrls;
@@ -108,6 +116,9 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     AtomicBoolean isUserScrolling = new AtomicBoolean(false);
     AtomicInteger lastConfirmedPosition = new AtomicInteger(0);
     AtomicInteger selectedPosition = new AtomicInteger(0);
+    private Boolean shouldNavBack = false;
+    private int positionDiff = 0;
+
 
 
     @Override
@@ -131,8 +142,13 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         getParentFragmentManager().setFragmentResultListener(ImageDetailFragment.REQUEST_KEY_POSITION, this, (requestKey, bundle) -> {
             if (requestKey.equals(ImageDetailFragment.REQUEST_KEY_POSITION)){
                 int position = bundle.getInt("position", 0);
-                pager.postDelayed(()->  pager.setCurrentItem(position, true), 600);
-                Log.d(TAG , "position set to " + position);
+                //viewModel.setLastPositionAtImageDetailFragment(position);         //USELESS
+                Log.d(TAG, "Receive position information from ImageDetailFragment and position is " + position);
+                pager.postDelayed(()-> {
+                    pager.setCurrentItem(position, true);
+                    Log.d(TAG , "position set to " + position);
+                    }, 500);
+
             }
         });
 
@@ -143,7 +159,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             if (requestKey.equals(ImageDetailFragment.REQUEST_KEY)) {
                 boolean transitionEnded = bundle.getBoolean(ImageDetailFragment.BUNDLE_KEY_TRANSITION_END);
                 if (transitionEnded) {
-                    Log.d("ListFragment", "Return transition from DetailsFragment has ended.");
+                    Log.d(TAG, "Return transition from DetailsFragment has ended.");
                     // ⭐ B에서 A로의 복귀 전환이 완전히 끝난 시점! ⭐
                     // 여기에 원하는 작업을 구현하면 됩니다.
                     int position = 0;
@@ -322,6 +338,23 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
           }
         };
 
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(),
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        shouldNavBack = true;
+                        positionDiff = pager.getCurrentItem();
+                        if (positionDiff == 0){
+                            NavHostFragment.findNavController(ArtistInfoFragment.this).popBackStack();
+                        }
+                        pager.setCurrentItem(0, true);
+                    }
+                }
+        );
+
+
         pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position){ //페이지 전환 감지(페이지가 바꼈을 때만 호출)
@@ -341,6 +374,11 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                 }
                 else if (state == ViewPager2.SCROLL_STATE_IDLE){ //스크롤 정지 상태 감지
                     Log.d("SlideDetect", "스크롤 정지!");
+
+                    if (shouldNavBack){
+                       NavHostFragment.findNavController(ArtistInfoFragment.this).popBackStack();
+                    }
+
                     if (isUserScrolling.get()){
                         Log.d("SlideDetect", "사용자 스크롤 감지!");
                         isUserScrolling.set(false);
@@ -461,6 +499,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
             imageUrls.add(artist.artworkUrl);
+
         }
 
         ImagePagerAdapter.OnImageLoadListener imageLoadListener = new ImagePagerAdapter.OnImageLoadListener() {
@@ -494,6 +533,12 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     startPostponedEnterTransition();
                     Log.d(TAG, "is first first fragment creation and startPostponedEnterTransition");
                 }
+            }
+
+            @Override
+            public void onCustomCacheLoadSuccess() {
+                Log.d(TAG, "custom cache image load success, startPostponedEnterTransition");
+                startPostponedEnterTransition();
             }
         };
 
@@ -541,6 +586,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     };
 
                     pager.setPageTransformer(transformer);
+
+                    pager.setOffscreenPageLimit(1);
 
 
                     if (metadata.debutDate != null && !metadata.debutDate.isEmpty())
@@ -679,6 +726,9 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         enlargeButton.setOnClickListener(v -> {
             int currentPosition = pager.getCurrentItem();
 
+            if (currentPosition != 0)
+                CustomImageCache.getInstance().pin(imageUrls.get(currentPosition));
+            viewModel.setStartPositionAtImageDetailFragment(currentPosition);
 
             // 2. 현재 페이지의 ViewHolder를 찾아, 그 안의 ImageView를 가져오기
             RecyclerView recyclerView = (RecyclerView) pager.getChildAt(0);

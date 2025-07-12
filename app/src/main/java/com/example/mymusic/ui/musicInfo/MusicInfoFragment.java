@@ -325,23 +325,22 @@ public class MusicInfoFragment extends Fragment {
                     Activity activity = getActivity();
                     if (activity != null) {
                         android.view.Window window = activity.getWindow();
-                    }
 
-                    if (bottomNavView == null) {
-                        bottomNavView = requireActivity().findViewById(R.id.nav_view);
-                    }
-                    if (bottomNavView != null) {
-                        bottomNavView.setBackgroundColor(primaryColor);
-                        if (activity != null) {
+
+                        if (bottomNavView == null) {
+                            bottomNavView = activity.findViewById(R.id.nav_view);
+                        }
+                        if (bottomNavView != null) {
+                            bottomNavView.setBackgroundColor(primaryColor);
                             backButton = activity.findViewById(R.id.back_button);
-                        }
 
-                        if (backButton != null) {
-                            backButton.setBackgroundColor(primaryColor);
-                            backButton.setColorFilter(selectedColor);
+                            if (backButton != null) {
+                                backButton.setBackgroundColor(primaryColor);
+                                backButton.setColorFilter(selectedColor);
+                            }
+                            ImageButton emptySpace = activity.findViewById(R.id.empty_space);
+                            emptySpace.setBackgroundColor(primaryColor);
                         }
-                        ImageButton emptySpace = requireActivity().findViewById(R.id.empty_space);
-                        emptySpace.setBackgroundColor(primaryColor);
                     }
 
                     // 3. 상태에 따른 색상 목록(ColorStateList)을 생성합니다.

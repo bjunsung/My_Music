@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Size;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +22,7 @@ import android.view.WindowMetrics;
 import android.webkit.WebView;
 import android.widget.ImageButton;
 
+import com.example.mymusic.cache.ImagePreloader;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.ActionBar;
@@ -36,7 +38,10 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.mymusic.databinding.ActivityMainBinding;
 
+import java.io.File;
+
 public class MainActivity extends AppCompatActivity {
+    private final String TAG = "MainActivity";
 
     private ActivityMainBinding binding;
     private AppBarConfiguration appBarConfiguration;
@@ -52,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //ImagePreloader.preloadRepresentativeFavoriteArtistImage(MainActivity.this);
         WebView.setWebContentsDebuggingEnabled(true);
 
         /*
@@ -147,6 +153,14 @@ public class MainActivity extends AppCompatActivity {
 
         getScreenSize(this);
 
+        printCacheInfo(MainActivity.this);
+
+        printExternalCacheInfo(MainActivity.this);
+
+        Log.d("SizeDebug", "files: " + getFolderSize(this.getFilesDir()) / (1024 * 1024) + " MB");
+        Log.d("SizeDebug", "webview: " + getFolderSize(this.getDir("app_webview", Context.MODE_PRIVATE)) / (1024 * 1024) + " MB");
+        Log.d("SizeDebug", "code_cache: " + getFolderSize(this.getCodeCacheDir()) / (1024 * 1024) + " MB");
+
     }
 
 
@@ -195,6 +209,69 @@ public class MainActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
+    }
+
+    public void printCacheInfo(Context context) {
+        File cacheDir = context.getCacheDir(); // /data/data/your.package.name/cache
+
+        if (cacheDir != null && cacheDir.isDirectory()) {
+            File[] files = cacheDir.listFiles();
+            long totalSize = 0;
+
+            if (files != null) {
+                for (File file : files) {
+                    long size = file.length();
+                    totalSize += size;
+
+                    Log.d("CacheInfo", "File: " + file.getName() + ", Size: " + size / 1024 + " KB");
+                }
+            }
+
+            Log.d("CacheInfo", "Total Cache Size: " + totalSize / (1024 * 1024) + " MB");
+        } else {
+            Log.d("CacheInfo", "Cache directory not found or not accessible.");
+        }
+    }
+
+
+    public void printExternalCacheInfo(Context context) {
+        File extCacheDir = context.getExternalCacheDir(); // /storage/emulated/0/Android/data/...
+        if (extCacheDir != null && extCacheDir.isDirectory()) {
+            File[] files = extCacheDir.listFiles();
+            long totalSize = 0;
+            if (files != null) {
+                for (File file : files) {
+                    totalSize += file.length();
+                    Log.d("ExtCache", "File: " + file.getName() + ", Size: " + file.length() / 1024 + " KB");
+                }
+            }
+            Log.d("ExtCache", "External Cache Size: " + totalSize / (1024 * 1024) + " MB");
+        }
+    }
+
+    public long scanEverything(Context context) {
+        long total = 0;
+        File appRoot = new File("/data/data/" + context.getPackageName());
+        total += getFolderSize(appRoot);
+        Log.d("TotalAppStorage", "ALL app storage: " + total / (1024 * 1024) + " MB");
+        return total;
+    }
+
+    public long getFolderSize(File dir) {
+        long size = 0;
+        if (dir != null && dir.exists()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        size += getFolderSize(file);
+                    } else {
+                        size += file.length();
+                    }
+                }
+            }
+        }
+        return size;
     }
 
 

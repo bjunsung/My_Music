@@ -13,11 +13,13 @@ import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
-import com.example.mymusic.model.Favorite;
+
 import com.example.mymusic.model.Track;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
-import com.squareup.picasso.Picasso;
+
 
 import java.util.List;
 
@@ -108,11 +110,13 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         }
         holder.artist.setText(track.artistName);
 
-        // 이미지 로딩 (Picasso 필요)
+        // 이미지 로딩 (Glide 필요)
         if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
-            Picasso.get()
+            Glide.with(context)
                     .load(track.artworkUrl)
-                    .resize(120, 120)
+                    .override(120, 120)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     //.placeholder(R.drawable.ic_image_not_found_foreground) // 로딩 중 보여줄 이미지
                     .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
                     .into(holder.image);

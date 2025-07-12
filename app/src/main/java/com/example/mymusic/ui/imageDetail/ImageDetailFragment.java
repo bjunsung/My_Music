@@ -1,41 +1,41 @@
 package com.example.mymusic.ui.imageDetail;
 
-import androidx.core.app.SharedElementCallback;
-import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.nfc.Tag;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.transition.ChangeBounds;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.transition.Explode;
 import androidx.transition.Transition;
-import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.ViewPager2;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.example.mymusic.R; // 자신의 R 클래스 경로
+import com.example.mymusic.cache.ImagePreloader;
+import com.example.mymusic.cache.customCache.CustomImageCache;
 import com.example.mymusic.databinding.FragmentImageDetailBinding;
-import com.example.mymusic.ui.artistInfo.ImagePagerAdapter;
-import com.example.mymusic.util.ImageOverlayManager;
+import com.example.mymusic.ui.artistInfo.ArtistInfoFragment;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
 
@@ -71,6 +71,11 @@ public class ImageDetailFragment extends Fragment {
     private String currentTransitionName;
     private int lastPosition;
     private Map<String, View> sharedElements;
+    private LinearLayout imageCountInfoLayout;
+    private TextView currentPositionNumberTextView, totalImageSizeTextView;
+    private int totalImageSize;
+    private Context viewGroupContext;
+    private DetailImagePagerAdapter pagerAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -106,15 +111,14 @@ public class ImageDetailFragment extends Fragment {
                 public void onTransitionResume(@NonNull Transition transition) {}
             });
         }
-
-
     }
+
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentImageDetailBinding.inflate(inflater, container, false);
-
+        viewGroupContext = container.getContext();
         return binding.getRoot();
     }
 
@@ -130,12 +134,13 @@ public class ImageDetailFragment extends Fragment {
             imageUrls = getArguments().getStringArrayList("image_urls");
             startPosition = getArguments().getInt("start_position");
             transitionName = getArguments().getString("transitionName");
+            totalImageSize = imageUrls.size();
         }
 
         bindView(view);
         setView();
-        DetailImagePagerAdapter adapter = new DetailImagePagerAdapter(getContext(), imageUrls, (v) -> toggleUiMode());
-        adapter.setZoomListener(new DetailImagePagerAdapter.ZoomListener() {
+        pagerAdapter = new DetailImagePagerAdapter(getContext(), imageUrls, (v) -> toggleUiMode());
+        pagerAdapter.setZoomListener(new DetailImagePagerAdapter.ZoomListener() {
             @Override
             public void onZoomIn() {
                 sliderHandler.removeCallbacks(sliderRunnable);
@@ -148,7 +153,7 @@ public class ImageDetailFragment extends Fragment {
             }
         });
 
-        viewPager.setAdapter(adapter);
+        viewPager.setAdapter(pagerAdapter);
         // 시작 위치로 바로 이동 (애니메이션 없이)
         viewPager.setCurrentItem(startPosition, false);
         if (transitionName != null)
@@ -170,8 +175,10 @@ public class ImageDetailFragment extends Fragment {
             @Override
             public void onPageSelected(int position) { //페이지 전환 감지
                 super.onPageSelected(position);
+                currentPositionNumberTextView.setText(String.valueOf(position + 1));
                 lastConfirmedPosition.set(selectedPosition.get());
                 selectedPosition.set(position);
+                saveCache(position);
             }
         });
 
@@ -205,12 +212,40 @@ public class ImageDetailFragment extends Fragment {
 
 
         sliderRunnable = () -> {
-            if (viewPager != null && adapter != null){
-                int nextItem = (viewPager.getCurrentItem() + 1) % adapter.getItemCount();
+            if (viewPager != null && pagerAdapter != null){
+                int nextItem = (viewPager.getCurrentItem() + 1) % pagerAdapter.getItemCount();
                 viewPager.setCurrentItem(nextItem, true);
                 sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
             }
         };
+
+    }
+
+    private void saveCache(int currentPosition) {
+        for (int idx = currentPosition  ; idx < currentPosition + 1; ++idx){
+            if (idx > 0 && idx < imageUrls.size()){ //0 이면 저장 x
+                String url = imageUrls.get(idx);
+                if (CustomImageCache.getInstance().get(url) == null) { //캐시에 없을 때만 저장
+                    Glide.with(viewGroupContext)
+                            .asBitmap()
+                            .load(url)
+                            .override(ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE)
+                            .centerCrop()
+                            .into(new CustomTarget<Bitmap>() {
+                                @Override
+                                public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                                    CustomImageCache.getInstance().put(url, resource);
+                                }
+
+                                @Override
+                                public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                                }
+                            });
+                }
+            }
+        }
+
 
     }
 
@@ -223,12 +258,16 @@ public class ImageDetailFragment extends Fragment {
             backButtonImageButton = activity.findViewById(R.id.back_button);
             emptySpaceImageButton = activity.findViewById(R.id.empty_space);
         }
+        imageCountInfoLayout = view.findViewById(R.id.image_count_info_layout);
+        currentPositionNumberTextView = view.findViewById(R.id.current_number);
+        totalImageSizeTextView = view.findViewById(R.id.total_image_count);
     }
 
     private void setView(){
         closeButton.setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
-
-
+        totalImageSizeTextView.setText(String.valueOf(totalImageSize));
+        currentPositionNumberTextView.setText(String.valueOf(startPosition + 1));
+        imageCountInfoLayout.setVisibility(View.GONE);
     }
 
     @Override
@@ -293,9 +332,9 @@ public class ImageDetailFragment extends Fragment {
         Log.d(TAG, "onPause called");
 
         Bundle bundle = new Bundle();
-        int position =  viewPager.getCurrentItem();
-        bundle.putInt("position", position);
-        lastPosition = position;
+        lastPosition = viewPager.getCurrentItem();
+        bundle.putInt("position", lastPosition);
+
 
         getParentFragmentManager().setFragmentResult(REQUEST_KEY_POSITION, bundle);
         Log.d(TAG, "position 전달 " + viewPager.getCurrentItem());
@@ -320,10 +359,12 @@ public class ImageDetailFragment extends Fragment {
     private void toggleUiMode(){
         isLightMode = !isLightMode;
         if (isLightMode){
+            imageCountInfoLayout.setVisibility(View.VISIBLE);
             detailContainer.setBackgroundColor(Color.WHITE);
             closeButton.setVisibility(View.VISIBLE);
             sliderHandler.removeCallbacks(sliderRunnable);
         }else{
+            imageCountInfoLayout.setVisibility(View.GONE);
             detailContainer.setBackgroundColor(Color.BLACK);
             closeButton.setVisibility(View.GONE);
             sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);

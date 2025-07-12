@@ -8,12 +8,13 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 
 
+import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
 import androidx.palette.graphics.Palette;
 
-import com.example.mymusic.R;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 public class ImageColorAnalyzer {
 
@@ -37,15 +38,15 @@ public class ImageColorAnalyzer {
      * @param imageUrl 분석할 이미지의 URL
      * @param listener 분석 결과를 전달받을 리스너
      */
+
     public static void analyzeBottomRightColor(Context context, String imageUrl, @NonNull OnColorAnalyzedListener listener) {
-        // Picasso를 사용해 URL로부터 이미지를 Bitmap으로 로드합니다.
-        Picasso.get().load(imageUrl).into(new Target() {
+        Glide.with(context).asBitmap().load(imageUrl).into(new CustomTarget<Bitmap>() {
             @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+            public void onResourceReady(@androidx.annotation.NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                 try {
                     // --- 1. 이미지 우측 하단 영역만 잘라내기 ---
-                    int fullWidth = bitmap.getWidth();
-                    int fullHeight = bitmap.getHeight();
+                    int fullWidth = resource.getWidth();
+                    int fullHeight = resource.getHeight();
                     int cropSize = 50; // 분석할 영역 크기 (50x50px)
 
                     int cropX = Math.max(0, fullWidth - cropSize);
@@ -53,7 +54,7 @@ public class ImageColorAnalyzer {
                     int finalCropWidth = Math.min(cropSize, fullWidth);
                     int finalCropHeight = Math.min(cropSize, fullHeight);
 
-                    Bitmap croppedBitmap = Bitmap.createBitmap(bitmap, cropX, cropY, finalCropWidth, finalCropHeight);
+                    Bitmap croppedBitmap = Bitmap.createBitmap(resource, cropX, cropY, finalCropWidth, finalCropHeight);
 
                     // --- 2. 잘라낸 이미지의 색상 분석 (Palette) ---
                     Palette.from(croppedBitmap).generate(palette -> {
@@ -77,71 +78,72 @@ public class ImageColorAnalyzer {
             }
 
             @Override
-            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                e.printStackTrace();
-                listener.onFailure();
-            }
+            public void onLoadCleared(@Nullable Drawable placeholder) {}
 
             @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {
-                // 로드 준비 중
+            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                super.onLoadFailed(errorDrawable);
+                listener.onFailure();
             }
         });
     }
 
 
     public static void analyzePrimaryColor(Context context, String imageUrl, @NonNull OnPrimaryColorAnalyzedListener listener) {
-        // Picasso를 사용해 URL로부터 이미지를 Bitmap으로 로드합니다.
-        Picasso.get().load(imageUrl).into(new Target() {
-            @SuppressLint("ResourceAsColor")
-            @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                try {
+        // Glide를 사용해 URL로부터 이미지를 Bitmap으로 로드합니다.
+        Glide.with(context)
+                .asBitmap()
+                .load(imageUrl)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@androidx.annotation.NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        try {
 
-                    // 이미지의 색상 분석 (Palette) ---
-                    Palette.from(bitmap).generate(palette -> {
-                        if (palette != null) {
-                            int dominantColor = palette.getDominantColor(Color.TRANSPARENT);
-                            if (dominantColor == Color.TRANSPARENT) {
-                                listener.onFailure();
-                                return;
-                            }
+                            // 이미지의 색상 분석 (Palette) ---
+                            Palette.from(resource).generate(palette -> {
+                                if (palette != null) {
+                                    int dominantColor = palette.getDominantColor(Color.TRANSPARENT);
+                                    if (dominantColor == Color.TRANSPARENT) {
+                                        listener.onFailure();
+                                        return;
+                                    }
 
-                            boolean isBackgroundLight = ColorUtils.calculateLuminance(dominantColor) > 0.5;
-                            int selectedColor;
-                            int unselectedColor;
-                            if (isBackgroundLight) {
-                                // 배경이 밝으면 -> 아이콘/텍스트는 어둡게
-                                selectedColor =  Color.DKGRAY;
-                                unselectedColor = Color.GRAY;
-                            } else {
-                                // 배경이 어두우면 -> 아이콘/텍스트는 밝게
-                                selectedColor = Color.WHITE;
-                                unselectedColor = Color.LTGRAY; // 밝은 회색
-                            }
+                                    boolean isBackgroundLight = ColorUtils.calculateLuminance(dominantColor) > 0.5;
+                                    int selectedColor;
+                                    int unselectedColor;
+                                    if (isBackgroundLight) {
+                                        // 배경이 밝으면 -> 아이콘/텍스트는 어둡게
+                                        selectedColor =  Color.DKGRAY;
+                                        unselectedColor = Color.GRAY;
+                                    } else {
+                                        // 배경이 어두우면 -> 아이콘/텍스트는 밝게
+                                        selectedColor = Color.WHITE;
+                                        unselectedColor = Color.LTGRAY; // 밝은 회색
+                                    }
 
-                            listener.onSuccess(dominantColor, dominantColor, selectedColor, unselectedColor);
-                        } else {
+                                    listener.onSuccess(dominantColor, dominantColor, selectedColor, unselectedColor);
+                                } else {
+                                    listener.onFailure();
+                                }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
                             listener.onFailure();
                         }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    listener.onFailure();
-                }
-            }
+                    }
 
-            @Override
-            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                e.printStackTrace();
-                listener.onFailure();
-            }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
 
-            @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {
-                // 로드 준비 중
-            }
-        });
+                    }
+
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable){
+                        super.onLoadFailed(errorDrawable);
+                        listener.onFailure();
+                    }
+                });
+
     }
 
 
