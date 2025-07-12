@@ -19,7 +19,7 @@ public class SortFilterUtil {
     private static Context context;
 
     public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, Track track) {
-        SortFilterArtistUtil.context = context;
+        SortFilterUtil.context = context;
         if (context == null || originalList == null) return originalList;
 
         SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
@@ -31,7 +31,7 @@ public class SortFilterUtil {
         return sortList(filteredList, sort, isDescending);
     }
     public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, String filterOption, Track track, String sortOption, boolean isDescending) {
-        SortFilterArtistUtil.context = context;
+        SortFilterUtil.context = context;
         if (context == null || originalList == null) return originalList;
         if (filterOption == null) filterOption = "ALL";
         List<Favorite> filteredList = filterList(originalList, filterOption, track);

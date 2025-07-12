@@ -40,6 +40,7 @@ import com.example.mymusic.adapter.TrackAdapter;
 import com.example.mymusic.databinding.FragmentAlbumInfoBinding;
 import com.example.mymusic.model.Album;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;

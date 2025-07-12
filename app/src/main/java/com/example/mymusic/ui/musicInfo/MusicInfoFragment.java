@@ -43,6 +43,7 @@ import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
 import com.example.mymusic.databinding.FragmentMusicInfoBinding;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistApiHelper;
