@@ -14,6 +14,7 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private int albumPosition = -1;
     private boolean firstFragmentCreation = true;
     private boolean secondPostponeFlag = false;
+    public String artistId;
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
     }

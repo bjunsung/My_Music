@@ -22,7 +22,7 @@ public interface ArtistMetadataDao {
     int removeArtistMetadataBySpotifyId(String spotifyId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void saveArtistMetadata(ArtistMetadata metadata);
+    long saveArtistMetadata(ArtistMetadata metadata);
 
     @Update
     int updateArtistMetadata(ArtistMetadata metadata);

@@ -66,4 +66,6 @@ public class FavoriteArtistRepository {
         return favoriteArtistDao.getFavoriteArtist(artistId);
     }
 
+
+
 }

@@ -7,6 +7,8 @@ import com.example.mymusic.data.local.AppDatabase;
 import com.example.mymusic.data.local.ArtistMetadata;
 import com.example.mymusic.data.local.ArtistMetadataDao;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class ArtistMetadataRepository {
@@ -91,6 +93,29 @@ public class ArtistMetadataRepository {
         );
         int result = artistMetadataDao.updateArtistMetadata(metadataDb);
         callback.accept(result > 0);
+    }
+
+    public long updateImagesBySpotifyId(String spotifyId, List<String> newImages) {
+        ArtistMetadata existingMetadata = artistMetadataDao.getArtistMetadataBySpotifyId(spotifyId);
+
+        if (existingMetadata != null) {
+            // 순서 유지하며 중복 없이 합치기
+            List<String> currentImages = existingMetadata.images != null
+                    ? new ArrayList<>(existingMetadata.images)
+                    : new ArrayList<>();
+
+            for (String url : newImages) {
+                if (!currentImages.contains(url)) {
+                    currentImages.add(url); // 순서 유지하면서 추가
+                }
+            }
+
+            // 업데이트 후 저장
+            existingMetadata.images = currentImages;
+            long result = artistMetadataDao.saveArtistMetadata(existingMetadata); // REPLACE 전략으로 저장
+            return result;
+        }
+        return 0;
     }
 
 

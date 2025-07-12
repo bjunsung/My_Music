@@ -75,16 +75,18 @@
         android:name="com.example.mymusic.ui.artistInfo.ArtistInfoFragment"
         android:label="Artist Information"
         tools:layout="@layout/fragment_artist_info">
-
+        <argument
+            android:name="favorite_artist"
+            app:argType="com.example.mymusic.model.FavoriteArtist" />
         <action
             android:id="@+id/action_artistInfoFragment_to_albumInfoFragment"
             app:destination="@id/album_info" />
         <action
             android:id="@+id/action_artistInfoFragment_to_imageDetailFragment"
             app:destination="@id/fragment_image_detail" />
-        <argument
-            android:name="favorite_artist"
-            app:argType="com.example.mymusic.model.FavoriteArtist" />
+        <action
+            android:id="@+id/action_artistInfoFragment_to_webViewFragment"
+            app:destination="@id/fragment_web_view" />
     </fragment>
 
     <fragment
@@ -120,6 +122,17 @@
         android:name="com.example.mymusic.ui.imageDetail.ImageDetailFragment"
         android:label="Image Detail"
         tools:layout="@layout/fragment_image_detail" />
+
+    <fragment
+        android:id="@+id/fragment_web_view"
+        android:name="com.example.mymusic.ui.photoWebView.WebViewFragment"
+        android:label="Web"
+        tools:layout="@layout/fragment_web_view" >
+    <argument
+        android:name="artist_id"
+        app:argType="string" />
+    </fragment>
+
 
 
 </navigation>

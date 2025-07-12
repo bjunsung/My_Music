@@ -1,16 +1,21 @@
    package com.example.mymusic.ui.artistInfo;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -23,6 +28,9 @@ import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.SharedElementCallback;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -37,13 +45,15 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
+import com.example.mymusic.data.repository.ArtistMetadataRepository;
 import com.example.mymusic.databinding.FragmentArtistInfoBinding;
 import com.example.mymusic.model.Album;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
-import com.example.mymusic.network.ArtistImageFetchService;
+import com.example.mymusic.network.PhotoDetectorBridge;
 import com.example.mymusic.ui.imageDetail.ImageDetailFragment;
+import com.example.mymusic.ui.photoWebView.WebViewFragment;
 import com.example.mymusic.util.ImageOverlayManager;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
@@ -53,6 +63,8 @@ import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -92,7 +104,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private long currentOnDataReadyTime = 0;
     public static final String REQUEST_KEY = "artist_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_artist_artwork_ended";
-    private WebView webView;
     private CardView imageFetchButton;
 
 
@@ -133,6 +144,44 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     ViewCompat.setTransitionName(imageView, viewModel.getInitialTransitionName());
 
                 }
+            }
+        });
+
+        getParentFragmentManager().setFragmentResultListener(WebViewFragment.REQUEST_KEY, this, (requestKey, bundle) -> {
+            if (requestKey.equals(WebViewFragment.REQUEST_KEY)) {
+                List<String> fetchedImageUrls = bundle.getStringArrayList(WebViewFragment.BUNDLE_KEY_IMAGE_URLS);
+                ArtistMetadataRepository metadataRepository = new ArtistMetadataRepository(getContext());
+                new Thread(() -> {
+                    long result = metadataRepository.updateImagesBySpotifyId(artist.artistId, fetchedImageUrls);
+                    if (result > 0) {
+                        Log.d(TAG, "save additional artist images Success");
+                        favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
+                            @Override
+                            public void onSuccess(ArtistMetadata metadata) {
+                                if (metadata != null && metadata.images != null && !metadata.images.isEmpty()) {
+                                    requireActivity().runOnUiThread(() -> {
+                                        // 중복 방지하면서 순서 유지
+                                        for (String url : metadata.images) {
+                                            if (!imageUrls.contains(url)) {
+                                                imageUrls.add(url);
+                                            }
+                                        }
+
+                                        // 어댑터에 갱신 반영
+                                        pageAdapter.notifyDataSetChanged();  // or create a new adapter if this doesn't work well
+
+                                        Toast.makeText(getContext(), "새 이미지가 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                    });
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(String reason) {
+                                Log.d(TAG, "Fail to load Artist Metadata due to : " + reason);
+                            }
+                        });
+                    }
+                }).start();
             }
         });
 
@@ -249,6 +298,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         if (viewModel.isFirstFragmentCreation() && transitionName == null){
             Log.d(TAG, "receive null transitionName, consider no shared element transition in this case AND startPostponedEnterTransition() at FIRST CREATION of fragment");
             viewModel.setFirstFragmentCreation(false);
+            viewModel.artistId = artist.artistId;
             startPostponedEnterTransition();
             return;
         } else if(!viewModel.isFirstFragmentCreation() && transitionName == null && !viewModel.isSecondPostponeFlag()){
@@ -477,7 +527,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         followersLayout = view.findViewById(R.id.followers_layout);
         biographyLayout = view.findViewById(R.id.biography_layout);
         addedDataLayout = view.findViewById(R.id.added_date_layout);
-        webView = view.findViewById(R.id.hidden_web_view);
+
         imageFetchButton = view.findViewById(R.id.image_fetch_button_overlay);
     }
 
@@ -520,36 +570,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             enlargeButtonShadow.setLayoutParams(enlargeShadowParams);
             enlargeButtonShadow.setVisibility(View.VISIBLE);
 
-            imageFetchButton.setOnClickListener(v -> {
-                favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
-                    @Override
-                    public void onSuccess(ArtistMetadata metadata) {
-                        if (metadata != null
-                                && metadata.vibeArtistId != null && !metadata.vibeArtistId.isEmpty()){
-                            ArtistImageFetchService.fetchImages(webView, metadata.vibeArtistId , new ArtistImageFetchService.ImageUrlsCallback() {
-                                @Override
-                                public void onSuccess(List<String> urls) {
-                                    for (String url : urls){
-                                        Log.d(TAG, url);
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(String reason) {
-                                    Log.d(TAG, "image fetch fail because " + reason);
-                                }
-                            });
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(String reason) {
-
-                    }
-                });
 
 
-            });
 
         });
 
@@ -593,6 +615,37 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             navController.navigate(R.id.action_artistInfoFragment_to_imageDetailFragment, args, null, extras);
         });
 
+        // ArtistInfoFragment.java -> onViewCreated 또는 viewSetting 등 버튼을 설정하는 곳
+
+// [수정!] 이 코드를 imageFetchButton의 클릭 리스너 안에 넣으세요.
+        imageFetchButton.setOnClickListener(v -> {
+
+
+            favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
+                @Override
+                public void onSuccess(ArtistMetadata metadata) {
+                    if (metadata != null && metadata.vibeArtistId != null) {
+
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            // 1. 전달할 데이터(artistId)를 Bundle에 담기
+                            Bundle bundle = new Bundle();
+                            bundle.putString("artist_id", metadata.vibeArtistId); // 현재 artist 객체에서 ID 가져오기
+
+                            // 2. NavController를 사용해 action 실행
+                            NavController navController = NavHostFragment.findNavController(ArtistInfoFragment.this);
+                            navController.navigate(R.id.action_artistInfoFragment_to_webViewFragment, bundle);
+                        });
+
+                    }
+                }
+                @Override
+                public void onFailure(String reason) {
+
+                }
+
+            });
+
+        });
 
     }
 
