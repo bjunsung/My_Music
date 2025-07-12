@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 
 
-public class Favorite implements Parcelable {
+public class FavoriteArtist implements Parcelable {
     public Track track;
     public String addedDate;
     public TrackMetadata metadata;

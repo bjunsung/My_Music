@@ -125,7 +125,7 @@
 
     <fragment
         android:id="@+id/fragment_web_view"
-        android:name="com.example.mymusic.ui.photoWebView.WebViewFragment"
+        android:name="com.example.mymusic.ui.webView.photoWebView.WebViewFragment"
         android:label="Web"
         tools:layout="@layout/fragment_web_view" >
     <argument

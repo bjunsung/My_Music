@@ -119,5 +119,32 @@ public class ArtistMetadataRepository {
     }
 
 
+    public long setRepresentativeImage(String vibeId, int position) {
+        ArtistMetadata existingMetadata = artistMetadataDao.getArtistMetadata(vibeId);
+        if (existingMetadata == null || existingMetadata.images == null || existingMetadata.images.isEmpty()) {
+            return 0;  // 실패
+        }
+
+        List<String> originalImages = existingMetadata.images;
+
+        if (position < 0 || position >= originalImages.size()) {
+            return 0;  // 유효하지 않은 인덱스
+        }
+
+        String selectedImage = originalImages.get(position);
+        List<String> reorderedImages = new ArrayList<>();
+        reorderedImages.add(selectedImage);
+
+        for (int i = 0; i < originalImages.size(); i++) {
+            if (i == position) continue;
+            reorderedImages.add(originalImages.get(i));
+        }
+
+        existingMetadata.images = reorderedImages;
+
+        // 저장 (업데이트)
+        return artistMetadataDao.updateArtistMetadata(existingMetadata);
+    }
+
 
 }

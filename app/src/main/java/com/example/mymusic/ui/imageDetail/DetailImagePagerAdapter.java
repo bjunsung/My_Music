@@ -13,7 +13,15 @@ import com.github.chrisbanes.photoview.PhotoView;
 import java.util.List;
 
 public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePagerAdapter.DetailImageViewHolder> {
+    public interface ZoomListener {
+        void onZoomIn();
+        void onZoomOut();
+    }
+    private ZoomListener zoomListener; // 줌 이벤트 리스너
 
+    public void setZoomListener(ZoomListener zoomListener){
+        this.zoomListener = zoomListener;
+    }
     private List<String> imageUrls;
     private View.OnClickListener onClickListener;
 
@@ -40,8 +48,18 @@ public class DetailImagePagerAdapter extends RecyclerView.Adapter<DetailImagePag
                 .load(imageUrl)
                 .into(holder.imageView);
 
-        // 이미지를 클릭하면 프래그먼트를 닫도록 리스너 설정
+
         holder.imageView.setOnClickListener(onClickListener);
+
+        holder.imageView.setOnScaleChangeListener((ScaleFactor, focusX, focusY) -> {
+            float currentScale = holder.imageView.getScale();
+            if (currentScale > 1.05f) {
+                if (zoomListener != null) zoomListener.onZoomIn();
+            } else{
+                if (zoomListener != null) zoomListener.onZoomOut();
+            }
+        });
+
     }
 
     @Override

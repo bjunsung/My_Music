@@ -1,6 +1,6 @@
 package com.example.mymusic.adapter;
 
-import android.os.Bundle;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -10,18 +10,17 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.util.Consumer;
 import androidx.core.view.ViewCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.model.Favorite;
+import com.example.mymusic.data.repository.ArtistMetadataRepository;
+import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.FavoriteArtistDiffCallback;
 import com.example.mymusic.util.NumberUtils;
@@ -29,7 +28,6 @@ import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAdapter.FavoriteArtistViewHolder> {
@@ -43,6 +41,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     private boolean isSelectionMode = false;
     private OnAddSelectedListener addSelectedListener;
     private OnRemoveSelectedListener removeSelectedListener;
+    private Context context;
     public interface OnAddSelectedListener{
         void onItemClick(Artist artist);
     }
@@ -81,8 +80,10 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView artistName, followers, addedDate;
-        ImageButton deleteButton, addButton;
+        ImageButton deleteButton, addButton, imageAlbumButton;
         CheckBox selectCheckBox;
+        LinearLayout debutLayout;
+        TextView debutDateTextView;
 
         public int recyclerViewPosition = -1;
         public FavoriteArtistViewHolder(@NonNull View itemView){
@@ -94,6 +95,9 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             deleteButton = itemView.findViewById(R.id.deleteButton);
             addButton = itemView.findViewById(R.id.add_button);
             selectCheckBox = itemView.findViewById(R.id.select_checkbox);
+            imageAlbumButton = itemView.findViewById(R.id.image_album_button);
+            debutLayout = itemView.findViewById(R.id.debut_layout);
+            debutDateTextView = itemView.findViewById(R.id.debut_date);
         }
     }
 
@@ -101,14 +105,43 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     @Override
     public FavoriteArtistViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType){
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_favorite_artist, parent, false);
+        context = parent.getContext();
         return new FavoriteArtistViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull FavoriteArtistViewHolder holder, int position){
-        FavoriteArtist favorite = favoriteArtistList.get(position);
-        Artist artist = favorite.artist;
-        FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
+        FavoriteArtist favoriteArtist = favoriteArtistList.get(position);
+        Artist artist = favoriteArtist.artist;
+
+
+        viewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
+            @Override
+            public void onSuccess(ArtistMetadata metadata) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    favoriteArtist.metadata = metadata;
+                    holder.addButton.setVisibility(View.GONE);
+                    holder.imageAlbumButton.setVisibility(View.VISIBLE);
+                    holder.debutLayout.setVisibility(View.VISIBLE);
+                    if(metadata.debutDate != null && !metadata.debutDate.isEmpty()){
+                        holder.debutDateTextView.setText(metadata.debutDate);
+                    } else{
+                        holder.debutDateTextView.setText("정보없음");
+                    }
+
+                });
+            }
+
+            @Override
+            public void onFailure(String reason) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    holder.addButton.setVisibility(View.VISIBLE);
+                    holder.imageAlbumButton.setVisibility(View.GONE);
+                    holder.debutLayout.setVisibility(View.GONE);
+                });
+
+            }
+        });
 
         if (viewModel.selectedList.contains(artist)){
             holder.selectCheckBox.setChecked(true);
@@ -135,6 +168,8 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
         Picasso.get()
                 .load(artist.artworkUrl)
+                .resize(160, 160)
+                .centerCrop()
                 .error(R.drawable.ic_image_not_found_foreground)
                 .into(holder.image);
 
@@ -199,12 +234,6 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     }
 
 
-    /*
-    public void updateData(List<Artist> newList){
-        this.artistList = newList;
-        notifyDataSetChanged();
-    }
-     */
 
     public void updateData(List<FavoriteArtist> newList){
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new FavoriteArtistDiffCallback(this.favoriteArtistList, newList));

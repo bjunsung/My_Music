@@ -24,13 +24,11 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-import org.w3c.dom.Text;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
+public class ArtistFilterBottomSheetFragment extends BottomSheetDialogFragment{
     private OnApplyListener applyListener;
     public interface OnApplyListener{
         void onApply();
@@ -38,16 +36,16 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
     public void setApplyListener(OnApplyListener applyListener){
         this.applyListener = applyListener;
     }
-    private final String TAG = "FilterBottomSheetFragment";
+    private final String TAG = "ArtistFilterBottomSheetFragment";
 
 
-    private TextView addedDateTextView, releaseDateTextView, durationTextView, titleTextView, artistNameTextView;
+    private TextView addedDateTextView, debutDateTextView, followersTextView, memberCountsTextView, artistNameTextView, imageCountsTextView;
 
 
-    private TextView allTextView, last3MonthsTextView, LastYearTextView,
-    last5YearsTextView, last10YearsTextView, decade2020sTextView, decade2010sTextView, decade2000sTextView,
-    before2000sTextView, seasonSpringTextView, seasonSummerTextView, seasonAutumnTextView, seasonWinterTextView,
-    customInputTextView;
+    private TextView allTextView, over10YearTextView,
+            last5YearsTextView, last10YearsTextView, decade2020sTextView, decade2010sTextView, decade2000sTextView,
+            before2000sTextView, seasonSpringTextView, seasonSummerTextView, seasonAutumnTextView, seasonWinterTextView,
+            customInputTextView;
 
     private Map<String, TextView> sortTextViewMap;
     private Map<String, TextView> filterTextViewMap;
@@ -90,7 +88,7 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_filter_bottom_sheet, container, false);
+        View view = inflater.inflate(R.layout.fragment_artist_filter_bottom_sheet, container, false);
         return view;
     }
 
@@ -100,13 +98,13 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         bindView(view);
         setView();
         if (prefs == null){
-        Context context = getContext();
-        if (context != null) {
-            prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
-        }
-        String sortOption = prefs.getString("sort_option", "ADDED_DATE"); // 기본값 지정 가능
-        String filterOption = prefs.getString("filter_option", "ALL");
-        setupHighlight(sortOption, filterOption);
+            Context context = getContext();
+            if (context != null) {
+                prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
+            }
+            String sortOption = prefs.getString("sort_option", "ADDED_DATE"); // 기본값 지정 가능
+            String filterOption = prefs.getString("filter_option", "ALL");
+            setupHighlight(sortOption, filterOption);
 
         }else{
             Log.d(TAG, "getContext() failed");
@@ -123,13 +121,14 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
 
     private void bindView(View view){
         addedDateTextView = view.findViewById(R.id.added_date);
-        releaseDateTextView = view.findViewById(R.id.release_date);
-        durationTextView = view.findViewById(R.id.duration);
-        titleTextView = view.findViewById(R.id.title);
+        debutDateTextView = view.findViewById(R.id.debut_date);
+        followersTextView = view.findViewById(R.id.followers);
+        memberCountsTextView = view.findViewById(R.id.member_counts);
         artistNameTextView = view.findViewById(R.id.artist_name);
+        imageCountsTextView = view.findViewById(R.id.image_counts);
+
         allTextView = view.findViewById(R.id.all);
-        last3MonthsTextView = view.findViewById(R.id.last_3_months);
-        LastYearTextView = view.findViewById(R.id.last_year);
+        over10YearTextView = view.findViewById(R.id.over_10_year);
         last5YearsTextView = view.findViewById(R.id.last_5_years);
         last10YearsTextView = view.findViewById(R.id.last_10_years);
         decade2020sTextView = view.findViewById(R.id.decade_2020s);
@@ -143,17 +142,17 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         customInputTextView = view.findViewById(R.id.custom_input);
         sortTextViewMap = new HashMap<>();
         sortTextViewMap.put("ADDED_DATE", addedDateTextView);
-        sortTextViewMap.put("RELEASE_DATE", releaseDateTextView);
-        sortTextViewMap.put("DURATION", durationTextView);
-        sortTextViewMap.put("TITLE", titleTextView);
+        sortTextViewMap.put("DEBUT_DATE", debutDateTextView);
+        sortTextViewMap.put("FOLLOWERS", followersTextView);
+        sortTextViewMap.put("MEMBER_COUNTS", memberCountsTextView);
         sortTextViewMap.put("ARTIST_NAME", artistNameTextView);
+        sortTextViewMap.put("IMAGE_COUNTS", imageCountsTextView);
 
         filterTextViewMap = new HashMap<>();
         filterTextViewMap.put("ALL", allTextView);
-        filterTextViewMap.put("LAST_3_MONTHS", last3MonthsTextView);
-        filterTextViewMap.put("LAST_YEAR", LastYearTextView);
         filterTextViewMap.put("LAST_5_YEARS", last5YearsTextView);
         filterTextViewMap.put("LAST_10_YEARS", last10YearsTextView);
+        filterTextViewMap.put("OVER_10_YEAR", over10YearTextView);
         filterTextViewMap.put("DECADE_2020S", decade2020sTextView);
         filterTextViewMap.put("DECADE_2010S", decade2010sTextView);
         filterTextViewMap.put("DECADE_2000S", decade2000sTextView);
@@ -174,7 +173,7 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         Context context = getContext();
         if (context != null) {
             if (prefs == null) {
-                prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
+                prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
             }
 
             sortOpt = prefs.getString("sort_option", "ADDED_DATE");
@@ -268,7 +267,7 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
                 tv.setTypeface(null, Typeface.NORMAL);
                 sortTextViewMap.get(selectedSort).setTextColor(Color.GRAY);
             }
-                // 선택된 항목만 Bold 처리
+            // 선택된 항목만 Bold 처리
             if (sortTextViewMap.containsKey(selectedSort)) {
                 sortTextViewMap.get(selectedSort).setTypeface(null, Typeface.BOLD);
                 sortTextViewMap.get(selectedSort).setTextColor(Color.DKGRAY);
@@ -323,7 +322,7 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
             Log.d(TAG, "getContext() failed");
             return;
         }
-        SharedPreferences prefs = context.getSharedPreferences("filter_prefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
         editor.putString("sort_option", sortOption);

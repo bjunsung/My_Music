@@ -1,12 +1,7 @@
 package com.example.mymusic.adapter;
 
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,16 +11,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
-import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
-import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

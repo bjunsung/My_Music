@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 
 import java.util.ArrayList;
@@ -14,11 +15,11 @@ import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-public class SortFilterUtil {
-    private final static String TAG = "SortFilterUtil";
+public class SortFilterArtistUtil {
+    private final static String TAG = "SortFilterArtistUtil";
     private static Context context;
 
-    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, Track track) {
+    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<FavoriteArtist> originalList, Track track) {
         SortFilterArtistUtil.context = context;
         if (context == null || originalList == null) return originalList;
 
@@ -27,20 +28,20 @@ public class SortFilterUtil {
         String filter = prefs.getString("filter_option", "ALL");
         boolean isDescending = prefs.getBoolean("isDescending", false);
 
-        List<Favorite> filteredList = filterList(originalList, filter, track);
+        List<FavoriteArtist> filteredList = filterList(originalList, filter, track);
         return sortList(filteredList, sort, isDescending);
     }
-    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, String filterOption, Track track, String sortOption, boolean isDescending) {
+    public static List<FavoriteArtist> sortAndFilterFavoritesList(Context context, List<FavoriteArtist> originalList, String filterOption, Track track, String sortOption, boolean isDescending) {
         SortFilterArtistUtil.context = context;
         if (context == null || originalList == null) return originalList;
         if (filterOption == null) filterOption = "ALL";
-        List<Favorite> filteredList = filterList(originalList, filterOption, track);
+        List<FavoriteArtist> filteredList = filterList(originalList, filterOption, track);
         if (sortOption == null) sortOption = "ADDED_DATE";
         return sortList(filteredList, sortOption, isDescending);
     }
 
-    private static List<Favorite> filterList(List<Favorite> list, String filter, Track queryTrack) {
-        List<Favorite> result = new ArrayList<>();
+    private static List<FavoriteArtist> filterList(List<FavoriteArtist> list, String filter, Track queryTrack) {
+        List<FavoriteArtist> result = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate threeMonthsAgo = LocalDate.now().minusMonths(3);
         LocalDate oneYearAgo = LocalDate.now().minusYears(1);
@@ -63,7 +64,7 @@ public class SortFilterUtil {
             Log.d(TAG, "received end date: " + endDateStr);
 
 
-            for (Favorite item : list) {
+            for (FavoriteArtist item : list) {
                 switch (filter) {
                     case "ALL":
                         result.add(item);
@@ -267,22 +268,22 @@ public class SortFilterUtil {
         }
         return result;
     }
-    private static List<Favorite> sortList(List<Favorite> list, String sort, boolean isDescending) {
+    private static List<FavoriteArtist> sortList(List<FavoriteArtist> list, String sort, boolean isDescending) {
         switch (sort) {
             case "TITLE":
-                Collections.sort(list, Comparator.comparing(Favorite::getTitle, String.CASE_INSENSITIVE_ORDER));
+                Collections.sort(list, Comparator.comparing(FavoriteArtist::getTitle, String.CASE_INSENSITIVE_ORDER));
                 break;
             case "ARTIST_NAME":
-                Collections.sort(list, Comparator.comparing(Favorite::getArtistName, String.CASE_INSENSITIVE_ORDER));
+                Collections.sort(list, Comparator.comparing(FavoriteArtist::getArtistName, String.CASE_INSENSITIVE_ORDER));
                 break;
             case "ADDED_DATE":
-                Collections.sort(list, Comparator.comparing(Favorite::getAddedDate));
+                Collections.sort(list, Comparator.comparing(FavoriteArtist::getAddedDate));
                 break;
             case "RELEASE_DATE":
-                Collections.sort(list, Comparator.comparing(Favorite::getReleaseDate));
+                Collections.sort(list, Comparator.comparing(FavoriteArtist::getReleaseDate));
                 break;
             case "DURATION":
-                Collections.sort(list, Comparator.comparing(Favorite::getDuration));
+                Collections.sort(list, Comparator.comparing(FavoriteArtist::getDuration));
                 break;
         }
         if (isDescending){

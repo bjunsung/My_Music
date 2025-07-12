@@ -14,6 +14,8 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private int albumPosition = -1;
     private boolean firstFragmentCreation = true;
     private boolean secondPostponeFlag = false;
+    private boolean metadataExist = false;
+
     public String artistId;
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
@@ -81,5 +83,13 @@ public class ArtistInfoViewModel extends AndroidViewModel {
 
     public void setSecondPostponeFlag(boolean secondPostponeFlag) {
         this.secondPostponeFlag = secondPostponeFlag;
+    }
+
+    public boolean isMetadataExist() {
+        return metadataExist;
+    }
+
+    public void setMetadataExist(boolean metadataExist) {
+        this.metadataExist = metadataExist;
     }
 }

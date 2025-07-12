@@ -92,6 +92,8 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
         if (ViewCompat.getTransitionName(holder.imageView) != null) {
             Glide.with(context)
                     .load(imageUrls.get(position))
+                    .override(480, 480)
+                    .centerCrop()
                     .listener(new RequestListener<Drawable>() {
                         @Override
                         public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @androidx.annotation.NonNull Target<Drawable> target, boolean isFirstResource) {
@@ -136,6 +138,11 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     public int getItemCount() {
         return imageUrls.size();
     }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
 
     static class ImageViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;

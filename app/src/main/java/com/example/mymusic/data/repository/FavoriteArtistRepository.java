@@ -66,6 +66,10 @@ public class FavoriteArtistRepository {
         return favoriteArtistDao.getFavoriteArtist(artistId);
     }
 
+    public int updateFavoriteArtist(com.example.mymusic.model.FavoriteArtist favoriteArtist){
+        FavoriteArtist favorite = new FavoriteArtist(favoriteArtist.artist, favoriteArtist.addedDate);
+        return favoriteArtistDao.updateFavoriteArtist(favorite);
+    }
 
 
 }

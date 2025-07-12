@@ -48,7 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="followers: "
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textColor="#666666"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -57,11 +57,38 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="1,303,867"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textColor="#666666"
                 android:maxLines="1"
                 android:ellipsize="end" />
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/debut_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="데뷔일: "
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+            <TextView
+                android:id="@+id/debut_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2011-04-19"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -71,7 +98,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="추가한 날짜: "
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textColor="#666666"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -80,11 +107,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="2025-06-22"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textColor="#666666"
                 android:maxLines="1"
                 android:ellipsize="end" />
         </LinearLayout>
+
     </LinearLayout>
 
     <ImageButton
@@ -104,7 +132,7 @@
         android:id="@+id/add_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_add_button"
+        android:src="@drawable/ic_rounded_add_photo_alternate"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_gravity="center_vertical"
         app:layout_constraintTop_toTopOf="@id/artistTextView"
@@ -113,4 +141,18 @@
         android:layout_marginBottom="4dp"
         android:padding="4dp"
         android:layout_marginEnd="4dp"/>
+    <ImageButton
+        android:id="@+id/image_album_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_rounded_photo_library"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="@id/artistTextView"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        android:layout_marginBottom="4dp"
+        android:padding="4dp"
+        android:layout_marginEnd="4dp"
+        android:visibility="gone"/>
 </LinearLayout>

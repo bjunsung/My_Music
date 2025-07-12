@@ -50,6 +50,8 @@ public class ImageDetailFragment extends Fragment {
     private final String TAG = "ImageDetailFragment";
     public static final String REQUEST_KEY = "details_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_ended";
+    private Handler sliderHandler = new Handler(Looper.getMainLooper());
+    private Runnable sliderRunnable;
 
 
 
@@ -124,8 +126,18 @@ public class ImageDetailFragment extends Fragment {
         bindView(view);
         setView();
         DetailImagePagerAdapter adapter = new DetailImagePagerAdapter(imageUrls, (v) -> toggleUiMode());
+        adapter.setZoomListener(new DetailImagePagerAdapter.ZoomListener() {
+            @Override
+            public void onZoomIn() {
+                sliderHandler.removeCallbacks(sliderRunnable);
+            }
 
-
+            @Override
+            public void onZoomOut() {
+                sliderHandler.removeCallbacks(sliderRunnable);
+                sliderHandler.postDelayed(sliderRunnable, 3000);
+            }
+        });
 
         viewPager.setAdapter(adapter);
         // 시작 위치로 바로 이동 (애니메이션 없이)
@@ -146,6 +158,16 @@ public class ImageDetailFragment extends Fragment {
         );
 
 
+
+
+        sliderRunnable = () -> {
+            if (viewPager != null && adapter != null){
+                int nextItem = (viewPager.getCurrentItem() + 1) % adapter.getItemCount();
+                viewPager.setCurrentItem(nextItem, true);
+                sliderHandler.postDelayed(sliderRunnable, 5000);
+            }
+        };
+
     }
 
     private void bindView(View view){
@@ -161,11 +183,14 @@ public class ImageDetailFragment extends Fragment {
 
     private void setView(){
         closeButton.setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        sliderHandler.removeCallbacks(sliderRunnable);
+        sliderHandler.postDelayed(sliderRunnable, 3000);
         // 전체 화면 모드 설정 (상태 바, 내비게이션 바 숨기기)
         if (getActivity() != null && getActivity().getWindow() != null) {
             backButtonImageButton.setVisibility(View.GONE);
@@ -190,6 +215,7 @@ public class ImageDetailFragment extends Fragment {
         }
         backButtonImageButton.setVisibility(View.VISIBLE);
         emptySpaceImageButton.setVisibility(View.VISIBLE);
+        sliderHandler.removeCallbacks(sliderRunnable);
     }
 
     private void toggleUiMode(){

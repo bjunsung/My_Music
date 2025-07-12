@@ -1,8 +1,9 @@
 package com.example.mymusic.util;
 
 import android.app.Activity;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
@@ -10,13 +11,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
 
 import com.example.mymusic.R; // 자신의 R 클래스 경로
 import com.example.mymusic.animation.StrokePulseView;
-import com.example.mymusic.util.ImageSaveUtil; // 자신의 유틸 경로
 
 
 
@@ -63,7 +62,7 @@ public class ImageOverlayManager {
     private ImageView overlayImageClone;
     private CardView downloadButton;
     private View dimView;
-    private CardView imageFetchButton;
+    private CardView imageFetchButton,setRepresentativeButton;
     private Drawable originalBottomNavBackground;
     private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavView;
     private double scale = 1.025f;
@@ -73,6 +72,14 @@ public class ImageOverlayManager {
     private int selectedColor = 0;
     private int unselectedColor = 0;
     private StrokePulseView strokePulseView;
+    private OnDismissListener dismissListener;
+    public interface OnDismissListener{
+        void onDismiss();
+    }
+
+    public void setDismissListener(OnDismissListener dismissListener){
+        this.dismissListener = dismissListener;
+    }
 
     public ImageOverlayManager (Activity activity, View rootView){
         this.activity = activity;
@@ -80,6 +87,7 @@ public class ImageOverlayManager {
         downloadButton = rootView.findViewById(R.id.download_button_overlay);
         longClickOverlay = rootView.findViewById(R.id.long_click_overlay); //nullable
         imageFetchButton = rootView.findViewById(R.id.image_fetch_button_overlay); //nullable
+        setRepresentativeButton = rootView.findViewById(R.id.set_representative_image_button_overlay); // nullable
         dimView = rootView.findViewById(R.id.dim_view);
         strokePulseView = rootView.findViewById(R.id.stroke_pulse_view);
         bottomNavView = activity.findViewById(R.id.nav_view);
@@ -97,6 +105,18 @@ public class ImageOverlayManager {
     }
     public void showOverlay(ImageView originalImageView,
                             String imageUrl, float touchX, float touchY) {
+        showOverlayByMetadata(originalImageView,
+                imageUrl, touchX, touchY, false);
+    }
+
+    public void showOverlay(ImageView originalImageView,
+                            String imageUrl, float touchX, float touchY, boolean metadataExist) {
+        showOverlayByMetadata(originalImageView,
+                imageUrl, touchX, touchY, metadataExist);
+    }
+
+    private void showOverlayByMetadata(ImageView originalImageView,
+                                       String imageUrl, float touchX, float touchY, boolean metadataExist){
         Log.d("OverlayDebug", "showOverlay called");
         Log.d("OverlayDebug", "touchX=" + touchX + ", touchY=" + touchY);
         overlayContainer.setVisibility(View.VISIBLE);
@@ -116,7 +136,14 @@ public class ImageOverlayManager {
 
         longClickOverlay.setVisibility(View.VISIBLE);
         downloadButton.setVisibility(View.VISIBLE);
-        if (imageFetchButton != null) imageFetchButton.setVisibility(View.VISIBLE);
+        if (imageFetchButton != null && metadataExist) {
+            imageFetchButton.setVisibility(View.VISIBLE);
+            setRepresentativeButton.setVisibility(View.VISIBLE);
+        }
+        else if (imageFetchButton != null && !metadataExist) {
+            imageFetchButton.setVisibility(View.GONE);
+            setRepresentativeButton.setVisibility(View.GONE);
+        }
 
         downloadButton.setOnClickListener(v -> {
             ImageSaveUtil.saveImageFromUrl(activity, imageUrl);
@@ -126,9 +153,10 @@ public class ImageOverlayManager {
 
 
 
-
     private void dismissOverlay(){
          overlayContainer.setVisibility(View.GONE);
+         if (dismissListener != null)
+             dismissListener.onDismiss();
     }
 
     private void setupDismissListeners(){

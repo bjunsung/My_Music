@@ -4,6 +4,7 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.List;
 
@@ -31,5 +32,8 @@ public interface FavoriteArtistDao {
     //get all favorite Artist
     @Query("SELECT * FROM favorite_artist_table")
     List<FavoriteArtist> getAllFavoriteArtists();
+
+    @Update
+    int updateFavoriteArtist(FavoriteArtist favoriteArtist);
 
 }

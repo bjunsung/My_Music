@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class FavoriteArtistViewModel extends AndroidViewModel {
-
-
     private final FavoriteArtistRepository repository;
     private final ArtistMetadataRepository artistMetadataRepository;
     public Bundle reenterState = null;
@@ -224,6 +222,22 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
     public interface addMetadataCallback{
         void onSuccess();
         void onFailure(ArtistMetadata metadata, String reason);
+    }
+
+    public void setRepresentativeArtistImage(String vibeId, int selectedPosition, Consumer<Boolean> callback){
+        new Thread(() -> {
+            long result = artistMetadataRepository.setRepresentativeImage(vibeId, selectedPosition);
+            if (result > 0) new Handler(Looper.getMainLooper()).post(() -> callback.accept(true));
+            else new Handler(Looper.getMainLooper()).post(() -> callback.accept(false));
+        }).start();
+    }
+
+    public void updateFavoriteArtist(com.example.mymusic.model.FavoriteArtist favoriteArtist, Consumer<Boolean> callback){
+        new Thread(() -> {
+            int result = repository.updateFavoriteArtist(favoriteArtist);
+            if (result > 0) new Handler(Looper.getMainLooper()).post(() -> callback.accept(true));
+            else new Handler(Looper.getMainLooper()).post(() -> callback.accept(false));
+        }).start();
     }
 
 }

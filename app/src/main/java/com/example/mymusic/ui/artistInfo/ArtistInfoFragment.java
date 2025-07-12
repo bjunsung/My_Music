@@ -1,6 +1,5 @@
    package com.example.mymusic.ui.artistInfo;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,9 +12,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -26,11 +22,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
-import androidx.core.app.SharedElementCallback;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -50,10 +42,8 @@ import com.example.mymusic.databinding.FragmentArtistInfoBinding;
 import com.example.mymusic.model.Album;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
-import com.example.mymusic.model.FavoriteArtist;
-import com.example.mymusic.network.PhotoDetectorBridge;
 import com.example.mymusic.ui.imageDetail.ImageDetailFragment;
-import com.example.mymusic.ui.photoWebView.WebViewFragment;
+import com.example.mymusic.ui.webView.photoWebView.WebViewFragment;
 import com.example.mymusic.util.ImageOverlayManager;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
@@ -63,8 +53,6 @@ import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -104,9 +92,13 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private long currentOnDataReadyTime = 0;
     public static final String REQUEST_KEY = "artist_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_artist_artwork_ended";
-    private CardView imageFetchButton;
+    private CardView imageFetchButton, setRepresentativeImageButton;
+    LinearLayout imageLongClickOverlay;
 
+    private static final long AUTO_SLIDER_DELAY_TIME = 5000L;
 
+    private Handler sliderHandler = new Handler(Looper.getMainLooper());
+    private Runnable sliderRunnable;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -171,6 +163,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                                         pageAdapter.notifyDataSetChanged();  // or create a new adapter if this doesn't work well
 
                                         Toast.makeText(getContext(), "새 이미지가 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                        sliderHandler.removeCallbacks(sliderRunnable);
+                                        sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
                                     });
                                 }
                             }
@@ -291,7 +285,34 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     .show();
         });
 
+
+        sliderRunnable = () -> {
+          if (pager != null && pageAdapter != null){
+              int nextItem = (pager.getCurrentItem() + 1) % pageAdapter.getItemCount();
+              pager.setCurrentItem(nextItem, true);
+              sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
+          }
+        };
+
+
+
+        //end of on view created
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        sliderHandler.removeCallbacks(sliderRunnable);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        sliderHandler.removeCallbacks(sliderRunnable);
+        sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
+    }
+
+
 
     private void parseArgs() {
         String transitionName = getArguments().getString("transitionName");
@@ -388,13 +409,20 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             @Override
             public void onSuccess(ArtistMetadata metadata){
                 requireActivity().runOnUiThread(() -> {
-                    //addArtistButton.setVisibility(View.GONE);
+
+                    viewModel.setMetadataExist(true);
                     genresLayout.setVisibility(View.GONE);
                     followersLayout.setVisibility(View.GONE);
                     viewSetting();
 
                     if (metadata.images != null && !metadata.images.isEmpty()){
-                        imageUrls.addAll(metadata.images);
+                        //imageUrls.addAll(metadata.images);
+
+                        for (String img : metadata.images){
+                           if (!imageUrls.contains(img)) {
+                                imageUrls.add(img);
+                            }
+                        }
                     }
 
                     Context context = getContext();
@@ -467,7 +495,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             @Override
             public void onFailure(String reason) {
                 requireActivity().runOnUiThread(() -> {
-
+                    Log.d(TAG, "Image Metadata loading fail");
+                    viewModel.setMetadataExist(false);
                     pageAdapter = new ImagePagerAdapter(
                             requireContext(),
                             imageUrls,
@@ -529,6 +558,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         addedDataLayout = view.findViewById(R.id.added_date_layout);
 
         imageFetchButton = view.findViewById(R.id.image_fetch_button_overlay);
+        setRepresentativeImageButton = view.findViewById(R.id.set_representative_image_button_overlay);
+        imageLongClickOverlay = view.findViewById(R.id.long_click_overlay);
     }
 
 
@@ -570,8 +601,13 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
             enlargeButtonShadow.setLayoutParams(enlargeShadowParams);
             enlargeButtonShadow.setVisibility(View.VISIBLE);
 
-
-
+            imageOverlayManager.setDismissListener(new ImageOverlayManager.OnDismissListener() {
+                @Override
+                public void onDismiss() {
+                    sliderHandler.removeCallbacks(sliderRunnable);
+                    sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
+                }
+            });
 
         });
 
@@ -619,13 +655,11 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
 // [수정!] 이 코드를 imageFetchButton의 클릭 리스너 안에 넣으세요.
         imageFetchButton.setOnClickListener(v -> {
-
-
             favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
                 @Override
                 public void onSuccess(ArtistMetadata metadata) {
                     if (metadata != null && metadata.vibeArtistId != null) {
-
+                        favoriteArtist.metadata = metadata;
                         new Handler(Looper.getMainLooper()).post(() -> {
                             // 1. 전달할 데이터(artistId)를 Bundle에 담기
                             Bundle bundle = new Bundle();
@@ -639,17 +673,76 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     }
                 }
                 @Override
-                public void onFailure(String reason) {
-
-                }
+                public void onFailure(String reason) {}
 
             });
 
         });
 
+        setRepresentativeImageButton.setOnClickListener(v -> {
+
+            int currentPosition = pager.getCurrentItem();
+            Log.d(TAG, "setRepresentativeImageButton click event occurred at position: " + currentPosition);
+            if (currentPosition > 0){
+                if (favoriteArtist.metadata != null && favoriteArtist.metadata.vibeArtistId != null) {
+                    Log.d(TAG, "metadata exist");
+                    favoriteArtistViewModel.setRepresentativeArtistImage(favoriteArtist.metadata.vibeArtistId, currentPosition, updateMetadata -> {
+                        if (updateMetadata) {
+                            Log.d(TAG, "메타데이터에 대표 이미지 업데이트 완료");
+                            setRepresentativeImageInDb(currentPosition);
+                        }
+                    });
+                } else{
+                    Log.d(TAG, "metadata 없음");
+                    favoriteArtistViewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
+                        @Override
+                        public void onSuccess(ArtistMetadata metadata) {
+                            Log.d(TAG, "metadata 불러오기 성곧");
+                            if (metadata != null && metadata.vibeArtistId != null) {
+                                favoriteArtist.metadata = metadata;
+                                favoriteArtistViewModel.setRepresentativeArtistImage(favoriteArtist.metadata.vibeArtistId, currentPosition, updateMetadata -> {
+                                    if (updateMetadata) {
+                                        Log.d(TAG, "메타데이터에 대표 이미지 업데이트 완료");
+                                        setRepresentativeImageInDb(currentPosition);
+                                    }
+                                });
+                            }
+                        }
+                        @Override
+                        public void onFailure(String reason) {
+                            Log.d(TAG, "metadata 불러오기  실패");
+                        }
+
+                    });
+                }
+            }
+        });
+
+
+
+
+
     }
 
+    private void setRepresentativeImageInDb(int currentPosition){
+        List<String> imageUrls = pageAdapter.getImageUrls();
+        if (currentPosition < imageUrls.size()) {
+            String currentImageUrl = imageUrls.get(currentPosition);
+            favoriteArtist.artist.artworkUrl = currentImageUrl;
+            favoriteArtistViewModel.updateFavoriteArtist(favoriteArtist, result -> {
+                if (result) {
+                    //new Handler(Looper.getMainLooper()).post(() -> pageAdapter.notifyDataSetChanged());  // or create a new adapter if this doesn't work well
 
+                    imageLongClickOverlay.setVisibility(View.GONE);
+                    Log.d(TAG, "FavoriteArtist db에 대표 이미지 update 완료" + currentImageUrl);
+                    Log.d(TAG, "image 개수: " + pageAdapter.getItemCount());
+                }
+                else Log.d(TAG, "FavoriteArtist db에 대표 이미지 update 실패" + currentImageUrl);
+            });
+            Log.d("ArtistInfoFragment", "현재 이미지 URL: " + currentImageUrl);
+        }
+
+    }
 
 
 
@@ -657,8 +750,10 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         float touchX = event.getRawX();
         float touchY = event.getRawY();
 
+        sliderHandler.removeCallbacks(sliderRunnable);
+
         // 매니저의 showOverlay 메서드 호출 시 좌표 전달
-        imageOverlayManager.showOverlay((ImageView) imageView, imageUrl, touchX, touchY);
+        imageOverlayManager.showOverlay((ImageView) imageView, imageUrl, touchX, touchY, viewModel.isMetadataExist());
     }
 
 
