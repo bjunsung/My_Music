@@ -8,12 +8,23 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteConstraintException;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavDestination;
 import androidx.transition.Explode;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -46,11 +57,15 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
 import com.example.mymusic.databinding.FragmentMusicInfoBinding;
+import com.example.mymusic.model.Artist;
+import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistApiHelper;
+import com.example.mymusic.network.ArtistMetadataService;
+import com.example.mymusic.simpleArtistInfo.SimpleArtistDialogHelper;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.DateFormatMismatchException;
@@ -63,6 +78,11 @@ import com.google.android.material.transition.MaterialContainerTransform;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MusicInfoFragment extends Fragment {
     private final String TAG = "MusicInfoFragment";
@@ -84,7 +104,8 @@ public class MusicInfoFragment extends Fragment {
     public static final String REQUEST_KEY = "music_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_track_artwork_ended";
     private WebView hiddenWebView;
-
+    private Map<String, ArtistMetadata> artistMetadataMap;
+    private  SimpleArtistDialogHelper dialogHelper;
 
     //ViewModel 연결
     @Override
@@ -210,7 +231,7 @@ public class MusicInfoFragment extends Fragment {
             addedDateLayout = view.findViewById(R.id.added_date_layout);
             addedDate = view.findViewById(R.id.added_date);
             ImageView enlargeButton = view.findViewById(R.id.enlarge_button);
-            hiddenWebView = view.findViewById(R.id.hidden_web_view);
+
 
 
             trackTitle.setText(track.trackName);
@@ -234,9 +255,22 @@ public class MusicInfoFragment extends Fragment {
                 composersLayout.setVisibility(TextView.VISIBLE);
             }
 
+
             if (metadata != null && metadata.vocalists != null && !metadata.vocalists.isEmpty()){
                 vocalists.setText(metadata.vocalistsToString());
                 vocalistsLayout.setVisibility(TextView.VISIBLE);
+                dialogHelper = new SimpleArtistDialogHelper(getContext(), new ArrayList<>());
+
+                hiddenWebView = view.findViewById(R.id.hidden_web_view);
+                artistMetadataMap = new LinkedHashMap<>();
+                fetchArtistMetadata(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
+                        setClickableArtists(vocalists, vocalists.getText().toString(), artistMetadataMap);
+                        dialogHelper = new SimpleArtistDialogHelper(getContext(), artistMetadataMap);
+                    }
+                });
             }
 
             if (favorite.addedDate != null && !favorite.addedDate.isEmpty()){
@@ -587,6 +621,117 @@ public class MusicInfoFragment extends Fragment {
             trackTitle.setVisibility(TextView.VISIBLE);
         }
     }
+
+
+    public void fetchArtistMetadata(Runnable onAllFinished) {
+        List<List<String>> vocalists = favorite.metadata.vocalists;
+        int vocalistSize = vocalists.size();
+        for (List<String> item : vocalists) {
+            String vibeId = item.get(1);
+            if (vibeId == null)
+                vocalistSize --;
+        }
+        int total = vocalistSize;
+
+        AtomicInteger completedCount = new AtomicInteger(0);
+
+        for (List<String> item : vocalists) {
+            String name = item.get(0);
+            String vibeId = item.get(1);
+
+            if (vibeId == null){
+                continue;
+            }
+
+            WebView tempWebView = new WebView(getContext().getApplicationContext());
+            ArtistMetadataService.fetchMetadata(tempWebView, vibeId, new ArtistMetadataService.MetadataCallback() {
+                @Override
+                public void onSuccess(ArtistMetadata metadata) {
+                    new Handler(Looper.getMainLooper()).post(()->{
+                        Log.e(TAG, "success to fetch artist metadata for " + name);
+                        artistMetadataMap.put(name, metadata);
+                        checkAllDone();
+                    });
+                }
+
+                @Override
+                public void onFailure(String reason) {
+                    new Handler(Looper.getMainLooper()).post(()->{
+                        Log.e(TAG, "fail to fetch artist metadata for " + name);
+                        checkAllDone();
+                    });
+
+                }
+
+                private void checkAllDone() {
+                    if (completedCount.incrementAndGet() == total) {
+                        Log.d(TAG, "✅ All artist metadata fetched.");
+                        onAllFinished.run(); // 모든 fetch 완료 시 콜백 실행
+                    }
+                }
+            });
+        }
+
+        // 예외 처리: 아무 것도 없을 경우 즉시 완료
+        if (total == 0) {
+            onAllFinished.run();
+        }
+    }
+
+
+    private void setClickableArtists(TextView textView, String artists, Map<String, ArtistMetadata> artistMap) {
+        SpannableString spannable = new SpannableString(artists);
+        int start = 0;
+
+        String[] artistArray = artists.split(",\\s*"); // 쉼표+공백 기준으로 split
+
+        for (String artist : artistArray) {
+            int index = artists.indexOf(artist, start);
+            int end = index + artist.length();
+            start = end;
+
+            boolean noVibeId = false;
+
+            for (List<String> item : favorite.metadata.vocalists){
+                if (item.get(0).equals(artist) && item.get(1) == null){
+                    noVibeId = true;
+                }
+            }
+            if (noVibeId) continue;
+
+
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    ArtistMetadata metadata = artistMap.get(artist);
+                    if (metadata != null) {
+                        Log.w("ArtistClick", "click event occurred: " + artist);
+                        dialogHelper.showArtistDialogFirstTime(artist);
+                    } else {
+                        Log.w("ArtistClick", "No data for: " + artist);
+                    }
+                }
+
+                @Override
+                public void updateDrawState(@NonNull TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setUnderlineText(false); // 밑줄 제거
+                    Context context = getContext();
+                    SharedPreferences prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
+                    int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
+
+                    ds.setColor(selectedColor);    // 클릭 가능한 색상
+                }
+            };
+
+            spannable.setSpan(clickableSpan, index, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        textView.setText(spannable);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
+        textView.setHighlightColor(Color.TRANSPARENT); // 클릭 시 배경 투명
+    }
+
 
 
 }

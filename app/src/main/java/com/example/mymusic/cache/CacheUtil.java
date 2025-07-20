@@ -15,6 +15,7 @@ public class CacheUtil {
         clearGlideCache(context);
         clearAllCustomCache(context);
         clearAppDiskCache(context);
+        clearWebView(context);
     }
     public static void clearAllCustomCache(Context context){
         CustomFavoriteArtistImageDiskCacheL3.getInstance(context).clear();

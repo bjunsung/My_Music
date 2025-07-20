@@ -12,8 +12,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1;
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageDiskCacheL3;
+import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
 import com.example.mymusic.model.FavoriteArtist;
-import com.example.mymusic.ui.artistInfo.ArtistInfoFragment;
 
 import java.util.List;
 import java.util.Map;
@@ -34,13 +34,13 @@ public class CustomFavoriteArtistImageWriter {
         void onError(String reason);
     }
     private static final String TAG = "CustomFavoriteArtistImageWriter";
-    public static void saveRepresentativeImages(Context context, List<FavoriteArtist> favoriteArtistList){
+    public static void saveRepresentativeImagesByFavoriteArtistList(Context context, List<FavoriteArtist> favoriteArtistList, int overrideWidth, int overrideHeight){
         if (favoriteArtistList == null) return;
         for (FavoriteArtist item : favoriteArtistList){
             if (item == null || item.artist == null || item.artist.artworkUrl == null || item.artist.artworkUrl.isEmpty())
                 continue;
             String artworkUrl = item.artist.artworkUrl;
-            saveRepresentativeImage(context, artworkUrl);
+            storeImageByUrlLink(context, artworkUrl, overrideWidth, overrideHeight);
         }
     }
 
@@ -66,21 +66,49 @@ public class CustomFavoriteArtistImageWriter {
     }
 
 
-    public static void saveRepresentativeImage(Context context, String artworkUrl){
-        getBitmapByUrl(context, artworkUrl, new BitmapCallback() {
+    public static void storeImageByBitmap(Context context, String artworkUrl, Bitmap bitmap, int overrideWidth, int overrideHeight){
+        if (bitmap == null){
+            Log.d(TAG, "empty bitmap received");
+            return;
+        }
+        Bitmap cachedL1 = CustomFavoriteArtistImageReader.getL1Cache(context, artworkUrl);
+        if (cachedL1 == null){
+            CustomFavoriteArtistImageCacheL1.getInstance().put(artworkUrl, bitmap);
+            Log.d(TAG, "onBitmapReady and now save bitmap to L1 cache");
+        }
+        Bitmap cachedL3 = CustomFavoriteArtistImageReader.getL3Cache(context, artworkUrl);
+        if (cachedL3 == null){
+            CustomFavoriteArtistImageDiskCacheL3.getInstance(context).put(artworkUrl, bitmap);
+            Log.d(TAG, "onBitmapReady and now save bitmap to L3 cache");
+            Log.d(TAG, "current L3 Cache Size: " + CustomFavoriteArtistImageDiskCacheL3.getInstance(context).getCacheSizeBytes());
+        }
+    }
+    public static void storeImageByUrlLink(Context context, String artworkUrl, int overrideWidth, int overrideHeight){
+        Bitmap cachedL1 = CustomFavoriteArtistImageReader.getL1Cache(context, artworkUrl);
+        Bitmap cachedL3 = CustomFavoriteArtistImageReader.getL3Cache(context, artworkUrl);
+
+        if (cachedL1 != null && cachedL3 != null){
+            Log.d(TAG, "already exist in L1 cache & L3 cache, skip to storing");
+            return;
+        }
+
+        getBitmapByUrl(context, artworkUrl, overrideWidth, overrideHeight, new BitmapCallback() {
             @Override
             public void onBitmapReady(Bitmap bitmap, int cacheLevel) {
-                Log.d(TAG, "onBitmapReady and now save bitmap to L1 cache and L3 cache");
                 if (cacheLevel == CustomFavoriteArtistImageWriter.L1_CACHE) {
                     CustomFavoriteArtistImageCacheL1.getInstance().put(artworkUrl, bitmap);
+                    Log.d(TAG, "onBitmapReady and now save bitmap to L1 cache");
                 }
                 else if (cacheLevel == CustomFavoriteArtistImageWriter.L3_CACHE) {
                     CustomFavoriteArtistImageDiskCacheL3.getInstance(context).put(artworkUrl, bitmap);
+                    Log.d(TAG, "onBitmapReady and now save bitmap to L3 cache");
                 }
             }
 
             @Override
-            public void onError(String reason) {}
+            public void onError(String reason) {
+                Log.e(TAG, "Failed to load image for: " + artworkUrl + " reason: " + reason);
+            }
         });
     }
 
@@ -89,29 +117,21 @@ public class CustomFavoriteArtistImageWriter {
         CustomFavoriteArtistImageDiskCacheL3.getInstance(context).remove(key);
     }
 
-    private static void getBitmapByUrl(Context context, String artworkUrl, BitmapCallback bitmapCallback){
+    private static void getBitmapByUrl(Context context, String artworkUrl, int overrideWidth, int overrideHeight, BitmapCallback bitmapCallback){
         Glide.with(context)
                 .asBitmap()
                 .load(artworkUrl)
-                .override(ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE)
+                .override(overrideWidth, overrideHeight)
                 .centerCrop()
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
-                        if (CustomFavoriteArtistImageCacheL1.getInstance().get(artworkUrl) != null) {
-                            Log.d(TAG, "Image already cached in L1 Memory cache: " + artworkUrl);
-                            bitmapCallback.onError("Image already cached in L1 Memory cache: " + artworkUrl);
-                            return;
-                        } else{
+                        if (CustomFavoriteArtistImageCacheL1.getInstance().get(artworkUrl) == null) {
                             bitmapCallback.onBitmapReady(resource, CustomFavoriteArtistImageWriter.L1_CACHE);
                             Log.d(TAG, "current L1 Cache Size: " + CustomFavoriteArtistImageCacheL1.getInstance().getSize());
                         }
 
-                        if(CustomFavoriteArtistImageDiskCacheL3.getInstance(context).contains(artworkUrl)){
-                            Log.d(TAG, "Image already cached in L3 Disk cache: " + artworkUrl);
-                            bitmapCallback.onError("Image already cached in L3 Disk cache: " + artworkUrl);
-                            return;
-                        } else{
+                        if(!CustomFavoriteArtistImageDiskCacheL3.getInstance(context).contains(artworkUrl)){
                             bitmapCallback.onBitmapReady(resource, CustomFavoriteArtistImageWriter.L3_CACHE);
                             Log.d(TAG, "current L3 Cache Size: " + CustomFavoriteArtistImageDiskCacheL3.getInstance(context).getCacheSizeBytes());
                         }
@@ -122,7 +142,6 @@ public class CustomFavoriteArtistImageWriter {
                     @Override
                     public void onLoadFailed(@Nullable Drawable errorDrawable) {
                         bitmapCallback.onError("Failed to load image for: " + artworkUrl);
-                        Log.e(TAG, "Failed to load image for: " + artworkUrl);
                     }
                 });
     }

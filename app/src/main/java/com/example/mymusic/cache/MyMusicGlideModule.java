@@ -16,7 +16,7 @@ public class MyMusicGlideModule extends AppGlideModule {
 
     @Override
     public void applyOptions(Context context, GlideBuilder builder) {
-        int diskCacheSizeBytes = 200 * 1024 * 1024; // 200MB
+        int diskCacheSizeBytes = 150 * 1024 * 1024; // 1500MB
 
         builder.setDiskCache(
                 new DiskLruCacheFactory(

@@ -20,7 +20,7 @@ public class CustomFavoriteArtistImageReader {
         // 1. L1 (메모리) 캐시 확인
         Bitmap bitmap = CustomFavoriteArtistImageCacheL1.getInstance().get(key);
         if (bitmap != null) {
-            Log.d(TAG, "Favorite Artist Image fetch Hit from L1 Memory cache");
+            Log.d(TAG, "Image fetch Hit from L1 Memory cache");
             return bitmap;
         }
 
@@ -28,12 +28,40 @@ public class CustomFavoriteArtistImageReader {
         bitmap = CustomFavoriteArtistImageDiskCacheL3.getInstance(context).get(key);
         if (bitmap != null) {
             // 3. 디스크에서 가져왔으면 L1에도 추가
-            Log.d(TAG, "Favorite Artist Image fetch Hit from L3 Disk cache");
+            Log.d(TAG, "Image fetch Hit from L3 Disk cache");
             CustomFavoriteArtistImageCacheL1.getInstance().put(key, bitmap);
         }
 
         return bitmap;
     }
+
+    public static Bitmap getL1Cache(Context context, String key){
+        Bitmap bitmap = CustomFavoriteArtistImageCacheL1.getInstance().get(key);
+        if (bitmap == null){
+            Log.d(TAG, "Image fetch Miss from L1 Memory cache");
+            return null;
+        }
+        Log.d(TAG, "Image fetch Hit from L1 Memory cache");
+        return bitmap;
+    }
+
+    public static Bitmap getL3Cache(Context context, String key){
+        Bitmap bitmap = CustomFavoriteArtistImageDiskCacheL3.getInstance(context).get(key);
+        if (bitmap == null){
+            Log.d(TAG, "Image fetch Miss from L3 Disk cache");
+            return null;
+        }
+        Log.d(TAG, "Image fetch Hit from L3 Disk cache");
+        return bitmap;
+    }
+
+}
+
+
+
+
+
+    /*
 
     public static void fetchFavoriteArtistCache(Context context){
         boolean successToFetchDiskCache = CustomFavoriteArtistImageWriter.saveRepresentativeImageFromL3DiskCacheToL1Cache(context);
@@ -48,5 +76,6 @@ public class CustomFavoriteArtistImageReader {
             });
         }
     }
-}
+
+     */
 

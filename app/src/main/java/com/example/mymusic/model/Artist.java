@@ -28,6 +28,10 @@ public class Artist implements Parcelable {
         this.popularity = popularity;
     }
 
+    public Artist(String name){
+        this.artistName = name;
+    }
+
     protected Artist(Parcel in) {
         artistId = in.readString();
         artistName = in.readString();

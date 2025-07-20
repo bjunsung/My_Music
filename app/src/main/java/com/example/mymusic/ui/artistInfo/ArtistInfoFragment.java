@@ -6,7 +6,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,9 +45,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.SimpleAlbumAdapter;
 import com.example.mymusic.adapter.TrackAdapter;
-import com.example.mymusic.cache.ImagePreloader;
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL2;
-import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageDiskCacheL3;
 import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.data.repository.ArtistMetadataRepository;
 import com.example.mymusic.databinding.FragmentArtistInfoBinding;
@@ -857,7 +854,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
                         //cache 에 저장하기
                         CustomFavoriteArtistImageWriter.removeUrl(viewGroupContext, prevRepresentativeUrl);
-                        CustomFavoriteArtistImageWriter.saveRepresentativeImage(viewGroupContext, imageUrls.get(currentPosition));
+                        CustomFavoriteArtistImageWriter.storeImageByUrlLink(viewGroupContext, imageUrls.get(currentPosition), ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE);
                     }
                 });
             } else{
@@ -875,7 +872,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
                                     //cache 에 저장하기
                                     CustomFavoriteArtistImageWriter.removeUrl(viewGroupContext, prevRepresentativeUrl);
-                                    CustomFavoriteArtistImageWriter.saveRepresentativeImage(viewGroupContext, imageUrls.get(currentPosition));
+                                    CustomFavoriteArtistImageWriter.storeImageByUrlLink(viewGroupContext, imageUrls.get(currentPosition), ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE);
 
                                 }
                             });

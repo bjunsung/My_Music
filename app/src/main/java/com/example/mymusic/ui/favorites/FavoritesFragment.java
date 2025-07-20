@@ -6,9 +6,9 @@ package com.example.mymusic.ui.favorites;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -26,6 +26,7 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ScrollView;
@@ -38,26 +39,18 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavController;
-import androidx.navigation.NavHostController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.webkit.internal.ApiFeature;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.FavoriteArtistAdapter;
 import com.example.mymusic.adapter.FavoritesAdapter;
 import com.example.mymusic.adapter.FavoritesWithCardViewAdapter;
-import com.example.mymusic.cache.ImagePreloader;
-import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageDiskCacheL3;
 import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.databinding.FragmentFavoritesBinding;
@@ -86,7 +79,6 @@ import com.example.mymusic.util.VerticalSpaceItemDecoration;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import android.widget.LinearLayout;
@@ -112,6 +104,7 @@ public class FavoritesFragment extends Fragment {
     private WebView webView, webView2;
     private FilterBottomSheetFragment bottomSheet;
     private ArtistFilterBottomSheetFragment bottomSheetArtist;
+    private FrameLayout lyricsFrameLayout;
 
     TextView lyricsTextView;
     ScrollView scrollAreaView;
@@ -374,7 +367,7 @@ public class FavoritesFragment extends Fragment {
         trackRecyclerView.setAdapter(favoriteTrackAdapter);
         artistRecyclerView.setAdapter(favoriteArtistAdapter);
 
-
+        lyricsFrameLayout = view.findViewById(R.id.lyrics_frame);
 
 
         if (context != null) {
@@ -815,7 +808,7 @@ public class FavoritesFragment extends Fragment {
 
                     //Cache save when enter to FavoritesFragment (Favorite option : 1)
                     artistRecyclerView.post(() -> {
-                        CustomFavoriteArtistImageWriter.saveRepresentativeImages(viewGroupContext, filtered);
+                        CustomFavoriteArtistImageWriter.saveRepresentativeImagesByFavoriteArtistList(viewGroupContext, filtered, ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE);
                     });
 
 
@@ -845,7 +838,7 @@ public class FavoritesFragment extends Fragment {
 
 
     public void artistDetailButtonClick(int position){
-        artistDialogHelper.showArtistDialog(position);
+        artistDialogHelper.showArtistDialogFirstTime(position);
     }
 
     private void updateEmptyState(boolean isEmpty) {
@@ -1074,6 +1067,14 @@ public class FavoritesFragment extends Fragment {
                     lyricsContainer.setCardBackgroundColor(primaryColor);
                 }
 
+                /**
+                 * 배경 그라디언트로 수정
+                 */
+                if (context != null){
+                    int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.7f), 0.85f, 0.15f, 0.2f, 0.45f, 0.29f,0.3f);
+                    gradiantToFrame(lyricsFrameLayout, colorPair[0], colorPair[1]);
+                }
+
                 int adjustedForWhiteText = MyColorUtils.adjustForWhiteText(darkenColor);
                 simpleMusicInfoContainer.setCardBackgroundColor(adjustedForWhiteText);
                 lyricsTextContainer.setCardBackgroundColor(adjustedForWhiteText);
@@ -1136,7 +1137,14 @@ public class FavoritesFragment extends Fragment {
         lyricsTextView.setText(lyrics);
     }
 
-
+    private void gradiantToFrame(FrameLayout frameLayout, int brightenColor, int darkenColor){
+        GradientDrawable gradient = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[]{darkenColor, brightenColor, darkenColor}
+        );
+        gradient.setCornerRadius(0f); // 필요 시 곡률
+        frameLayout.setBackground(gradient);
+    }
     private void addArtistMetadataAuto(String artistId, String artistName) {
         Bundle bundle = new Bundle();
         bundle.putString("artist_id", artistId);

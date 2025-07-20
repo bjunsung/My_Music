@@ -17,13 +17,16 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
+import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1;
+import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
+import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 
 import java.util.List;
 
 public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePagerAdapter.ImageViewHolder>{
     private final static String TAG = "SimpleImagePagerAdapter";
     private List<String> imageUrls;
-    private int recyclerViewPosition;
+    private final int FAKE_MULTIPLIER = 1000;
     private Context viewGroupContext;
     private OnImageLoadListener imageLoadListener;
 
@@ -57,9 +60,19 @@ public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePag
 
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
-        String url = imageUrls.get(holder.getAdapterPosition());
+        if (imageUrls == null || imageUrls.isEmpty()) return;
 
-        if (url != null){
+        int realPosition = position % imageUrls.size();
+        String url = imageUrls.get(realPosition);
+
+        Bitmap bitmapCache = CustomFavoriteArtistImageReader.get(viewGroupContext, url);
+        if (bitmapCache != null){
+            holder.imageView.setImageBitmap(bitmapCache);
+            Log.d(TAG, "cache hit at realPosition " + realPosition);
+            if (imageLoadListener != null){
+                imageLoadListener.onLoadSuccess(realPosition, bitmapCache);
+            }
+        } else {
             Glide.with(viewGroupContext)
                     .asBitmap()
                     .load(url)
@@ -70,10 +83,18 @@ public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePag
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                             holder.imageView.setImageBitmap(resource);
+
+                            CustomFavoriteArtistImageWriter.storeImageByBitmap(
+                                    viewGroupContext, url, resource,
+                                    SimpleArtistDialogHelper.ARTWORK_SIZE,
+                                    SimpleArtistDialogHelper.ARTWORK_SIZE
+                            );
+
                             if (imageLoadListener != null){
-                                imageLoadListener.onLoadSuccess(holder.getAdapterPosition(), resource);
+                                imageLoadListener.onLoadSuccess(realPosition, resource);
                             }
-                            Log.d(TAG, "image bitmap ready for position " + holder.getAdapterPosition());
+
+                            Log.d(TAG, "image loaded for realPosition " + realPosition);
                         }
 
                         @Override
@@ -81,9 +102,16 @@ public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePag
                     });
         }
 
-
     }
 
+    public String getCurrentImageUrl(int position){
+        String url = imageUrls.get(position);
+        return url;
+    }
+
+    public int getRealCount() {
+        return imageUrls.size();
+    }
     public void updateList(List<String> imageUrls){
         this.imageUrls = imageUrls;
         notifyDataSetChanged();
@@ -91,7 +119,7 @@ public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePag
 
     @Override
     public int getItemCount() {
-        return imageUrls.size();
+        return imageUrls == null ? 0 : imageUrls.size() * FAKE_MULTIPLIER;
     }
 
 

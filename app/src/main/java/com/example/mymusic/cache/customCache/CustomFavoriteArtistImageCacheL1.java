@@ -16,7 +16,7 @@ public class CustomFavoriteArtistImageCacheL1 {
     private final LruCache<String, Bitmap> memoryCache;
     private final Set<String> pinnedKeys = new HashSet<>();
 
-    private  static final int maxCacheSize = 30*480*480*4/1024; //27MB 아티스트 30명
+    private  static final int maxCacheSize = 50*480*480*4/1024; //27MB 아티스트 50명
 
     private CustomFavoriteArtistImageCacheL1() {
         memoryCache = new LruCache<String, Bitmap>(maxCacheSize) {

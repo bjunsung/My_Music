@@ -206,8 +206,6 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setItemIconTintList(colorStateList);
         bottomNav.setItemTextColor(colorStateList);
         bottomNav.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
-
-
     }
     @Override
     public boolean onSupportNavigateUp() {

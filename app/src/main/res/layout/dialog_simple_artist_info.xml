@@ -51,7 +51,7 @@
                 android:visibility="visible"
                 app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="300dp"
-                app:cardElevation="4dp">
+                app:cardElevation="0dp">
 
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/circle_image_pager"
@@ -59,7 +59,7 @@
                     android:layout_height="match_parent"
                     android:clipChildren="false"
                     android:clipToPadding="false"
-                    android:overScrollMode="never"/>
+                    android:overScrollMode="never" />
             </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
 
@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingTop="60dp"
-            android:paddingBottom="20dp"
+            android:paddingBottom="8dp"
             android:paddingStart="20dp"
             android:paddingEnd="20dp">
 
@@ -84,7 +84,7 @@
                     android:id="@+id/artist_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="2dp"
                     android:layout_weight="1"
                     android:text="G-DRAGON"
                     android:textColor="@color/textPrimary"
@@ -95,15 +95,17 @@
                     android:id="@+id/expand_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:src="@drawable/ic_arrow_drop_down"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_expand_more"
+                    android:layout_marginTop="-6dp"
                     android:contentDescription="Expand details" />
                 <ImageView
                     android:id="@+id/contract_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:src="@drawable/ic_arrow_drop_up_24"
+                    android:padding="6dp"
+                    android:layout_marginTop="-6dp"
+                    android:src="@drawable/ic__expand_less"
                     android:contentDescription="contrack details"
                     android:visibility="gone"/>
             </LinearLayout>
@@ -112,7 +114,7 @@
             <ScrollView
                 android:id="@+id/detail_container"
                 android:layout_width="match_parent"
-                android:layout_height="240dp"
+                android:layout_height="252dp"
                 android:visibility="gone">
                 <LinearLayout
                     android:layout_width="match_parent"

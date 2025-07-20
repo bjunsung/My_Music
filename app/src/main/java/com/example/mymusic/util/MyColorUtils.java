@@ -70,6 +70,49 @@ public class MyColorUtils {
         };
     }
 
+    public static int[] generateBoundedContrastColors(
+            int primaryColor,
+            float lightenFactor,
+            float darkenFactor,
+            float minLightness,
+            float maxLightness,
+            float minDifference,
+            float maxDifference
+    ) {
+        float[] baseHsl = new float[3];
+        ColorUtils.colorToHSL(primaryColor, baseHsl);
+
+        float[] brightHsl = baseHsl.clone();
+        float[] darkHsl = baseHsl.clone();
+
+        brightHsl[2] = clamp(brightHsl[2] * lightenFactor, minLightness, maxLightness);
+        darkHsl[2] = clamp(darkHsl[2] * darkenFactor, minLightness, maxLightness);
+
+        float diff = Math.abs(brightHsl[2] - darkHsl[2]);
+
+        float mid = (brightHsl[2] + darkHsl[2]) / 2f;
+
+        // ✅ 차이가 너무 작으면 → 벌린다
+        if (diff < minDifference) {
+            float halfMin = minDifference / 2f;
+            brightHsl[2] = clamp(mid + halfMin, minLightness, maxLightness);
+            darkHsl[2] = clamp(mid - halfMin, minLightness, maxLightness);
+        }
+        // ✅ 차이가 너무 크면 → 좁힌다
+        else if (diff > maxDifference) {
+            float halfMax = maxDifference / 2f;
+            brightHsl[2] = clamp(mid + halfMax, minLightness, maxLightness);
+            darkHsl[2] = clamp(mid - halfMax, minLightness, maxLightness);
+        }
+
+        return new int[]{
+                ColorUtils.HSLToColor(brightHsl),
+                ColorUtils.HSLToColor(darkHsl)
+        };
+    }
+
+
+
     private static float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(value, max));
     }

@@ -12,20 +12,13 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.mymusic.cache.ImagePreloader;
-import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1;
-import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageDiskCacheL3;
-import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
 import com.example.mymusic.cache.reader.FavoriteArtistReader;
 import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.databinding.FragmentHomeBinding;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.ui.artistInfo.ArtistInfoFragment;
-import com.example.mymusic.ui.favorites.FavoritesFragment;
 import com.example.mymusic.util.SortFilterArtistUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
@@ -67,7 +60,7 @@ public class HomeFragment extends Fragment {
             Log.d(TAG, "fail to load L3 disk cache, start to load FavoriteArtist List from room db and store to L1, L3 cache");
             FavoriteArtistReader.loadFavoritesOriginalForm(viewGroupContext, favoriteArtistList -> {
                 List<FavoriteArtist> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(viewGroupContext, favoriteArtistList);
-                CustomFavoriteArtistImageWriter.saveRepresentativeImages(viewGroupContext, filtered);
+                CustomFavoriteArtistImageWriter.saveRepresentativeImagesByFavoriteArtistList(viewGroupContext, filtered, ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE);
             });
         }
 

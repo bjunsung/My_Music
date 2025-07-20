@@ -27,6 +27,8 @@ import com.bumptech.glide.request.target.CustomTarget;
 
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
+import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
+import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.FavoriteArtist;
@@ -39,14 +41,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class SimpleArtistDialogHelper {
     private final String TAG = "SimpleArtistDialogHelper";
-    public final static int ARTWORK_SIZE = 360;
+    public final static int ARTWORK_SIZE = 480;
     private Context context;
     private SimpleImagePagerAdapter pagerAdapter;
     List<FavoriteArtist> artistList;
-    List<Bitmap> bitmapList;
+    Map<String, ArtistMetadata> artistMetadataMap;
+
     /**
      * 이미지 뷰 텍스트뷰
      */
@@ -68,11 +72,11 @@ public class SimpleArtistDialogHelper {
     private TextView activityTextView;
     private MaterialCardView circleImageCardView;
     private Dialog dialog;
+    private String artistNameForNoArtistData;
 
     public SimpleArtistDialogHelper(Context context, List<FavoriteArtist> artistList){
         this.context = context;
         this.artistList = artistList;
-        this.bitmapList = new ArrayList<>(Collections.nCopies(artistList.size(), null));
 
         bindView();
 
@@ -87,14 +91,11 @@ public class SimpleArtistDialogHelper {
         pagerAdapter.setImageLoadListener(new SimpleImagePagerAdapter.OnImageLoadListener() {
             @Override
             public void onLoadSuccess(int position, Bitmap bitmap) {
-                if (position >= 0 && position < bitmapList.size()) {
-                    bitmapList.set(position, bitmap);
-                } else {
-                    Log.e(TAG, "Position out of bounds: " + position);
-                }
+                rectangleImageView.setImageBitmap(bitmap);
             }
         });
         circleImagePager.setAdapter(pagerAdapter);
+
         circleImagePager.setOffscreenPageLimit(1);
 
         circleImagePager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
@@ -104,6 +105,45 @@ public class SimpleArtistDialogHelper {
                 showArtistDialog(position);
             }
         });
+
+
+    }
+
+    public SimpleArtistDialogHelper(Context context, Map<String, ArtistMetadata> artistMetadataMap){
+        this.context = context;
+        this.artistMetadataMap = artistMetadataMap;
+
+        bindView();
+        List<String> imageUrls = new ArrayList<>();
+
+        for (Map.Entry<String, ArtistMetadata> entry : artistMetadataMap.entrySet()) {
+            ArtistMetadata metadata = entry.getValue();
+            if (metadata != null && metadata.images != null && !metadata.images.isEmpty()) {
+                imageUrls.add(metadata.images.get(0));
+            }
+        }
+
+        pagerAdapter = new SimpleImagePagerAdapter(imageUrls);
+        pagerAdapter.setImageLoadListener(new SimpleImagePagerAdapter.OnImageLoadListener() {
+            @Override
+            public void onLoadSuccess(int position, Bitmap bitmap) {
+                rectangleImageView.setImageBitmap(bitmap);
+            }
+        });
+        circleImagePager.setAdapter(pagerAdapter);
+        circleImagePager.setOffscreenPageLimit(1);
+
+        circleImagePager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                int realPosition = getRealPosition(position);
+                artistNameForNoArtistData = getKeyAtPosition(artistMetadataMap, realPosition);
+                Log.d(TAG, "NAME " + artistNameForNoArtistData + " position: " + realPosition);
+                showArtistDialog(position);
+            }
+        });
+
     }
 
     private void bindView(){
@@ -131,9 +171,17 @@ public class SimpleArtistDialogHelper {
     }
 
     private void setView(int position){
-        FavoriteArtist favoriteArtist = artistList.get(position);
-        Artist artist = favoriteArtist.artist;
-        ArtistMetadata artistMetadata = favoriteArtist.metadata;
+
+        ArtistMetadata artistMetadata;
+        Artist artist = null;
+        if (artistList != null && artistList != null) { //리스트 기반
+            FavoriteArtist favoriteArtist = artistList.get(position);
+            artist = favoriteArtist.artist;
+            artistMetadata = favoriteArtist.metadata;
+        } else{ //해쉬 맵 기반
+            artistMetadata = artistMetadataMap.get(artistNameForNoArtistData);
+        }
+
 
         if (artistMetadata == null) {
             new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(context, "아티스트 정보가 없습니다.", Toast.LENGTH_SHORT));
@@ -142,7 +190,10 @@ public class SimpleArtistDialogHelper {
 
         if (artistMetadata.artistNameKr != null && !artistMetadata.artistNameKr.isEmpty()){
             artistNameTextView.setText(artistMetadata.artistNameKr);
-        } else{
+        } else if(artistNameForNoArtistData != null){
+            artistNameTextView.setText(artistNameForNoArtistData);
+        }
+        else if (artist != null){
             artistNameTextView.setText(artist.artistName);
         }
 
@@ -185,7 +236,12 @@ public class SimpleArtistDialogHelper {
         ImageColorAnalyzer.analyzePrimaryColor(context, artistMetadata.images.get(0), new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
             @Override
             public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                /*
                 int[] colorPair = MyColorUtils.generateContrastColors(primaryColor, 1.5f, 0.42f, 0.1f, 0.9f, 0.3f);
+int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.7f), 0.85f, 0.15f, 0.3f, 0.7f, 0.6f,0.9f);
+                 */
+                int[] colorPair = MyColorUtils.generateContrastColors(MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.5f), 1.5f, 0.42f, 0.1f, 0.9f, 0.3f);
+
                 gradiantToFrame(paletteFrame, colorPair[0], colorPair[1]);
 
             }
@@ -203,6 +259,38 @@ public class SimpleArtistDialogHelper {
             contractButton.setVisibility(View.VISIBLE);
             circleImageCardView.setVisibility(View.GONE);
             rectangleImageView.setVisibility(View.VISIBLE);
+            int currentPosition = circleImagePager.getCurrentItem();
+            int realPosition = getRealPosition(currentPosition);
+            String imageUrl;
+            if (artistList != null) {
+                imageUrl = artistList.get(realPosition).getSecondaryImageUrl();
+            }else{
+                imageUrl = artistMetadataMap.get(artistNameForNoArtistData).images.get(0);
+            }
+            Bitmap cached = CustomFavoriteArtistImageReader.get(context, imageUrl);
+            if (cached != null) {
+                rectangleImageView.setImageBitmap(cached);
+                Log.d(TAG, "cache hit and set image bitmap to rectangle image view");
+            } else{
+                String finalArtworkUrl = imageUrl;
+                Glide.with(context)
+                        .asBitmap()
+                        .load(imageUrl)
+                        .centerCrop()
+                        .override(SimpleArtistDialogHelper.ARTWORK_SIZE, SimpleArtistDialogHelper.ARTWORK_SIZE)
+                        .error(R.drawable.ic_image_not_found_foreground)
+                        .into(new CustomTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                rectangleImageView.setImageBitmap(resource);
+                                CustomFavoriteArtistImageWriter.storeImageByBitmap(context, finalArtworkUrl, resource, SimpleArtistDialogHelper.ARTWORK_SIZE, SimpleArtistDialogHelper.ARTWORK_SIZE);
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {}
+                        });
+            }
+
         });
 
         contractButton.setOnClickListener(v -> {
@@ -216,33 +304,45 @@ public class SimpleArtistDialogHelper {
         dialog.show();
     }
 
-    public void showArtistDialog(int position){
-        setView(position);
-        circleImagePager.setCurrentItem(position, false);
-        Bitmap bitmap = bitmapList.get(position);
-        if (bitmap != null) {
-            rectangleImageView.setImageBitmap(bitmapList.get(position));
-        } else{
-            ArtistMetadata metadata = artistList.get(position).metadata;
-            if (metadata != null && metadata.images != null && !metadata.images.isEmpty()){
-                Glide.with(context)
-                        .asBitmap()
-                        .load(metadata.images.get(0))
-                        .centerCrop()
-                        .override(SimpleArtistDialogHelper.ARTWORK_SIZE, SimpleArtistDialogHelper.ARTWORK_SIZE)
-                        .error(R.drawable.ic_image_not_found_foreground)
-                        .into(new CustomTarget<Bitmap>() {
-                            @Override
-                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                rectangleImageView.setImageBitmap(resource);
-                                bitmapList.set(position, resource);
-                            }
-
-                            @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {}
-                        });
+    public static <K, V> int indexOfKey(Map<K, V> map, K targetKey) {
+        int index = 0;
+        for (K key : map.keySet()) {
+            if (key.equals(targetKey)) {
+                return index;
             }
+            index++;
         }
+        return -1; // 키가 존재하지 않음
+    }
+
+    public static <K, V> K getKeyAtPosition(Map<K, V> map, int position) {
+        if (position < 0 || position >= map.size()) return null;
+        return new ArrayList<>(map.keySet()).get(position);
+    }
+
+    public void showArtistDialog(String artistName){
+        artistNameForNoArtistData = artistName;
+        showArtistDialog(indexOfKey(artistMetadataMap, artistName));
+    }
+
+    public int getRealPosition(int position) {
+        return position % pagerAdapter.getRealCount();
+    }
+
+    public void showArtistDialogFirstTime(String artistName){
+        artistNameForNoArtistData = artistName;
+        int position = indexOfKey(artistMetadataMap, artistName);
+        int initialPosition = pagerAdapter.getRealCount() * 500 + position;
+        showArtistDialog(initialPosition);
+    }
+    public void showArtistDialogFirstTime(int position){
+        int initialPosition = pagerAdapter.getRealCount() * 500 + position;
+        showArtistDialog(initialPosition);
+    }
+    public void showArtistDialog(int position){
+        int realPosition = getRealPosition(position);
+        setView(realPosition);
+        circleImagePager.setCurrentItem(position, false);
     }
 
 
@@ -257,7 +357,6 @@ public class SimpleArtistDialogHelper {
 
     public void updateList(List<FavoriteArtist> artistList){
         this.artistList = artistList;
-        this.bitmapList = new ArrayList<>(Collections.nCopies(artistList.size(), null));
         List<String> imageUrls = new ArrayList<>();
         for (FavoriteArtist artist : artistList){
             String secondaryImageUrl = artist.getSecondaryImageUrl();
