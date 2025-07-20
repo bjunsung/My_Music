@@ -1,12 +1,12 @@
 package com.example.mymusic.simpleArtistInfo;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.content.Context;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -17,14 +17,13 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
-import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1;
 import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
 import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 
 import java.util.List;
 
-public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePagerAdapter.ImageViewHolder>{
-    private final static String TAG = "SimpleImagePagerAdapter";
+public class SimpleRectangleImagePagerAdapter extends RecyclerView.Adapter<SimpleRectangleImagePagerAdapter.ImageViewHolder>{
+    private final static String TAG = "SimpleRectangleImagePagerAdapter";
     private List<String> imageUrls;
     private final int FAKE_MULTIPLIER = 1000;
     private Context viewGroupContext;
@@ -38,15 +37,15 @@ public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePag
         this.imageLoadListener = imageLoadListener;
     }
 
-    public SimpleImagePagerAdapter(List<String> imageUrls){
+    public SimpleRectangleImagePagerAdapter(List<String> imageUrls){
         this.imageUrls = imageUrls;
     }
 
     @NonNull
     @Override
-    public SimpleImagePagerAdapter.ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public SimpleRectangleImagePagerAdapter.ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         viewGroupContext = parent.getContext();
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_image_pager_circle, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_image_pager, parent, false);
         return new ImageViewHolder(view);
     }
 

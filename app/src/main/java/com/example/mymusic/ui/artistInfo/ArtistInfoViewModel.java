@@ -2,11 +2,19 @@ package com.example.mymusic.ui.artistInfo;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.graphics.drawable.GradientDrawable;
 import android.widget.Switch;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.mymusic.model.ArtistMetadata;
+import com.example.mymusic.model.FavoriteArtist;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 public class ArtistInfoViewModel extends AndroidViewModel {
     private String initialTransitionName = null;
@@ -32,6 +40,12 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private int lastPositionAtImageDetailFragment = -1;
 
 
+    private boolean onSimpleDialog = false;
+    private int simpleArtistDialogPosition = 0;
+    private int detailVisibleStateOnDialog = 0;
+    private GradientDrawable lastGradient = null;
+    private List<FavoriteArtist> favoriteArtistList = new ArrayList<>();
+    private LinkedHashMap<String, ArtistMetadata> metadataMap = new LinkedHashMap<>();
 
     public ArtistInfoViewModel(@NonNull Application application) {
         super(application);
@@ -147,5 +161,53 @@ public class ArtistInfoViewModel extends AndroidViewModel {
 
     public void setScrollY(int scrollY) {
         this.scrollY = scrollY;
+    }
+
+    public boolean isOnSimpleDialog() {
+        return onSimpleDialog;
+    }
+
+    public void setOnSimpleDialog(boolean onSimpleDialog) {
+        this.onSimpleDialog = onSimpleDialog;
+    }
+
+    public int getSimpleArtistDialogPosition() {
+        return simpleArtistDialogPosition;
+    }
+
+    public void setSimpleArtistDialogPosition(int simpleArtistDialogPosition) {
+        this.simpleArtistDialogPosition = simpleArtistDialogPosition;
+    }
+
+    public int getDetailVisibleStateOnDialog() {
+        return detailVisibleStateOnDialog;
+    }
+
+    public void setDetailVisibleStateOnDialog(int detailVisibleStateOnDialog) {
+        this.detailVisibleStateOnDialog = detailVisibleStateOnDialog;
+    }
+
+    public GradientDrawable getLastGradient() {
+        return lastGradient;
+    }
+
+    public void setLastGradient(GradientDrawable lastGradient) {
+        this.lastGradient = lastGradient;
+    }
+
+    public List<FavoriteArtist> getFavoriteArtistList() {
+        return favoriteArtistList;
+    }
+
+    public void setFavoriteArtistList(List<FavoriteArtist> favoriteArtistList) {
+        this.favoriteArtistList = favoriteArtistList;
+    }
+
+    public LinkedHashMap<String, ArtistMetadata> getMetadataMap() {
+        return metadataMap;
+    }
+
+    public void setMetadataMap(LinkedHashMap<String, ArtistMetadata> metadataMap) {
+        this.metadataMap = metadataMap;
     }
 }

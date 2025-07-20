@@ -10,6 +10,7 @@ public class FavoriteArtist implements Parcelable {
     public String addedDate;
     public ArtistMetadata metadata;
 
+    public Boolean isSelected = false;
 
     public FavoriteArtist(Artist artist){
         this.artist = artist;
@@ -119,10 +120,13 @@ public class FavoriteArtist implements Parcelable {
     public String getSecondaryImageUrl(){
         String url = artist.artworkUrl;
         if (metadata != null && metadata.images != null && !metadata.images.isEmpty()){
-            if (metadata.images.size() == 1){
+            if (metadata.images.size() <= 1){
                 url = metadata.images.get(0);
                 }
-            else{
+            else if (url == null){ // favorite artist 에 저장된게 아니라면 metadata 의 첫번 째 사진을 가져옴
+                url = metadata.images.get(0);
+            }
+            else {
                 url = (url.equals(metadata.images.get(0))) ? metadata.images.get(1): metadata.images.get(0);
             }
         }

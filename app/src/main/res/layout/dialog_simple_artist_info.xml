@@ -34,12 +34,14 @@
             android:clipChildren="false"
             android:clipToPadding="false">
 
-            <ImageView
+            <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/rectangle_image_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:visibility="gone" />
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:visibility="gone"/>
 
             <!-- ✅ 이미지가 절반 아래로 튀어나오게 -->
             <com.google.android.material.card.MaterialCardView
@@ -67,10 +69,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="60dp"
+            android:paddingTop="5dp"
             android:paddingBottom="8dp"
             android:paddingStart="20dp"
             android:paddingEnd="20dp">
+
+            <View
+                android:id="@+id/empty_space"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:visibility="visible">
+            </View>
 
             <!-- 제목  -->
             <LinearLayout
@@ -105,7 +114,7 @@
                     android:layout_height="wrap_content"
                     android:padding="6dp"
                     android:layout_marginTop="-6dp"
-                    android:src="@drawable/ic__expand_less"
+                    android:src="@drawable/ic_expand_less"
                     android:contentDescription="contrack details"
                     android:visibility="gone"/>
             </LinearLayout>
@@ -114,7 +123,7 @@
             <ScrollView
                 android:id="@+id/detail_container"
                 android:layout_width="match_parent"
-                android:layout_height="252dp"
+                android:layout_height="254dp"
                 android:visibility="gone">
                 <LinearLayout
                     android:layout_width="match_parent"

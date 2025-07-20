@@ -17,6 +17,9 @@ import java.time.format.DateTimeFormatter;
 public class SortFilterUtil {
     private final static String TAG = "SortFilterUtil";
     private static Context context;
+    public static final String sort_RELEASE_DATE = "RELEASE_DATE";
+    public static final String sort_ARTIST_NAME =  "ARTIST_NAME";
+    public static final String filter_ALL = "ALL";
 
     public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, Track track) {
         SortFilterUtil.context = context;

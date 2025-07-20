@@ -5,11 +5,19 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.sqlite.SQLiteConstraintException;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -17,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.view.WindowManager;
+import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -53,7 +62,10 @@ import com.example.mymusic.model.Album;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
+import com.example.mymusic.network.ArtistMetadataService;
+import com.example.mymusic.simpleArtistInfo.SimpleArtistDialogHelper;
 import com.example.mymusic.ui.imageDetail.ImageDetailFragment;
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment;
 import com.example.mymusic.ui.webView.photoWebView.WebViewFragment;
 import com.example.mymusic.util.ImageOverlayManager;
 import com.example.mymusic.util.NumberUtils;
@@ -68,6 +80,7 @@ import com.google.android.material.transition.MaterialContainerTransform;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -102,7 +115,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private TrackAdapter trackAdapter;
     private SimpleAlbumAdapter albumAdapter;
     private AtomicInteger readyCounter = new AtomicInteger(0);
-    private boolean isTransitionStarted = false;
 
     public static final String REQUEST_KEY = "artist_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_artist_artwork_ended";
@@ -121,6 +133,34 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private int positionDiff = 0;
     private Context viewGroupContext;
     private NestedScrollView scrollView;
+    private LinkedHashMap<String, ArtistMetadata> artistMetadataMap;
+    private SimpleArtistDialogHelper dialogHelper;
+
+    private void safeShowDialog(Activity activity, int lastPosition, int detailsVisibleState, List<FavoriteArtist> favoriteArtistList, GradientDrawable lastGradient){
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        Runnable tryShow = new Runnable() {
+            int attempts = 0;
+
+            @Override
+            public void run() {
+                if (!activity.isFinishing() && !activity.isDestroyed()) {
+                    if (detailsVisibleState == SimpleArtistDialogHelper.OFF_DETAILS) {
+                        dialogHelper.showArtistDialog(lastPosition, favoriteArtistList, lastGradient);
+                    } else{
+                        dialogHelper.showArtistDialogWithExpand(lastPosition, favoriteArtistList, lastGradient);
+                    }
+                } else if (attempts < 5) {
+                    attempts ++;
+                    handler.postDelayed(this, 100);
+                } else {
+                    Log.w(TAG, "Activity not ready. Dialog not shown.");
+                }
+
+            }
+        };
+        handler.post(tryShow);
+    }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -265,7 +305,6 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
         readyCounter.set(0);
-        isTransitionStarted = false;
         //전환 연기
         postponeEnterTransition();
 
@@ -438,17 +477,31 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
     @Override
     public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+
         Activity activity = requireActivity();
         if (activity != null){
             //keep screen on
             activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         }
-        super.onResume();
+
+
+        if (viewModel.isOnSimpleDialog()) {
+            Log.d(TAG, "is on simple dialog state");
+
+            int lastPosition = viewModel.getSimpleArtistDialogPosition();
+            List<FavoriteArtist> favoriteArtistList = viewModel.getFavoriteArtistList();
+            GradientDrawable lastGradient = viewModel.getLastGradient();
+            int visibleState =  viewModel.getDetailVisibleStateOnDialog();
+            Log.d(TAG, "visible state saved in viewmodel " + visibleState);
+
+            safeShowDialog(getActivity(), lastPosition, visibleState, favoriteArtistList, lastGradient);
+        }
+
         sliderHandler.removeCallbacks(sliderRunnable);
         sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
         Log.d("Slide Handler", "slide speed set to " + AUTO_SLIDER_DELAY_TIME);
-
     }
 
 
@@ -653,8 +706,69 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                     else
                         activityYearsLayout.setVisibility(View.GONE);
 
-                    if (metadata.members != null && !metadata.members.isEmpty())
+                    if (metadata.members != null && !metadata.members.isEmpty()) {
                         membersTextView.setText(metadata.membersToString());
+                        dialogHelper = new SimpleArtistDialogHelper(getContext(), new ArrayList<>());
+
+                        Log.d(TAG, "dialogHelper create with empty ArrayList");
+
+                        dialogHelper.setPositionChangedListener(new SimpleArtistDialogHelper.OnPositionChangedListener() {
+                            @Override
+                            public void positionChanged(int position, int detail_visible_state, GradientDrawable currentGradient) {
+                                Log.d(TAG, "position changed callback received detail visible state is " + detail_visible_state);
+                                viewModel.setSimpleArtistDialogPosition(position);
+                                viewModel.setDetailVisibleStateOnDialog(detail_visible_state);
+                                viewModel.setLastGradient(currentGradient);
+                            }
+                        });
+
+                        dialogHelper.setDismissListener(new SimpleArtistDialogHelper.OnDialogDismissListener() {
+                            @Override
+                            public void dialogDismissed() {
+                                viewModel.setOnSimpleDialog(false);
+                            }
+                        });
+                        List<FavoriteArtist> favoriteArtistListSavedInViewModel = viewModel.getFavoriteArtistList();
+                        if (favoriteArtistListSavedInViewModel != null && !favoriteArtistListSavedInViewModel.isEmpty()) {
+                            dialogHelper.updateList(favoriteArtistListSavedInViewModel);
+                            Log.d(TAG, "dialogHelper updateList, list size: " + favoriteArtistListSavedInViewModel.size());
+                            artistMetadataMap = viewModel.getMetadataMap();
+                            setClickableArtists(membersTextView, membersTextView.getText().toString(), artistMetadataMap);
+                        }
+                        else {
+
+                            artistMetadataMap = new LinkedHashMap<>();
+                            for (List<String> item : metadata.members){
+                                if (item.get(1) != null) {
+                                    artistMetadataMap.put(item.get(0), null);
+                                }
+                            }
+
+                            fetchArtistMetadata(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
+                                    setClickableArtists(membersTextView, membersTextView.getText().toString(), artistMetadataMap);
+
+                                    List<FavoriteArtist> faList = new ArrayList<>();
+
+
+                                    for (String key : artistMetadataMap.keySet()) {
+                                        ArtistMetadata value = artistMetadataMap.get(key);
+
+                                        Artist artist = new Artist(key);
+                                        FavoriteArtist fa = new FavoriteArtist(artist, null, value);
+                                        faList.add(fa);
+                                    }
+
+                                    viewModel.setFavoriteArtistList(faList);
+                                    viewModel.setMetadataMap(artistMetadataMap);
+
+                                    dialogHelper.updateList(faList);
+                                }
+                            });
+                        }
+                    }
                     else
                         membersLayout.setVisibility(View.GONE);
 
@@ -1152,5 +1266,114 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         navController.navigate(R.id.action_artistInfoFragment_to_imageDetailFragment, args, null, extras);
     }
 
+    public void fetchArtistMetadata(Runnable onAllFinished) {
+        List<List<String>> vocalists = favoriteArtist.metadata.members;
+        int vocalistSize = vocalists.size();
+        for (List<String> item : vocalists) {
+            String vibeId = item.get(1);
+            if (vibeId == null)
+                vocalistSize --;
+        }
+        int total = vocalistSize;
+
+        AtomicInteger completedCount = new AtomicInteger(0);
+
+        for (List<String> item : vocalists) {
+            String name = item.get(0);
+            String vibeId = item.get(1);
+
+            if (vibeId == null){
+                continue;
+            }
+
+            WebView tempWebView = new WebView(getContext().getApplicationContext());
+            ArtistMetadataService.fetchMetadata(tempWebView, vibeId, new ArtistMetadataService.MetadataCallback() {
+                @Override
+                public void onSuccess(ArtistMetadata metadata) {
+                    new Handler(Looper.getMainLooper()).post(()->{
+                        Log.e(TAG, "success to fetch artist metadata for " + name);
+                        artistMetadataMap.put(name, metadata);
+                        checkAllDone();
+                    });
+                }
+
+                @Override
+                public void onFailure(String reason) {
+                    new Handler(Looper.getMainLooper()).post(()->{
+                        Log.e(TAG, "fail to fetch artist metadata for " + name);
+                        checkAllDone();
+                    });
+
+                }
+
+                private void checkAllDone() {
+                    if (completedCount.incrementAndGet() == total) {
+                        Log.d(TAG, "✅ All artist metadata fetched.");
+                        onAllFinished.run(); // 모든 fetch 완료 시 콜백 실행
+                    }
+                }
+            });
+        }
+
+        // 예외 처리: 아무 것도 없을 경우 즉시 완료
+        if (total == 0) {
+            onAllFinished.run();
+        }
+    }
+    private void setClickableArtists(TextView textView, String artists, LinkedHashMap<String, ArtistMetadata> artistMap) {
+        SpannableString spannable = new SpannableString(artists);
+        int start = 0;
+
+        String[] artistArray = artists.split(",\\s*"); // 쉼표+공백 기준으로 split
+
+        for (String artist : artistArray) {
+            int index = artists.indexOf(artist, start);
+            int end = index + artist.length();
+            start = end;
+
+            boolean noVibeId = false;
+
+            for (List<String> item : favoriteArtist.metadata.members){
+                if (item.get(0).equals(artist) && item.get(1) == null){
+                    noVibeId = true;
+                }
+            }
+            if (noVibeId) continue;
+
+
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    ArtistMetadata metadata = artistMap.get(artist);
+                    if (metadata != null) {
+                        Log.w("ArtistClick", "click event occurred: " + artist);
+                        int position = MusicInfoFragment.indexOfKey(artistMap, artist);
+
+                        dialogHelper.showArtistDialogFirstTime(position);
+                        viewModel.setOnSimpleDialog(true);
+                    } else {
+                        Log.w("ArtistClick", "No data for: " + artist);
+                    }
+                }
+
+                @Override
+                public void updateDrawState(@NonNull TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setUnderlineText(false); // 밑줄 제거
+                    Context context = getContext();
+                    SharedPreferences prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
+                    int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
+
+                    ds.setColor(selectedColor);    // 클릭 가능한 색상
+                }
+            };
+
+            spannable.setSpan(clickableSpan, index, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        textView.setText(spannable);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
+        textView.setHighlightColor(Color.TRANSPARENT); // 클릭 시 배경 투명
+    }
 
 }

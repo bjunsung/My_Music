@@ -158,4 +158,22 @@
 
 
 
+    <fragment
+        android:id="@+id/fragment_my_calendar"
+        android:name="com.example.mymusic.ui.myCalendar.MyCalendar"
+        android:label="Calendar"
+        tools:layout="@layout/fragment_my_calendar" >
+        <action
+            android:id="@+id/action_myCalendarFragment_to_releaseDateChart"
+            app:destination="@id/fragment_release_date_chart" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/fragment_release_date_chart"
+        android:name="com.example.mymusic.ui.chart.ReleaseDateChart"
+        android:label="Release Date Chart"
+        tools:layout="@layout/fragment_release_date_chart" >
+    </fragment>
+
 </navigation>

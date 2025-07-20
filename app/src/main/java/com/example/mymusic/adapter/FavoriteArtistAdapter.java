@@ -10,6 +10,10 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,6 +41,7 @@ import com.example.mymusic.MainActivity;
 import com.example.mymusic.R;
 
 import com.example.mymusic.model.ArtistMetadata;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.FavoriteArtistDiffCallback;
 import com.example.mymusic.simpleArtistInfo.SimpleArtistDialogHelper;
@@ -45,6 +50,7 @@ import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -60,6 +66,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     private OnAddSelectedListener addSelectedListener;
     private OnRemoveSelectedListener removeSelectedListener;
     private OnMetadataLongClickListener metadataLongClickListener;
+    private String keyword = null;
 
     private Context context;
     public interface OnMetadataLongClickListener{
@@ -156,6 +163,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     public void onBindViewHolder(@NonNull FavoriteArtistViewHolder holder, int position){
         FavoriteArtist favoriteArtist = favoriteArtistList.get(position);
         Artist artist = favoriteArtist.artist;
+        ArtistMetadata metadata = favoriteArtist.metadata;
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
             holder.position = holder.getAdapterPosition();
@@ -189,56 +197,40 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                 })
                 .into(holder.image);
 
-/*
-        Glide.with(context)
-                .load(artist.artworkUrl)
-                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                .centerCrop()
-                .error(R.drawable.ic_image_not_found_foreground)
-                .preload(480, 480);
-
- */
-
-        viewModel.loadArtistMetadataBySpotifyId(artist.artistId, new FavoriteArtistViewModel.MetadataCallback() {
-            @Override
-            public void onSuccess(ArtistMetadata metadata) {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    favoriteArtist.metadata = metadata;
-                    holder.addButton.setVisibility(View.GONE);
-                    holder.imageAlbumButton.setVisibility(View.VISIBLE);
-                    holder.debutLayout.setVisibility(View.VISIBLE);
-                    if(metadata.debutDate != null && !metadata.debutDate.isEmpty()){
-                        holder.debutDateTextView.setText(metadata.debutDate);
-                    } else{
-                        holder.debutDateTextView.setText("정보없음");
-                    }
-                    removeAdditionalInfo(holder);
-
-                    setAdditionalInfo(holder, metadata);
-
-                });
+        if (metadata != null) {
+            holder.addButton.setVisibility(View.GONE);
+            holder.imageAlbumButton.setVisibility(View.VISIBLE);
+            holder.debutLayout.setVisibility(View.VISIBLE);
+            if(metadata.debutDate != null && !metadata.debutDate.isEmpty()){
+                holder.debutDateTextView.setText(metadata.debutDate);
+            } else{
+                holder.debutDateTextView.setText("정보없음");
             }
 
-            @Override
-            public void onFailure(String reason) {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    holder.addButton.setVisibility(View.VISIBLE);
-                    holder.addButton.setColorFilter(Color.GRAY);
-                    holder.imageAlbumButton.setVisibility(View.GONE);
-                    holder.debutLayout.setVisibility(View.GONE);
-                    removeAdditionalInfo(holder);
-                    setAdditionalInfo(holder, null);
-                });
-            }
-        });
-
-        if (viewModel.selectedList.contains(artist)){
-            holder.selectCheckBox.setChecked(true);
+        }
+        else{
+            holder.addButton.setVisibility(View.VISIBLE);
+            holder.addButton.setColorFilter(Color.GRAY);
+            holder.imageAlbumButton.setVisibility(View.GONE);
+            holder.debutLayout.setVisibility(View.GONE);
         }
 
 
+        removeAdditionalInfo(holder);
 
-        holder.artistName.setText(artist.artistName);
+        setAdditionalInfo(holder, metadata);
+
+        if (metadata != null && metadata.artistNameKr != null && !metadata.artistNameKr.isEmpty()){
+            holder.artistName.setText(metadata.artistNameKr);
+        }
+        else{
+            holder.artistName.setText(artist.artistName);
+        }
+        if (keyword != null && !keyword.isEmpty()){
+            highlightText(holder.artistName, keyword);
+        }
+
+
         holder.followers.setText(NumberUtils.formatWithComma(artist.followers));
         //String addedDate = viewModel.getAddedDateAsync(artist.artistId);
 
@@ -254,7 +246,10 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
         holder.selectCheckBox.setVisibility(isSelectionMode ? View.VISIBLE : View.GONE);
 
-
+        // ✅ 체크 상태 설정
+        if (holder.selectCheckBox.getVisibility() == View.VISIBLE) {
+            holder.selectCheckBox.setChecked(favoriteArtist.isSelected);
+        }
 
 
         holder.itemView.setOnClickListener(v -> {
@@ -278,10 +273,12 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                 if (holder.selectCheckBox.isChecked()){
                     holder.selectCheckBox.setChecked(false);
                     removeSelectedListener.onItemClick(artist);
+                    favoriteArtist.isSelected = false;
                 }
                 else{
                     holder.selectCheckBox.setChecked(true);
                     addSelectedListener.onItemClick(artist);
+                    favoriteArtist.isSelected = true;
                 }
             }
         });
@@ -298,9 +295,11 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         holder.itemView.setOnLongClickListener(v -> {
             if (!isSelectionMode) {
                 setSelectionMode(true);
+                favoriteArtist.isSelected = true;
             }
             if (!holder.selectCheckBox.isChecked()) {
                 holder.selectCheckBox.setChecked(true);
+                favoriteArtist.isSelected = true;
                 addSelectedListener.onItemClick(artist);// UI 갱신// 상태 반영
             }
 
@@ -334,6 +333,14 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         holder.additionalLayout.setVisibility(View.GONE);
     }
 
+    public List<FavoriteArtist> getSelectedList(){
+        List<FavoriteArtist> selectedList = new ArrayList<>();
+        for (FavoriteArtist item : favoriteArtistList){
+            if (item.isSelected)
+                selectedList.add(item);
+        }
+        return selectedList;
+    }
     private void setAdditionalInfo(@NonNull FavoriteArtistViewHolder holder, ArtistMetadata metadata){
         SharedPreferences prefs = context.getSharedPreferences("artist_filter_prefs", Context.MODE_PRIVATE);
         String filterOption = prefs.getString("sort_option", "ADDED_DATE");
@@ -394,5 +401,57 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     public Context getRecyclerViewContext(){
         return context;
     }
+
+    public void setKeyword(String keyword){
+        this.keyword = keyword;
+        notifyDataSetChanged();
+    }
+    private void highlightText(TextView textView, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) return;
+
+        String original = textView.getText().toString();
+        String normalizedTitle = original.replaceAll("\\s+", "").toLowerCase();
+        String normalizedKeyword = keyword.replaceAll("\\s+", "").toLowerCase();
+
+        if (normalizedTitle.contains(normalizedKeyword)) {
+            int start = normalizedTitle.indexOf(normalizedKeyword);
+            int end = start + normalizedKeyword.length() - 1;
+
+            String cleaned = original.replace('\u00A0', ' ');
+
+            for (int i = 0; i <= start; ++i) {
+                if (cleaned.charAt(i) == ' ') {
+                    start++;
+                }
+            }
+
+            for (int i = 0; i <= end; ++i) {
+                if (cleaned.charAt(i) == ' ') {
+                    end++;
+                }
+            }
+
+            SpannableString spannable = new SpannableString(original);
+            spannable.setSpan(
+                    new BackgroundColorSpan(Color.parseColor("#4682b4")),
+                    start,
+                    end + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+            spannable.setSpan(
+                    new ForegroundColorSpan(Color.WHITE),
+                    start,
+                    end + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+            textView.setText(spannable);
+            return;
+        }
+
+        // 매칭 실패 시 원래 텍스트 그대로 설정
+        textView.setText(original);
+    }
+
+
 
 }

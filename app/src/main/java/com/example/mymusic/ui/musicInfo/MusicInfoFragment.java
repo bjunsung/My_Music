@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 
 import androidx.core.content.ContextCompat;
@@ -103,8 +104,7 @@ public class MusicInfoFragment extends Fragment {
     private MusicInfoViewModel viewModel;
     public static final String REQUEST_KEY = "music_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_track_artwork_ended";
-    private WebView hiddenWebView;
-    private Map<String, ArtistMetadata> artistMetadataMap;
+    private LinkedHashMap<String, ArtistMetadata> artistMetadataMap;
     private  SimpleArtistDialogHelper dialogHelper;
 
     //ViewModel 연결
@@ -156,6 +156,50 @@ public class MusicInfoFragment extends Fragment {
 
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        Log.d(TAG, "onResume");
+        if (viewModel.isOnSimpleDialog()) {
+            Log.d(TAG, "is on simple dialog state");
+
+            int lastPosition = viewModel.getSimpleArtistDialogPosition();
+            List<FavoriteArtist> favoriteArtistList = viewModel.getFavoriteArtistList();
+            GradientDrawable lastGradient = viewModel.getLastGradient();
+            int visibleState =  viewModel.getDetailVisibleStateOnDialog();
+            Log.d(TAG, "visible state saved in viewmodel " + visibleState);
+
+            safeShowDialog(getActivity(), lastPosition, visibleState, favoriteArtistList, lastGradient);
+        }
+
+    }
+
+    private void safeShowDialog(Activity activity, int lastPosition, int detailsVisibleState, List<FavoriteArtist> favoriteArtistList, GradientDrawable lastGradient){
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        Runnable tryShow = new Runnable() {
+            int attempts = 0;
+
+            @Override
+            public void run() {
+                if (!activity.isFinishing() && !activity.isDestroyed()) {
+                    if (detailsVisibleState == SimpleArtistDialogHelper.OFF_DETAILS) {
+                        dialogHelper.showArtistDialog(lastPosition, favoriteArtistList, lastGradient);
+                    } else{
+                        dialogHelper.showArtistDialogWithExpand(lastPosition, favoriteArtistList, lastGradient);
+                    }
+                } else if (attempts < 5) {
+                    attempts ++;
+                    handler.postDelayed(this, 100);
+                } else {
+                    Log.w(TAG, "Activity not ready. Dialog not shown.");
+                }
+
+            }
+        };
+        handler.post(tryShow);
     }
 
     @Override
@@ -261,16 +305,68 @@ public class MusicInfoFragment extends Fragment {
                 vocalistsLayout.setVisibility(TextView.VISIBLE);
                 dialogHelper = new SimpleArtistDialogHelper(getContext(), new ArrayList<>());
 
-                hiddenWebView = view.findViewById(R.id.hidden_web_view);
-                artistMetadataMap = new LinkedHashMap<>();
-                fetchArtistMetadata(new Runnable() {
+                Log.d(TAG, "dialogHelper create with empty ArrayList");
+
+                dialogHelper.setPositionChangedListener(new SimpleArtistDialogHelper.OnPositionChangedListener() {
                     @Override
-                    public void run() {
-                        Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
-                        setClickableArtists(vocalists, vocalists.getText().toString(), artistMetadataMap);
-                        dialogHelper = new SimpleArtistDialogHelper(getContext(), artistMetadataMap);
+                    public void positionChanged(int position, int detail_visible_state, GradientDrawable currentGradient) {
+                        Log.d(TAG, "position changed callback received detail visible state is " + detail_visible_state);
+                        viewModel.setSimpleArtistDialogPosition(position);
+                        viewModel.setDetailVisibleStateOnDialog(detail_visible_state);
+                        viewModel.setLastGradient(currentGradient);
                     }
                 });
+
+                dialogHelper.setDismissListener(new SimpleArtistDialogHelper.OnDialogDismissListener() {
+                    @Override
+                    public void dialogDismissed() {
+                        viewModel.setOnSimpleDialog(false);
+                    }
+                });
+
+
+
+
+                List<FavoriteArtist> favoriteArtistListSavedInViewModel = viewModel.getFavoriteArtistList();
+                if (favoriteArtistListSavedInViewModel != null && !favoriteArtistListSavedInViewModel.isEmpty()) {
+                    dialogHelper.updateList(favoriteArtistListSavedInViewModel);
+                    Log.d(TAG, "dialogHelper updateList, list size: " + favoriteArtistListSavedInViewModel.size());
+                    artistMetadataMap = viewModel.getMetadataMap();
+                    setClickableArtists(vocalists, vocalists.getText().toString(), artistMetadataMap);
+                }
+                else {
+
+                    artistMetadataMap = new LinkedHashMap<>();
+                    for (List<String> item : metadata.vocalists){
+                        if (item.get(1) != null) {
+                            artistMetadataMap.put(item.get(0), null);
+                        }
+                    }
+
+                    fetchArtistMetadata(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
+                            setClickableArtists(vocalists, vocalists.getText().toString(), artistMetadataMap);
+
+                            List<FavoriteArtist> faList = new ArrayList<>();
+
+
+                            for (String key : artistMetadataMap.keySet()) {
+                                ArtistMetadata value = artistMetadataMap.get(key);
+
+                                Artist artist = new Artist(key);
+                                FavoriteArtist fa = new FavoriteArtist(artist, null, value);
+                                faList.add(fa);
+                            }
+
+                            viewModel.setFavoriteArtistList(faList);
+                            viewModel.setMetadataMap(artistMetadataMap);
+
+                            dialogHelper.updateList(faList);
+                        }
+                    });
+                }
             }
 
             if (favorite.addedDate != null && !favorite.addedDate.isEmpty()){
@@ -679,7 +775,7 @@ public class MusicInfoFragment extends Fragment {
     }
 
 
-    private void setClickableArtists(TextView textView, String artists, Map<String, ArtistMetadata> artistMap) {
+    private void setClickableArtists(TextView textView, String artists, LinkedHashMap<String, ArtistMetadata> artistMap) {
         SpannableString spannable = new SpannableString(artists);
         int start = 0;
 
@@ -706,7 +802,10 @@ public class MusicInfoFragment extends Fragment {
                     ArtistMetadata metadata = artistMap.get(artist);
                     if (metadata != null) {
                         Log.w("ArtistClick", "click event occurred: " + artist);
-                        dialogHelper.showArtistDialogFirstTime(artist);
+                        int position = MusicInfoFragment.indexOfKey(artistMap, artist);
+
+                        dialogHelper.showArtistDialogFirstTime(position);
+                        viewModel.setOnSimpleDialog(true);
                     } else {
                         Log.w("ArtistClick", "No data for: " + artist);
                     }
@@ -730,6 +829,17 @@ public class MusicInfoFragment extends Fragment {
         textView.setText(spannable);
         textView.setMovementMethod(LinkMovementMethod.getInstance());
         textView.setHighlightColor(Color.TRANSPARENT); // 클릭 시 배경 투명
+    }
+
+    public static <K, V> int indexOfKey(LinkedHashMap<String, ArtistMetadata> map, String targetKey) {
+        int index = 0;
+        for (String key : map.keySet()) {
+            if (key.equals(targetKey)) {
+                return index;
+            }
+            index++;
+        }
+        return -1; // key가 없는 경우
     }
 
 

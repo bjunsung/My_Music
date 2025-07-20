@@ -67,6 +67,55 @@
                 android:layout_marginStart="14dp"
                 />
 
+            <EditText
+                android:id="@+id/search_keyword"
+                android:layout_width="120dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginLeft="4dp"
+                android:layout_height="24dp"
+                android:textSize="16sp"
+                android:inputType="text"
+                android:imeOptions="actionDone"
+                android:drawableStart="@drawable/ic_search_button_18dp"
+                android:background="@drawable/search_edittext_bg"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/in_order_button_drop_up"
+                />
+
+            <ImageButton
+                android:id="@+id/previous_keyword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_north_16dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/search_keyword" />
+
+
+            <ImageButton
+                android:id="@+id/next_keyword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="-6dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_south_16dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/previous_keyword" />
+
+            <TextView
+                android:id="@+id/keyword_searched_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                android:text="0/0"
+                android:textSize="14sp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginTop="6dp"
+                app:layout_constraintStart_toEndOf="@+id/next_keyword" />
+
 
             <LinearLayout
                 android:id="@+id/count_layout"
@@ -81,6 +130,7 @@
                     android:layout_height="wrap_content"
                     android:text="취소"
                     android:textSize="16sp"
+                    android:layout_marginTop="3dp"
                     android:textColor="#666666"
                     android:visibility="invisible"
                     android:layout_marginRight="8dp" />
@@ -91,6 +141,7 @@
                     android:layout_height="wrap_content"
                     android:text="삭제"
                     android:textSize="16sp"
+                    android:layout_marginTop="3dp"
                     android:textColor="#666666"
                     android:visibility="invisible"
                     android:layout_marginRight="10dp" />

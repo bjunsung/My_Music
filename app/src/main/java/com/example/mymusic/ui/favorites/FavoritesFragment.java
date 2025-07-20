@@ -3,6 +3,7 @@
 package com.example.mymusic.ui.favorites;
 
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -12,9 +13,12 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +26,7 @@ import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -71,6 +76,7 @@ import com.example.mymusic.ui.musicInfo.MusicInfoFragment;
 import com.example.mymusic.ui.webView.artistMetadata.ArtistMetadataWebView;
 import com.example.mymusic.ui.webView.lyricsSearch.LyricsSearchAutoFragment;
 import com.example.mymusic.util.DarkModeUtils;
+import com.example.mymusic.util.FavoritesSearchUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.example.mymusic.util.SortFilterArtistUtil;
@@ -122,6 +128,9 @@ public class FavoritesFragment extends Fragment {
     private MaterialCardView artistsOtherMusicCardView;
     private Context viewGroupContext;
     private SimpleArtistDialogHelper artistDialogHelper;
+    private EditText searchKeywordEditText;
+    private ImageButton previousKeywordButton, nextKeywordButton;
+    private TextView keywordSearchedCountTextView;
 
 
     @Override
@@ -131,9 +140,46 @@ public class FavoritesFragment extends Fragment {
         if (orientation != favoritesViewModel.getScreenOrientation()){
             removeRecyclerViewAnimation();
             Log.d(TAG, "orientation changed");
+
         }
         favoritesViewModel.setScreenOrientation(orientation);
+        if (favoriteArtistViewModel.isOnSimpleDialog()){
+            int lastPosition = favoriteArtistViewModel.getSimpleArtistDialogPosition();
+            List<FavoriteArtist> favoriteArtistList = favoriteArtistViewModel.getFavoriteArtistList();
+            GradientDrawable lastGradient = favoriteArtistViewModel.getLastGradient();
+            safeShowDialog(getActivity(), lastPosition, favoriteArtistViewModel.getDetailVisibleStateOnDialog(), favoriteArtistList, lastGradient);
+        }
     }
+
+
+    private void safeShowDialog(Activity activity, int lastPosition, int detailsVisibleState, List<FavoriteArtist> favoriteArtistList , GradientDrawable lastGradient) {
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        Runnable tryShow = new Runnable() {
+            int attempts = 0;
+
+            @Override
+            public void run() {
+
+                if (!activity.isFinishing() && !activity.isDestroyed()) {
+                    if (detailsVisibleState == SimpleArtistDialogHelper.OFF_DETAILS) {
+                        artistDialogHelper.showArtistDialog(lastPosition, favoriteArtistList, lastGradient);
+                    } else{
+                        artistDialogHelper.showArtistDialogWithExpand(lastPosition, favoriteArtistList, lastGradient);
+                    }
+                } else if (attempts < 5) {
+                    attempts++;
+                    handler.postDelayed(this, 100); // 100ms 간격으로 최대 5번 재시도
+                } else {
+                    Log.w(TAG, "Activity not ready. Dialog not shown.");
+                }
+            }
+        };
+
+        handler.post(tryShow);
+    }
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState){
@@ -225,6 +271,21 @@ public class FavoritesFragment extends Fragment {
         postponeEnterTransition();
 
         artistDialogHelper = new SimpleArtistDialogHelper(getContext(), new ArrayList<>());
+        artistDialogHelper.setPositionChangedListener(new SimpleArtistDialogHelper.OnPositionChangedListener() {
+            @Override
+            public void positionChanged(int position, int detail_visible_state, GradientDrawable currentGradient) {
+                favoriteArtistViewModel.setSimpleArtistDialogPosition(position);
+                favoriteArtistViewModel.setDetailVisibleStateOnDialog(detail_visible_state);
+                favoriteArtistViewModel.setLastGradient(currentGradient);
+            }
+
+        });
+        artistDialogHelper.setDismissListener(new SimpleArtistDialogHelper.OnDialogDismissListener() {
+            @Override
+            public void dialogDismissed() {
+                favoriteArtistViewModel.setOnSimpleDialog(false);
+            }
+        });
 
         //No adapter attached 오류 해결을 위해 먼저 빈 리스트 전달하고 나중에 데이터 받고 나서 업데이트해주기
         favoriteTrackAdapter = new FavoritesAdapter(
@@ -354,6 +415,11 @@ public class FavoritesFragment extends Fragment {
         filterImageButton = view.findViewById(R.id.filter_button);
         dropDownImageButton = view.findViewById(R.id.in_order_button_drop_down);
         dropUpImageButton = view.findViewById(R.id.in_order_button_drop_up);
+        searchKeywordEditText = view.findViewById(R.id.search_keyword);
+        previousKeywordButton = view.findViewById(R.id.previous_keyword);
+        nextKeywordButton = view.findViewById(R.id.next_keyword);
+        keywordSearchedCountTextView = view.findViewById(R.id.keyword_searched_count);
+
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             artistsOtherMusicRecyclerView = view.findViewById(R.id.artists_other_music_recycler);
             artistsOtherMusicCardView = view.findViewById(R.id.artists_other_music_card_view);
@@ -378,7 +444,7 @@ public class FavoritesFragment extends Fragment {
             }
             boolean isDescending = prefs.getBoolean("isDescending", false);
             if (isDescending) {
-                dropUpImageButton.setVisibility(View.GONE);
+                dropUpImageButton.setVisibility(View.INVISIBLE);
                 dropDownImageButton.setVisibility(View.VISIBLE);
             } else {
                 dropDownImageButton.setVisibility(View.GONE);
@@ -468,6 +534,7 @@ public class FavoritesFragment extends Fragment {
                             favoritesViewModel.loadAllFavorites(favorites -> {
                                 if (context != null) {
                                     List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, favorites, null);
+                                    favoritesViewModel.setFavoriteList(filtered);
                                     favoriteTrackAdapter.updateData(filtered);
                                     //count 업데이트
                                     setFavoritesCountText(filtered.size());
@@ -676,7 +743,7 @@ public class FavoritesFragment extends Fragment {
         });
 
         dropUpImageButton.setOnClickListener(v -> {
-            dropUpImageButton.setVisibility(View.GONE);
+            dropUpImageButton.setVisibility(View.INVISIBLE);
             dropDownImageButton.setVisibility(View.VISIBLE);
             if (context != null){
                 if (favoriteOption == 0) {
@@ -698,7 +765,211 @@ public class FavoritesFragment extends Fragment {
         });
 
 
+        searchKeywordEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (favoriteOption == 0){
+                    favoritesViewModel.setKeyword(s.toString());
+                    updateHighlightedPositionList();
+                }
+
+                else{
+                    favoriteArtistViewModel.setKeyword(s.toString());
+                    updateHighlightedPositionList();
+                }
+
+            }
+        });
+
+        searchKeywordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null){
+                        imm.hideSoftInputFromWindow(searchKeywordEditText.getWindowToken(), 0);
+                    }
+                    searchKeywordEditText.clearFocus();
+
+                    String currentKeyword = searchKeywordEditText.getText().toString();
+                    if (favoriteOption == 0){
+                        String keywordSavedInViewModel = favoritesViewModel.getKeyword();
+                        if (keywordSavedInViewModel == null || keywordSavedInViewModel.isEmpty() || keywordSavedInViewModel.equals(currentKeyword)) return true;
+                        favoritesViewModel.setKeyword(currentKeyword);
+                        updateHighlightedPositionList();
+                    }else if (favoriteOption == 1) {
+                        String keywordSavedInViewModel = favoriteArtistViewModel.getKeyword();
+                        if (keywordSavedInViewModel == null || keywordSavedInViewModel.isEmpty() || keywordSavedInViewModel.equals(currentKeyword)) return true;
+                        favoriteArtistViewModel.setKeyword(currentKeyword);
+                        updateHighlightedPositionList();
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        previousKeywordButton.setOnClickListener(v -> {
+            if (keywordSearchedCountTextView.getVisibility() == View.VISIBLE) {
+                scrollToPreviousSearched();
+            }
+            else{
+                if (favoriteOption == 0){
+                    trackRecyclerView.smoothScrollToPosition(0);
+                } else{
+                    artistRecyclerView.smoothScrollToPosition(0);
+                }
+            }
+        });
+
+        nextKeywordButton.setOnClickListener(v -> {
+            if (keywordSearchedCountTextView.getVisibility() == View.VISIBLE) {
+                scrollToNextSearched();
+            }
+            else{
+                if (favoriteOption == 0){
+                    trackRecyclerView.smoothScrollToPosition(favoritesViewModel.getFavoriteList().size() - 1);
+                } else{
+                    artistRecyclerView.smoothScrollToPosition(favoriteArtistViewModel.getFavoriteArtistList().size() - 1);
+                }
+            }
+        });
+
+
 //onViewCreated
+    }
+
+    private void updateHighlightedPositionList(){
+        if (favoriteOption == 0){
+            String keyword = favoritesViewModel.getKeyword();
+            favoriteTrackAdapter.setKeyword(keyword);
+            favoritesViewModel.clearHighlightedPositions();
+            List<Integer> highlightedPositions = FavoritesSearchUtils.getContainPositions(keyword, favoritesViewModel.getFavoriteList(), favorite -> {
+                if (favorite.metadata != null && favorite.metadata.title != null)
+                    return favorite.metadata.title;
+                else if (favorite.track != null && favorite.track.trackName != null)
+                    return favorite.track.trackName;
+                return null;
+            });
+
+            if (highlightedPositions != null && !highlightedPositions.isEmpty()){
+                previousKeywordButton.setVisibility(View.VISIBLE);
+                nextKeywordButton.setVisibility(View.VISIBLE);
+                keywordSearchedCountTextView.setVisibility(View.VISIBLE);
+                favoritesViewModel.setFocusedHighlightedPosition(highlightedPositions.get(0));
+                String count = "1/" + highlightedPositions.size();
+                keywordSearchedCountTextView.setText(count);
+                trackRecyclerView.smoothScrollToPosition(highlightedPositions.get(0));
+            } else{
+                keywordSearchedCountTextView.setText("");
+                //previousKeywordButton.setVisibility(View.INVISIBLE);
+                //nextKeywordButton.setVisibility(View.INVISIBLE);
+                keywordSearchedCountTextView.setVisibility(View.INVISIBLE);
+            }
+
+            favoritesViewModel.setHighlightedPositions(highlightedPositions);
+            Log.d(TAG, "highlighted positions: " + favoritesViewModel.getHighlightedPositions());
+        }
+
+        else {
+            String keyword = favoriteArtistViewModel.getKeyword();
+            favoriteArtistAdapter.setKeyword(keyword);
+            favoriteArtistViewModel.clearHighlightedPositions();
+
+            List<Integer> highlightedPositions = FavoritesSearchUtils.getContainPositions(keyword, favoriteArtistViewModel.getFavoriteArtistList(), favorite -> {
+                if (favorite.metadata != null && favorite.metadata.artistNameKr != null)
+                    return favorite.metadata.artistNameKr;
+                else if (favorite.artist != null && favorite.artist.artistName != null)
+                    return favorite.artist.artistName;
+                return null;
+            });
+
+            if (highlightedPositions != null && !highlightedPositions.isEmpty()){
+                previousKeywordButton.setVisibility(View.VISIBLE);
+                nextKeywordButton.setVisibility(View.VISIBLE);
+                keywordSearchedCountTextView.setVisibility(View.VISIBLE);
+                favoriteArtistViewModel.setFocusedHighlightedPosition(highlightedPositions.get(0));
+                String count = "1/" + highlightedPositions.size();
+                keywordSearchedCountTextView.setText(count);
+                artistRecyclerView.smoothScrollToPosition(highlightedPositions.get(0));
+            } else{
+                //previousKeywordButton.setVisibility(View.INVISIBLE);
+                //nextKeywordButton.setVisibility(View.INVISIBLE);
+                keywordSearchedCountTextView.setText("");
+                keywordSearchedCountTextView.setVisibility(View.INVISIBLE);
+            }
+
+            favoriteArtistViewModel.setHighlightedPositions(highlightedPositions);
+            Log.d(TAG, "highlighted positions: " + favoriteArtistViewModel.getHighlightedPositions());
+        }
+
+    }
+
+    private void scrollToPreviousSearched(){
+        if (favoriteOption == 0) {
+            List<Integer> highlightedPositions = favoritesViewModel.getHighlightedPositions();
+            if (highlightedPositions != null && !highlightedPositions.isEmpty()) {
+                int currentPosition = favoritesViewModel.getFocusedHighlightedPosition();
+                int indexOfCurrentPosition = highlightedPositions.indexOf(currentPosition);
+                int index = (indexOfCurrentPosition + highlightedPositions.size() - 1) % highlightedPositions.size();
+                int previousPosition = highlightedPositions.get(index);
+                favoritesViewModel.setFocusedHighlightedPosition(previousPosition);
+                trackRecyclerView.smoothScrollToPosition(previousPosition);
+                String count = (index + 1) + "/" + highlightedPositions.size();
+                keywordSearchedCountTextView.setText(count);
+            }
+        }
+
+        else{
+            List<Integer> highlightedPositions = favoriteArtistViewModel.getHighlightedPositions();
+            if (highlightedPositions != null && !highlightedPositions.isEmpty()) {
+                int currentPosition = favoriteArtistViewModel.getFocusedHighlightedPosition();
+                int indexOfCurrentPosition = highlightedPositions.indexOf(currentPosition);
+                int index = (indexOfCurrentPosition + highlightedPositions.size() - 1) % highlightedPositions.size();
+                int previousPosition = highlightedPositions.get(index);
+                favoriteArtistViewModel.setFocusedHighlightedPosition(previousPosition);
+                artistRecyclerView.smoothScrollToPosition(previousPosition);
+                String count = (index + 1) + "/" + highlightedPositions.size();
+                keywordSearchedCountTextView.setText(count);
+            }
+        }
+    }
+    private void scrollToNextSearched(){
+        if (favoriteOption == 0) {
+            List<Integer> highlightedPositions = favoritesViewModel.getHighlightedPositions();
+            if (highlightedPositions != null && !highlightedPositions.isEmpty()) {
+                int currentPosition = favoritesViewModel.getFocusedHighlightedPosition();
+                int indexOfCurrentPosition = highlightedPositions.indexOf(currentPosition);
+                int index = (indexOfCurrentPosition + highlightedPositions.size() + 1) % highlightedPositions.size();
+                int nextPosition = highlightedPositions.get(index);
+                favoritesViewModel.setFocusedHighlightedPosition(nextPosition);
+                trackRecyclerView.smoothScrollToPosition(nextPosition);
+                String count = (index + 1) + "/" + highlightedPositions.size();
+                keywordSearchedCountTextView.setText(count);
+            }
+        }
+
+        else{
+            List<Integer> highlightedPositions = favoriteArtistViewModel.getHighlightedPositions();
+            if (highlightedPositions != null && !highlightedPositions.isEmpty()) {
+                int currentPosition = favoriteArtistViewModel.getFocusedHighlightedPosition();
+                int indexOfCurrentPosition = highlightedPositions.indexOf(currentPosition);
+                int index = (indexOfCurrentPosition + highlightedPositions.size() + 1) % highlightedPositions.size();
+                int previousPosition = highlightedPositions.get(index);
+                favoriteArtistViewModel.setFocusedHighlightedPosition(previousPosition);
+                artistRecyclerView.smoothScrollToPosition(previousPosition);
+                String count = (index + 1) + "/" + highlightedPositions.size();
+                keywordSearchedCountTextView.setText(count);
+            }
+        }
     }
 
     private void updateArtistSortOption(SharedPreferences prefs){
@@ -750,7 +1021,10 @@ public class FavoritesFragment extends Fragment {
                 Context context = getContext();
                 if (context != null) {
                     List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, favoritesList, null);
+                    favoritesViewModel.setFavoriteList(filtered);
                     favoriteTrackAdapter.updateData(filtered);
+                    updateHighlightedPositionList();
+
                     //count 업데이트
                     int size = filtered.size();
                     if (size == 0){
@@ -802,6 +1076,8 @@ public class FavoritesFragment extends Fragment {
                     List<FavoriteArtist> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(getContext(), favoriteArtistList);
 
                     artistDialogHelper.updateList(filtered);
+                    favoriteArtistViewModel.setFavoriteArtistList(filtered);
+                    updateHighlightedPositionList();
 
                     updateEmptyState(filtered.isEmpty());
                     favoriteArtistAdapter.updateData(filtered, finalOldSortOpt, newSortOpt);
@@ -833,12 +1109,14 @@ public class FavoritesFragment extends Fragment {
                 }
             });
         }
+
     }
 
 
 
     public void artistDetailButtonClick(int position){
         artistDialogHelper.showArtistDialogFirstTime(position);
+        favoriteArtistViewModel.setOnSimpleDialog(true);
     }
 
     private void updateEmptyState(boolean isEmpty) {
@@ -905,6 +1183,7 @@ public class FavoritesFragment extends Fragment {
                         Context context = getContext();
                         if (context != null){
                             List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, updatedList, null);
+                            favoritesViewModel.setFavoriteList(filtered);
                             favoriteTrackAdapter.updateData(filtered);
                             updateEmptyState(filtered.isEmpty());
                             setFavoritesCountText(filtered.size());
@@ -1861,6 +2140,11 @@ public class FavoritesFragment extends Fragment {
             });
         }
         else{
+            List<FavoriteArtist> selectedList = favoriteArtistAdapter.getSelectedList();
+            for (FavoriteArtist item : selectedList){
+                item.isSelected = false;
+            }
+
             favoriteArtistAdapter.setSelectionMode(false);
             favoriteArtistViewModel.selectedList = new ArrayList<>();
             cancelSelectionModeTextView.setVisibility(View.GONE);
@@ -1887,6 +2171,7 @@ public class FavoritesFragment extends Fragment {
                     trackRecyclerView.setVisibility(View.GONE);
 
                 updateEmptyState(filtered.isEmpty());
+                favoritesViewModel.setFavoriteList(filtered);
                 favoriteTrackAdapter.updateData(filtered);
 
 

@@ -1,6 +1,7 @@
 package com.example.mymusic.ui.favorites;
 
 import android.app.Application;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -15,6 +16,7 @@ import com.example.mymusic.data.repository.ArtistMetadataRepository;
 import com.example.mymusic.data.repository.FavoriteArtistRepository;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.ArtistMetadata;
+import com.example.mymusic.model.Favorite;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,16 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
     private int reenterScrollOffset = 0;
     public List<Artist> selectedList = new ArrayList<>();
     private String sortOption;
+    private boolean onSimpleDialog = false;
+    private int simpleArtistDialogPosition = 0;
+    private int detailVisibleStateOnDialog = 0;
+    private GradientDrawable lastGradient = null;
+    private List<com.example.mymusic.model.FavoriteArtist> favoriteArtistList = new ArrayList<>();
+
+    private List<Integer> highlightedPositions = new ArrayList<>();
+    private int focusedHighlightedPosition = -1;
+    private String keyword = null;
+
 
     public FavoriteArtistViewModel(@NonNull Application application) {
         super(application);
@@ -232,6 +244,70 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         this.reenterScrollOffset = reenterScrollOffset;
     }
 
+    public int getSimpleArtistDialogPosition() {
+        return simpleArtistDialogPosition;
+    }
+
+    public void setSimpleArtistDialogPosition(int simpleArtistDialogPosition) {
+        this.simpleArtistDialogPosition = simpleArtistDialogPosition;
+    }
+
+    public int getDetailVisibleStateOnDialog() {
+        return detailVisibleStateOnDialog;
+    }
+
+    public void setDetailVisibleStateOnDialog(int detailVisibleStateOnDialog) {
+        this.detailVisibleStateOnDialog = detailVisibleStateOnDialog;
+    }
+
+    public boolean isOnSimpleDialog() {
+        return onSimpleDialog;
+    }
+
+    public void setOnSimpleDialog(boolean onSimpleDialog) {
+        this.onSimpleDialog = onSimpleDialog;
+    }
+
+    public List<com.example.mymusic.model.FavoriteArtist> getFavoriteArtistList() {
+        return favoriteArtistList;
+    }
+
+    public void setFavoriteArtistList(List<com.example.mymusic.model.FavoriteArtist> favoriteArtistList) {
+        this.favoriteArtistList = favoriteArtistList;
+    }
+
+    public GradientDrawable getLastGradient() {
+        return lastGradient;
+    }
+
+    public void setLastGradient(GradientDrawable lastGradient) {
+        this.lastGradient = lastGradient;
+    }
+
+    public List<Integer> getHighlightedPositions() {
+        return highlightedPositions;
+    }
+
+    public void setHighlightedPositions(List<Integer> highlightedPositions) {
+        this.highlightedPositions = highlightedPositions;
+    }
+
+    public int getFocusedHighlightedPosition() {
+        return focusedHighlightedPosition;
+    }
+
+    public void setFocusedHighlightedPosition(int focusedHighlightedPosition) {
+        this.focusedHighlightedPosition = focusedHighlightedPosition;
+    }
+
+    public String getKeyword() {
+        return keyword;
+    }
+
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
+    }
+
 
     public interface MetadataCallback{
         void onSuccess(ArtistMetadata metadata);
@@ -276,6 +352,12 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
     public void setSortOption(String sortOption) {
         this.sortOption = sortOption;
         Log.d(TAG, "set artist sort option: " + sortOption);
+    }
+
+    public void clearHighlightedPositions(){
+        if (highlightedPositions != null) {
+            this.highlightedPositions.clear();
+        }
     }
 
 }

@@ -19,10 +19,13 @@ import com.bumptech.glide.request.transition.Transition;
 public class ImageColorAnalyzer {
 
     // 결과를 비동기적으로 반환받기 위한 콜백 인터페이스
+    /*
     public interface OnColorAnalyzedListener {
         void onSuccess(int dominantColor, boolean isLight);
         void onFailure();
     }
+
+     */
 
     public interface OnPrimaryColorAnalyzedListener{
         void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor);
@@ -38,7 +41,7 @@ public class ImageColorAnalyzer {
      * @param imageUrl 분석할 이미지의 URL
      * @param listener 분석 결과를 전달받을 리스너
      */
-
+/*
     public static void analyzeBottomRightColor(Context context, String imageUrl, @NonNull OnColorAnalyzedListener listener) {
         Glide.with(context).asBitmap().load(imageUrl).into(new CustomTarget<Bitmap>() {
             @Override
@@ -87,6 +90,8 @@ public class ImageColorAnalyzer {
             }
         });
     }
+
+ */
 
 
     public static void analyzePrimaryColor(Context context, String imageUrl, @NonNull OnPrimaryColorAnalyzedListener listener) {

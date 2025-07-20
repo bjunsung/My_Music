@@ -2,15 +2,19 @@ package com.example.mymusic.simpleArtistInfo;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.Bitmap;
+import android.content.DialogInterface;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
+
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
+
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -18,43 +22,40 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+
+import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
 
-import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
-import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
-import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
+
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.FavoriteArtist;
-import com.example.mymusic.ui.artistInfo.ImagePagerAdapter;
+
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+
 import java.util.List;
-import java.util.Map;
+
 
 public class SimpleArtistDialogHelper {
+    public static final int OFF_DETAILS = 0;
+    public static final int ON_DETAILS = 1;
     private final String TAG = "SimpleArtistDialogHelper";
     public final static int ARTWORK_SIZE = 480;
     private Context context;
     private SimpleImagePagerAdapter pagerAdapter;
+    private SimpleRectangleImagePagerAdapter pagerAdapter2;
     List<FavoriteArtist> artistList;
-    Map<String, ArtistMetadata> artistMetadataMap;
 
     /**
      * 이미지 뷰 텍스트뷰
      */
-    private ImageView rectangleImageView;
+    private ViewPager2 rectangleImagePager;
     private ViewPager2 circleImagePager;
     private TextView artistNameTextView;
     private ImageView expandButton;
@@ -72,7 +73,27 @@ public class SimpleArtistDialogHelper {
     private TextView activityTextView;
     private MaterialCardView circleImageCardView;
     private Dialog dialog;
-    private String artistNameForNoArtistData;
+    private View emptySpace;
+    private FrameLayout paletteFrame;
+    private GradientDrawable currentGradient;
+    private OnPositionChangedListener positionChangedListener;
+    private OnDialogDismissListener dismissListener;
+
+    public interface OnDialogDismissListener{
+        void dialogDismissed();
+    }
+
+    public interface OnPositionChangedListener{
+        void positionChanged(int position, int detail_visible_state, GradientDrawable currentGradient);
+    }
+
+    public void setPositionChangedListener(OnPositionChangedListener positionChangedListener){
+        this.positionChangedListener = positionChangedListener;
+    }
+
+    public void setDismissListener(OnDialogDismissListener dismissListener){
+        this.dismissListener = dismissListener;
+    }
 
     public SimpleArtistDialogHelper(Context context, List<FavoriteArtist> artistList){
         this.context = context;
@@ -88,13 +109,19 @@ public class SimpleArtistDialogHelper {
 
 
         pagerAdapter = new SimpleImagePagerAdapter(imageUrls);
-        pagerAdapter.setImageLoadListener(new SimpleImagePagerAdapter.OnImageLoadListener() {
+        circleImagePager.setAdapter(pagerAdapter);
+
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
-            public void onLoadSuccess(int position, Bitmap bitmap) {
-                rectangleImageView.setImageBitmap(bitmap);
+            public void onDismiss(DialogInterface dialogInterface) {
+                // 다이얼로그가 닫힐 때 수행할 작업
+                Log.d("Dialog", "Dialog was dismissed");
+                if (dismissListener != null){
+                    dismissListener.dialogDismissed();
+                }
             }
         });
-        circleImagePager.setAdapter(pagerAdapter);
+
 
         circleImagePager.setOffscreenPageLimit(1);
 
@@ -102,47 +129,39 @@ public class SimpleArtistDialogHelper {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
+                rectangleImagePager.setCurrentItem(position, false);
                 showArtistDialog(position);
+                Log.d(TAG, "position changed Circ: " + position);
+                if (positionChangedListener != null) {
+                    int detailVisibleState = (rectangleImagePager.getVisibility() == View.VISIBLE) ? SimpleArtistDialogHelper.ON_DETAILS : SimpleArtistDialogHelper.OFF_DETAILS;
+                    Log.d(TAG, "detailVisibleState: " + detailVisibleState);
+                    positionChangedListener.positionChanged(position, detailVisibleState, currentGradient);
+                }
+
             }
         });
 
+        pagerAdapter2 = new SimpleRectangleImagePagerAdapter(imageUrls);
+        rectangleImagePager.setAdapter(pagerAdapter2);
+        rectangleImagePager.setOffscreenPageLimit(1);
 
-    }
-
-    public SimpleArtistDialogHelper(Context context, Map<String, ArtistMetadata> artistMetadataMap){
-        this.context = context;
-        this.artistMetadataMap = artistMetadataMap;
-
-        bindView();
-        List<String> imageUrls = new ArrayList<>();
-
-        for (Map.Entry<String, ArtistMetadata> entry : artistMetadataMap.entrySet()) {
-            ArtistMetadata metadata = entry.getValue();
-            if (metadata != null && metadata.images != null && !metadata.images.isEmpty()) {
-                imageUrls.add(metadata.images.get(0));
-            }
-        }
-
-        pagerAdapter = new SimpleImagePagerAdapter(imageUrls);
-        pagerAdapter.setImageLoadListener(new SimpleImagePagerAdapter.OnImageLoadListener() {
-            @Override
-            public void onLoadSuccess(int position, Bitmap bitmap) {
-                rectangleImageView.setImageBitmap(bitmap);
-            }
-        });
-        circleImagePager.setAdapter(pagerAdapter);
-        circleImagePager.setOffscreenPageLimit(1);
-
-        circleImagePager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+        rectangleImagePager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
-                int realPosition = getRealPosition(position);
-                artistNameForNoArtistData = getKeyAtPosition(artistMetadataMap, realPosition);
-                Log.d(TAG, "NAME " + artistNameForNoArtistData + " position: " + realPosition);
+                circleImagePager.setCurrentItem(position, false);
                 showArtistDialog(position);
+                Log.d(TAG, "position changed Rec: " + position);
+                if (positionChangedListener != null) {
+                    //int detailVisibleState = (rectangleImagePager.getVisibility() == View.VISIBLE) ? SimpleArtistDialogHelper.ON_DETAILS : SimpleArtistDialogHelper.OFF_DETAILS;
+                    //Log.d(TAG, "detailVisibleState: " + detailVisibleState);
+                    //Log.d(TAG, "state changed callback transmitted");
+                    //positionChangedListener.positionChanged(position, detailVisibleState, currentGradient);
+                }
+
             }
         });
+
 
     }
 
@@ -150,8 +169,9 @@ public class SimpleArtistDialogHelper {
         dialog = new Dialog(context);
         dialog.setContentView(R.layout.dialog_simple_artist_info);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        dialog.setCancelable(true);
-        rectangleImageView = dialog.findViewById(R.id.rectangle_image_view);
+        dialog.setCancelable(true);             // 뒤로가기 버튼으로 닫히는 것 비활성화 (선택)
+
+        rectangleImagePager = dialog.findViewById(R.id.rectangle_image_view);
         circleImagePager = dialog.findViewById(R.id.circle_image_pager);
         artistNameTextView = dialog.findViewById(R.id.artist_name);
         expandButton = dialog.findViewById(R.id.expand_button);
@@ -168,19 +188,16 @@ public class SimpleArtistDialogHelper {
         activityLayout = dialog.findViewById(R.id.activity_layout);
         activityTextView = dialog.findViewById(R.id.activity);
         circleImageCardView = dialog.findViewById(R.id.circle_image_card);
+        emptySpace = dialog.findViewById(R.id.empty_space);
     }
 
     private void setView(int position){
 
         ArtistMetadata artistMetadata;
-        Artist artist = null;
-        if (artistList != null && artistList != null) { //리스트 기반
-            FavoriteArtist favoriteArtist = artistList.get(position);
-            artist = favoriteArtist.artist;
-            artistMetadata = favoriteArtist.metadata;
-        } else{ //해쉬 맵 기반
-            artistMetadata = artistMetadataMap.get(artistNameForNoArtistData);
-        }
+        FavoriteArtist favoriteArtist = artistList.get(position);
+        Artist artist = favoriteArtist.artist;
+        artistMetadata = favoriteArtist.metadata;
+
 
 
         if (artistMetadata == null) {
@@ -190,10 +207,8 @@ public class SimpleArtistDialogHelper {
 
         if (artistMetadata.artistNameKr != null && !artistMetadata.artistNameKr.isEmpty()){
             artistNameTextView.setText(artistMetadata.artistNameKr);
-        } else if(artistNameForNoArtistData != null){
-            artistNameTextView.setText(artistNameForNoArtistData);
         }
-        else if (artist != null){
+        else {
             artistNameTextView.setText(artist.artistName);
         }
 
@@ -231,7 +246,10 @@ public class SimpleArtistDialogHelper {
         } else{
             activityLayout.setVisibility(View.GONE);
         }
-        FrameLayout paletteFrame = dialog.findViewById(R.id.palette_frame);
+        paletteFrame = dialog.findViewById(R.id.palette_frame);
+        if (currentGradient != null){
+            paletteFrame.setBackground(currentGradient);
+        }
 
         ImageColorAnalyzer.analyzePrimaryColor(context, artistMetadata.images.get(0), new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
             @Override
@@ -248,49 +266,18 @@ int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darken
 
             @Override
             public void onFailure() {
-                int brightenColor = Color.parseColor("#B39DDB"); // 밝은 보라
-                int darkenColor = Color.parseColor("#4527A0");   // 진한 보라
-                gradiantToFrame(paletteFrame, brightenColor, darkenColor);
+                if (currentGradient != null){
+                    paletteFrame.setBackground(currentGradient);
+                } else {
+                    Log.d(TAG, "gradient is null");
+                    int brightenColor = Color.parseColor("#B39DDB"); // 밝은 보라
+                    int darkenColor = Color.parseColor("#4527A0");   // 진한 보라
+                    gradiantToFrame(paletteFrame, brightenColor, darkenColor);
+                }
             }
         });
         expandButton.setOnClickListener(v -> {
-            expandButton.setVisibility(View.GONE);
-            detailScrollView.setVisibility(View.VISIBLE);
-            contractButton.setVisibility(View.VISIBLE);
-            circleImageCardView.setVisibility(View.GONE);
-            rectangleImageView.setVisibility(View.VISIBLE);
-            int currentPosition = circleImagePager.getCurrentItem();
-            int realPosition = getRealPosition(currentPosition);
-            String imageUrl;
-            if (artistList != null) {
-                imageUrl = artistList.get(realPosition).getSecondaryImageUrl();
-            }else{
-                imageUrl = artistMetadataMap.get(artistNameForNoArtistData).images.get(0);
-            }
-            Bitmap cached = CustomFavoriteArtistImageReader.get(context, imageUrl);
-            if (cached != null) {
-                rectangleImageView.setImageBitmap(cached);
-                Log.d(TAG, "cache hit and set image bitmap to rectangle image view");
-            } else{
-                String finalArtworkUrl = imageUrl;
-                Glide.with(context)
-                        .asBitmap()
-                        .load(imageUrl)
-                        .centerCrop()
-                        .override(SimpleArtistDialogHelper.ARTWORK_SIZE, SimpleArtistDialogHelper.ARTWORK_SIZE)
-                        .error(R.drawable.ic_image_not_found_foreground)
-                        .into(new CustomTarget<Bitmap>() {
-                            @Override
-                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                rectangleImageView.setImageBitmap(resource);
-                                CustomFavoriteArtistImageWriter.storeImageByBitmap(context, finalArtworkUrl, resource, SimpleArtistDialogHelper.ARTWORK_SIZE, SimpleArtistDialogHelper.ARTWORK_SIZE);
-                            }
-
-                            @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {}
-                        });
-            }
-
+            expandDetails();;
         });
 
         contractButton.setOnClickListener(v -> {
@@ -298,43 +285,40 @@ int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darken
             detailScrollView.setVisibility(View.GONE);
             expandButton.setVisibility(View.VISIBLE);
             circleImageCardView.setVisibility(View.VISIBLE);
-            rectangleImageView.setVisibility(View.GONE);
+            rectangleImagePager.setVisibility(View.GONE);
+            emptySpace.setVisibility(View.VISIBLE);
+            paletteFrame.setBackground(currentGradient);
+            if (positionChangedListener != null){
+                Log.d(TAG, "state changed callback transmitted");
+                positionChangedListener.positionChanged(circleImagePager.getCurrentItem(), SimpleArtistDialogHelper.OFF_DETAILS, currentGradient);
+            }
         });
 
         dialog.show();
     }
 
-    public static <K, V> int indexOfKey(Map<K, V> map, K targetKey) {
-        int index = 0;
-        for (K key : map.keySet()) {
-            if (key.equals(targetKey)) {
-                return index;
-            }
-            index++;
+    public void dismissDialog(){
+        dialog.dismiss();
+    }
+
+    private void expandDetails(){
+        expandButton.setVisibility(View.GONE);
+        detailScrollView.setVisibility(View.VISIBLE);
+        contractButton.setVisibility(View.VISIBLE);
+        circleImageCardView.setVisibility(View.GONE);
+        rectangleImagePager.setVisibility(View.VISIBLE);
+        emptySpace.setVisibility(View.GONE);
+        paletteFrame.setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent));
+        if (positionChangedListener != null){
+            Log.d(TAG, "state changed callback transmitted");
+            positionChangedListener.positionChanged(circleImagePager.getCurrentItem(), SimpleArtistDialogHelper.ON_DETAILS, currentGradient);
         }
-        return -1; // 키가 존재하지 않음
-    }
-
-    public static <K, V> K getKeyAtPosition(Map<K, V> map, int position) {
-        if (position < 0 || position >= map.size()) return null;
-        return new ArrayList<>(map.keySet()).get(position);
-    }
-
-    public void showArtistDialog(String artistName){
-        artistNameForNoArtistData = artistName;
-        showArtistDialog(indexOfKey(artistMetadataMap, artistName));
     }
 
     public int getRealPosition(int position) {
         return position % pagerAdapter.getRealCount();
     }
 
-    public void showArtistDialogFirstTime(String artistName){
-        artistNameForNoArtistData = artistName;
-        int position = indexOfKey(artistMetadataMap, artistName);
-        int initialPosition = pagerAdapter.getRealCount() * 500 + position;
-        showArtistDialog(initialPosition);
-    }
     public void showArtistDialogFirstTime(int position){
         int initialPosition = pagerAdapter.getRealCount() * 500 + position;
         showArtistDialog(initialPosition);
@@ -343,7 +327,49 @@ int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darken
         int realPosition = getRealPosition(position);
         setView(realPosition);
         circleImagePager.setCurrentItem(position, false);
+        rectangleImagePager.setCurrentItem(position, false);
     }
+
+    public void showArtistDialog(int position, List<FavoriteArtist> favoriteArtistList, GradientDrawable lastGradient){ // 화면 회전 등 재생성 대비 빠른 시간안에 dialog 생성을 위해 count FavorieFragment에서 받아오기
+        if (favoriteArtistList.isEmpty()) return;
+
+        this.artistList = favoriteArtistList;
+        currentGradient = lastGradient;
+        int realPosition = position % favoriteArtistList.size();
+        Log.d(TAG, "received position: " + position + " real position: " + realPosition);
+        setView(realPosition);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            circleImagePager.setCurrentItem(position, true);
+            rectangleImagePager.setCurrentItem(position, false );
+        }, 50);
+    }
+
+
+    public void showArtistDialogWithExpand(int position){
+        int realPosition = getRealPosition(position);
+        setView(realPosition);
+        circleImagePager.setCurrentItem(position, false);
+        rectangleImagePager.setCurrentItem(position, false);
+        expandDetails();
+    }
+
+    public void showArtistDialogWithExpand(int position, List<FavoriteArtist> favoriteArtistList, GradientDrawable lastGradient){  // 화면 회전 등 재생성 대비 빠른 시간안에 dialog 생성을 위해 count FavorieFragment에서 받아오기
+        if (favoriteArtistList.isEmpty()) return;
+
+        this.artistList = favoriteArtistList;
+        currentGradient = lastGradient;
+        int realPosition = position % favoriteArtistList.size();
+        Log.d(TAG, "On Details Mode: received position: " + position + " real position: " + realPosition);
+        setView(realPosition);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            rectangleImagePager.setCurrentItem(position, true);
+            circleImagePager.setCurrentItem(position, false);
+
+        }, 50);
+
+        expandDetails();
+    }
+
 
 
     private void gradiantToFrame(FrameLayout frameLayout, int brightenColor, int darkenColor){
@@ -352,7 +378,17 @@ int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darken
                 new int[]{darkenColor, brightenColor, darkenColor}
         );
         gradient.setCornerRadius(5f); // 필요 시 곡률
-        frameLayout.setBackground(gradient);
+
+        currentGradient = gradient;
+
+        if (rectangleImagePager.getVisibility() == View.VISIBLE){
+            frameLayout.setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent));
+        }
+        else{
+            frameLayout.setBackground(gradient);
+        }
+
+
     }
 
     public void updateList(List<FavoriteArtist> artistList){
@@ -365,6 +401,7 @@ int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darken
             }
         }
         pagerAdapter.updateList(imageUrls);
+        pagerAdapter2.updateList(imageUrls);
     }
 
 }

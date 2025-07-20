@@ -91,6 +91,9 @@ dependencies {    // Room core
     implementation("com.squareup.picasso:picasso:2.71828")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0")
+    implementation("com.kizitonwose.calendar:view:2.3.0") //custom 캘린더
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0") //chart
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     implementation(libs.palette)  //Glide
     implementation(libs.appcompat)
     implementation(libs.material)

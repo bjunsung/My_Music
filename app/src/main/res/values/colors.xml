@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="textPrimary">#212121</color> <!-- 기본 검정 -->
+    <color name="background_basic">#FFFFFF</color>
     <color name="purple_200">#FFBB86FC</color>
     <color name="apink_official_color">#FF8EA0</color>
     <color name="machester_city_official_color">#6CADDF</color>
@@ -12,8 +13,9 @@
     <color name="navy_blue">#002852</color>
     <color name="pantone">#FCC89B</color>
     <color name="navBarBasic">#FFFFFFFF</color>
-    <color name="basic">#FFFFFFFF</color>
-
+    <color name="basic">#FFFAFA</color>
+    <color name="color_secondary">#E8E8E8</color>
+    <color name="basic_soft">#4F4F4F</color>
     <color name="cancel_text_color">#555555</color>
-
+    <color name="light_gray">#D3D3D3</color>
 </resources>

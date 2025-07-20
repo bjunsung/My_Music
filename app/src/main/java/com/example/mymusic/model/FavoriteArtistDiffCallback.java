@@ -49,7 +49,8 @@ public class FavoriteArtistDiffCallback extends DiffUtil.Callback {
         return Objects.equals(oldItem.artist, newItem.artist)
                 && Objects.equals(oldItem.addedDate, newItem.addedDate)
                 && Objects.equals(oldItem.metadata, newItem.metadata)
-                && oldSortOpt == newSortOpt;
+                && oldSortOpt == newSortOpt
+                && Objects.equals(oldItem.isSelected, newItem.isSelected);
     }
 
 

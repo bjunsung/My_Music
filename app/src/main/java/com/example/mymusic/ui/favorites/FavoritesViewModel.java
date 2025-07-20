@@ -14,6 +14,7 @@ import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -30,6 +31,10 @@ public class FavoritesViewModel extends AndroidViewModel {
     private int reenterScrollOffset = 0;
     private int transitionPosition = -1;
     private String lyricsSearchTrackId;
+    private List<Integer> highlightedPositions = new ArrayList<>();
+    private List<Favorite> favoriteList = new ArrayList<>();
+    private int focusedHighlightedPosition = -1;
+    private String keyword = null;
 
     public void setLyricsSearchTrackId(String trackId){
         this.lyricsSearchTrackId = trackId;
@@ -171,5 +176,43 @@ public class FavoritesViewModel extends AndroidViewModel {
 
     public void setScreenOrientation(int screenOrientation) {
         this.screenOrientation = screenOrientation;
+    }
+
+    public List<Integer> getHighlightedPositions() {
+        return highlightedPositions;
+    }
+
+    public void setHighlightedPositions(List<Integer> highlightedPositions) {
+        this.highlightedPositions = highlightedPositions;
+    }
+
+    public void clearHighlightedPositions(){
+        if (highlightedPositions != null) {
+            this.highlightedPositions.clear();
+        }
+    }
+
+    public List<Favorite> getFavoriteList() {
+        return favoriteList;
+    }
+
+    public void setFavoriteList(List<Favorite> favoriteList) {
+        this.favoriteList = favoriteList;
+    }
+
+    public int getFocusedHighlightedPosition() {
+        return focusedHighlightedPosition;
+    }
+
+    public void setFocusedHighlightedPosition(int focusedHighlightedPosition) {
+        this.focusedHighlightedPosition = focusedHighlightedPosition;
+    }
+
+    public String getKeyword() {
+        return keyword;
+    }
+
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
     }
 }

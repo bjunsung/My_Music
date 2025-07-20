@@ -2,6 +2,12 @@ package com.example.mymusic.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.provider.Telephony;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoriteViewHolder> {
+    private static final String TAG = "FavoritesAdapter";
     private boolean isSelectionMode = false;
     List<Favorite> favoritesList;
     OnDeleteClickListener deleteClickListener;
@@ -37,6 +44,8 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     private int textColor = invalidColor;
     private boolean removeButtonVisibilityGone = false;
     private Context context;
+
+    private String keyword = null;
 
     public void setTextColor(int textColor) {
         this.textColor = textColor;
@@ -137,8 +146,6 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
                 .into(holder.image);
 
 
-
-
         holder.title.setText(track.trackName);
         if (favorite.metadata != null && favorite.metadata.title != null){
             holder.titleKr.setText(favorite.metadata.title);
@@ -153,6 +160,10 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             }
         }
 
+
+        if (keyword != null && !keyword.isEmpty()){
+            highlightText(holder.titleKr, keyword);
+        }
 
         holder.artist.setText(track.artistName);
         if (textColor != invalidColor){
@@ -251,6 +262,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         //아이템 롤클릭 이벤트
         holder.itemView.setOnLongClickListener(v -> {
             if (!isSelectionMode) {
+                favorite.isSelected = true;
                 setSelectionMode(true);
                 itemLongClickListener.onItemClick();
             }
@@ -292,6 +304,65 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         }
         return selectedList.size();
     }
+
+    public void setKeyword(String keyword){
+        this.keyword = keyword;
+        notifyDataSetChanged();
+    }
+    private void highlightText(TextView textView, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) return;
+
+        String original = textView.getText().toString();
+        String normalizedTitle = original.replaceAll("\\s+", "").toLowerCase();
+        String normalizedKeyword = keyword.replaceAll("\\s+", "").toLowerCase();
+
+        if (normalizedTitle.contains(normalizedKeyword)){
+            int start = normalizedTitle.indexOf(normalizedKeyword);
+            int end = start + normalizedKeyword.length() - 1;
+
+            String cleaned = original.replace('\u00A0', ' ');
+
+            for (int i=0; i <= start; ++i){
+                if (cleaned.charAt(i) == ' ') {
+                    start ++;
+                }
+            }
+
+            for (int i=0; i <= end; ++i){
+                if (cleaned.charAt(i) == ' ') {
+                    end ++;
+                }
+            }
+
+            SpannableString spannable = new SpannableString(original);
+            spannable.setSpan(
+                    new BackgroundColorSpan(Color.parseColor("#4682b4")),
+                    start,
+                    end + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+            spannable.setSpan(
+                    new ForegroundColorSpan(Color.WHITE),
+                    start,
+                    end + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+            textView.setText(spannable);
+            return;
+        }
+
+        // 매칭 실패 시 원래 텍스트 그대로 설정
+        textView.setText(original);
+    }
+
+
+
+
+
+
+
+
+
 
 
     public void setSelectionMode(boolean enable) {

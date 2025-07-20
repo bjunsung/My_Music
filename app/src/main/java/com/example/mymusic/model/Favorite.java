@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.util.Objects;
+
 
 public class Favorite implements Parcelable {
     public Track track;
@@ -76,6 +78,18 @@ public class Favorite implements Parcelable {
         return track != null ? track.artistName : "";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Favorite)) return false;
+
+        Favorite other = (Favorite) obj;
+
+        return Objects.equals(track, other.track)
+                && Objects.equals(addedDate, other.addedDate)
+                && Objects.equals(metadata, other.metadata)
+                && Objects.equals(isSelected, other.isSelected);
+    }
 
 
 

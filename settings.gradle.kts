@@ -1,4 +1,8 @@
 pluginManagement {
+    plugins {
+        id("org.jetbrains.kotlin.android") version "2.1.10"
+        id("org.jetbrains.kotlin.kapt") version "2.1.10"
+    }
     repositories {
         google {
             content {
