@@ -121,7 +121,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         favorite.recyclerViewPosition = holder.getAdapterPosition();
         Track track = favorite.track;
         if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
-            String transitionName = "Transition_favorite_adapter_to_music_"  + track.artworkUrl + "_" + track.trackId + "_" + track.durationMs + "_" + track.releaseDate + "_" + position;
+            String transitionName = "Transition_favorite_adapter_to_music_"  + track.artworkUrl + "_" + track.trackId + "_" + track.durationMs + "_" + track.releaseDate + "_";
             ViewCompat.setTransitionName(holder.image, transitionName);
         } else {
             ViewCompat.setTransitionName(holder.image, null);

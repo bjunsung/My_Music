@@ -2,6 +2,7 @@ package com.example.mymusic.ui.albumInfo;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.drawable.Drawable;
@@ -268,40 +269,40 @@ public class  AlbumInfoFragment extends Fragment {
     }
 
     private void addFavoriteSong(Track track, int position){
-        new AlertDialog.Builder(getContext())
-                .setTitle("관심목록에 추가")
-                .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
-                .setNegativeButton("취소", null)
-                .setPositiveButton("확인", new DialogInterface.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int which) {
-                        favoritesViewModel.loadFavoriteItem(track.trackId, loaded -> {
-                            if (loaded != null){
-                                requireActivity().runOnUiThread(() -> {
-                                    Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
-                                });
-                            }
-                            else{
-                                String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                                new Thread(() -> {
-                                    try {
-                                        favoritesViewModel.insert(track, today);
-                                        requireActivity().runOnUiThread(() -> {
-                                            Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
-                                            if (trackAdapter != null){
-                                                trackAdapter.notifyItemChanged(position);
-                                            }
-                                        });
-                                    } catch (SQLiteConstraintException e) {
-                                        requireActivity().runOnUiThread(() -> {
-                                            Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
-                                        });
-                                    }
-                                }).start();
-                            }
-                        });
-                    }
-                })
-                .show();
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+
+        TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+        TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+        confirmButton.setText("확인");
+
+        TextView subText = dialog.findViewById(R.id.subtext);
+        TextView title = dialog.findViewById(R.id.title);
+        title.setText("관심목록에 추가");
+        subText.setText(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?");
+        cancelButton.setOnClickListener(v1 -> dialog.dismiss());
+
+        confirmButton.setOnClickListener(v1 -> {
+            dialog.dismiss();
+            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            new Thread(() -> {
+                try {
+                    favoritesViewModel.insert(track, today);
+                    requireActivity().runOnUiThread(() -> {
+                        //Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                        trackAdapter.notifyItemChanged(position);
+                    });
+                } catch (SQLiteConstraintException e) {
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }).start();
+        });
+
+        dialog.show();
     }
 
     private void showTrackDetails(Track track) {

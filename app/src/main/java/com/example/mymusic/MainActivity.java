@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,10 +24,13 @@ import android.webkit.WebView;
 import android.widget.ImageButton;
 
 import com.example.mymusic.cache.ImagePreloader;
+import com.example.mymusic.ui.setting.SettingFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -52,7 +56,14 @@ public class MainActivity extends AppCompatActivity {
     private long lastClickTime = 0;
     //더블클릭시 해당 Fragment로 강제이동
     private static final long DOUBLE_CLICK_THRESHOLD = 500; // 0.5초
-    public Size screenSize;;
+    public Size screenSize;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume()");
+        SettingFragment.applyDarkModeSensitiveCustomStyling(this);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,11 +103,6 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
 
-
-        ImageButton backButton = binding.backButton;
-        backButton.setOnClickListener(view -> {
-            getOnBackPressedDispatcher().onBackPressed();
-        });
 
         binding.navView.setOnItemSelectedListener(item -> {
             // 항상 클릭한 탭만 강조
@@ -180,6 +186,10 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
         int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
 
+        if (prefs.getBoolean("basic_color", false)){
+            selectedColor = ContextCompat.getColor(this, R.color.textPrimary);
+        }
+
         int[][] states = new int[][] {
                 new int[] { android.R.attr.state_checked },
                 new int[] { -android.R.attr.state_checked }
@@ -197,12 +207,6 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setItemTextColor(colorStateList);
         bottomNav.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
 
-
-        ImageButton backButton = binding.backButton;
-        backButton.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
-        backButton.setColorFilter(Color.DKGRAY);
-        ImageButton emptySpace = binding.emptySpace;
-        emptySpace.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
 
     }
     @Override

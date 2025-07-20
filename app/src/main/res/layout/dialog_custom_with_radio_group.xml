@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="16dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@android:color/transparent">
+
+    <LinearLayout
+        android:layout_width="@dimen/custom_dialog_width"
+        android:layout_height="wrap_content"
+        android:background="@color/basic"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- 아이콘 + 제목 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="subject"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 라디오 버튼 그룹 -->
+        <RadioGroup
+            android:id="@+id/radio_group_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            android:gravity="left">
+
+            <RadioButton
+                android:id="@+id/radio_option1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="옵션 1" />
+
+            <RadioButton
+                android:id="@+id/radio_option2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="옵션 2" />
+
+            <RadioButton
+                android:id="@+id/radio_option3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="옵션 3" />
+        </RadioGroup>
+
+        <!-- 버튼 영역 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <!-- 취소 버튼 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/basic"
+                app:strokeWidth="1dp"
+                app:strokeColor="#E0E0E0">
+
+                <TextView
+                    android:id="@+id/cancel_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="취소"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="14sp" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 확인 버튼 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/basic"
+                app:strokeWidth="1dp"
+                app:strokeColor="#E0E0E0">
+
+                <TextView
+                    android:id="@+id/confirm_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="확인"
+                    android:textColor="#FF3C3C"
+                    android:textSize="14sp"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -14,5 +14,6 @@
     <color name="navBarBasic">#FFFFFFFF</color>
     <color name="basic">#FFFFFFFF</color>
 
+    <color name="cancel_text_color">#555555</color>
 
 </resources>

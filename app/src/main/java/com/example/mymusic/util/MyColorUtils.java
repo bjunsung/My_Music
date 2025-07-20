@@ -25,6 +25,55 @@ public class MyColorUtils {
         return androidx.core.graphics.ColorUtils.HSLToColor(hsl);
     }
 
+    public static int[] generateContrastColors(
+            int primaryColor,
+            float lightenFactor,    // 예: 1.15f
+            float darkenFactor,     // 예: 0.42f
+            float minLightness,     // 예: 0.1f
+            float maxLightness,     // 예: 0.9f
+            float minDifference     // 예: 0.3f
+    ) {
+        float[] baseHsl = new float[3];
+        ColorUtils.colorToHSL(primaryColor, baseHsl);
+
+        // 밝은 색과 어두운 색용 HSL 복사
+        float[] brightHsl = baseHsl.clone();
+        float[] darkHsl = baseHsl.clone();
+
+        // 초기 조정
+        brightHsl[2] = clamp(brightHsl[2] * lightenFactor, minLightness, maxLightness);
+        darkHsl[2] = clamp(darkHsl[2] * darkenFactor, minLightness, maxLightness);
+
+        float diff = Math.abs(brightHsl[2] - darkHsl[2]);
+
+        // 최소 차이보다 작으면 보정
+        if (diff < minDifference) {
+            float desiredBright = clamp(darkHsl[2] + minDifference, minLightness, maxLightness);
+            float desiredDark = clamp(brightHsl[2] - minDifference, minLightness, maxLightness);
+
+            // 우선 bright 쪽을 위로 띄워보기
+            if (desiredBright <= maxLightness) {
+                brightHsl[2] = desiredBright;
+            } else if (desiredDark >= minLightness) {
+                darkHsl[2] = desiredDark;
+            }
+            // 둘 다 불가능하면 가능한 한 벌리기
+            else {
+                brightHsl[2] = maxLightness;
+                darkHsl[2] = minLightness;
+            }
+        }
+
+        return new int[]{
+                ColorUtils.HSLToColor(brightHsl),
+                ColorUtils.HSLToColor(darkHsl)
+        };
+    }
+
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(value, max));
+    }
+
     public static int adjustForWhiteText(int color) {
         float[] hsl = new float[3];
         ColorUtils.colorToHSL(color, hsl);

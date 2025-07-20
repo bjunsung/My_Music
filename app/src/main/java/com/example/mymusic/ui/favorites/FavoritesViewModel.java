@@ -55,6 +55,8 @@ public class FavoritesViewModel extends AndroidViewModel {
     public LiveData<Favorite> getFocusedTrack() {
         return focusedTrack;
     }
+    private int screenOrientation = -1;
+
 
     public FavoritesViewModel(@NonNull Application application) {
         super(application);
@@ -161,5 +163,13 @@ public class FavoritesViewModel extends AndroidViewModel {
 
     public void setTransitionPosition(int transitionPosition) {
         this.transitionPosition = transitionPosition;
+    }
+
+    public int getScreenOrientation() {
+        return screenOrientation;
+    }
+
+    public void setScreenOrientation(int screenOrientation) {
+        this.screenOrientation = screenOrientation;
     }
 }

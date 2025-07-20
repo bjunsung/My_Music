@@ -103,9 +103,30 @@ public class FavoriteArtist implements Parcelable {
 
     public int getImageCount(){
         if (metadata != null && metadata.images != null && !metadata.images.isEmpty())
-            return metadata.images.size();
+            if (metadata.images.contains(artist.artworkUrl)) {
+                return metadata.images.size();
+            } else{
+                return metadata.images.size() + 1;
+            }
         else
             return 1;
+    }
+
+    public String getRepresentativeImageUrl(){
+        return artist.artworkUrl;
+    }
+
+    public String getSecondaryImageUrl(){
+        String url = artist.artworkUrl;
+        if (metadata != null && metadata.images != null && !metadata.images.isEmpty()){
+            if (metadata.images.size() == 1){
+                url = metadata.images.get(0);
+                }
+            else{
+                url = (url.equals(metadata.images.get(0))) ? metadata.images.get(1): metadata.images.get(0);
+            }
+        }
+        return url;
     }
 
 }

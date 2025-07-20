@@ -1,6 +1,7 @@
 package com.example.mymusic.ui.search;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.sqlite.SQLiteConstraintException;
@@ -17,6 +18,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,6 +37,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mymusic.R;
+import com.example.mymusic.cache.CacheUtil;
 import com.example.mymusic.data.local.Token;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.data.repository.TokenRepository;
@@ -418,14 +423,24 @@ public class SearchFragment extends Fragment {
 
 
     private void showTrackDetails(Track track) {
-        new AlertDialog.Builder(getContext())
-                .setTitle("세부사항")
-                .setMessage("제목: " + track.trackName +
-                        "\n아티스트: " + track.artistName +
-                        "\n앨범: " + track.albumName +
-                        "\n발매일: " + track.releaseDate.substring(0, 10))
-                .setPositiveButton("닫기", null)
-                .show();
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom_only_dismiss_button);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+
+
+        TextView dismissButton = dialog.findViewById(R.id.dismiss_button);
+        TextView titleTextView = dialog.findViewById(R.id.title);
+        TextView subTextView = dialog.findViewById(R.id.subtext);
+
+        titleTextView.setText("세부사항");
+        subTextView.setText("제목: " + track.trackName +
+                "\n아티스트: " + track.artistName +
+                "\n앨범: " + track.albumName +
+                "\n발매일: " + track.releaseDate.substring(0, 10));
+
+        dismissButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
 
@@ -433,112 +448,173 @@ public class SearchFragment extends Fragment {
         DecimalFormat formatter = new DecimalFormat("#,###");
         String followers = formatter.format(artist.followers);
 
-        new AlertDialog.Builder(getContext())
-                .setTitle("세부사항")
-                .setMessage("아티스트: " + artist.artistName +
-                        "\n장르: " + artist.getJoinedGenres() +
-                        "\nfollowers: " + followers)
-                .setPositiveButton("닫기", null)
-                .show();
+
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom_only_dismiss_button);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+
+
+        TextView dismissButton = dialog.findViewById(R.id.dismiss_button);
+        TextView titleTextView = dialog.findViewById(R.id.title);
+        TextView subTextView = dialog.findViewById(R.id.subtext);
+
+        titleTextView.setText("세부사항");
+        subTextView.setText("아티스트: " + artist.artistName +
+                "\n장르: " + artist.getJoinedGenres() +
+                "\nfollowers: " + followers);
+
+        dismissButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     //addButton click시 db에 노래 저장
     private void addFavoriteSong(Track track, int position){
-        new AlertDialog.Builder(getContext())
-                .setTitle("관심목록에 추가")
-                .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
-                .setNegativeButton("취소", null)
-                .setPositiveButton("확인", (dialog, which) -> favoritesViewModel.loadFavoriteItem(track.trackId, duplicates -> {
-                    if (duplicates == null){
-                        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                        new Thread(() -> {
-                            try {
-                                favoritesViewModel.insert(track, today);
-                                requireActivity().runOnUiThread(() -> {
-                                    Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
-                                    if (trackAdapter != null) {
-                                        trackAdapter.notifyItemChanged(position);
-                                        Log.d(TAG, "notify item changed: " + position);
-                                    } else{
-                                        Log.d(TAG, "track adapter is null, position: " + position);
-                                    }
-                                });
-                            } catch (SQLiteConstraintException e) {
-                                requireActivity().runOnUiThread(() -> {
-                                    Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
-                                });
-                            }
-                        }).start();
-                    }
-                    else{
-                        Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
-                    }
-                }))
-        .show();
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+
+        TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+        TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+        TextView titleTextView = dialog.findViewById(R.id.title);
+        TextView subTextView = dialog.findViewById(R.id.subtext);
+
+        titleTextView.setText("관심목록에 추가");
+        subTextView.setText(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?");
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        confirmButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            favoritesViewModel.loadFavoriteItem(track.trackId, duplicates -> {
+                if (duplicates == null){
+                    String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    new Thread(() -> {
+                        try {
+                            favoritesViewModel.insert(track, today);
+                            requireActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                if (trackAdapter != null) {
+                                    trackAdapter.notifyItemChanged(position);
+                                    Log.d(TAG, "notify item changed: " + position);
+                                } else{
+                                    Log.d(TAG, "track adapter is null, position: " + position);
+                                }
+                            });
+                        } catch (SQLiteConstraintException e) {
+                            requireActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    }).start();
+                }
+                else{
+                    Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        dialog.show();
     }
 
 
     private void addFavoriteArtist(Artist artist, int position){
-        new AlertDialog.Builder(getContext())
-                .setTitle("관심목록에 추가")
-                .setMessage(artist.artistName  + " 을(를) Favorites List 에 추가할까요?")
-                .setNegativeButton("취소", null)
-                .setPositiveButton("확인", new DialogInterface.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int which) {
-                        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                        new Thread(() -> {
-                            try {
-                                favoriteArtistViewModel.insert(artist, today, result -> {
-                                    if (result > 0){
-                                        requireActivity().runOnUiThread(() -> {
-                                            Toast.makeText(getContext(), artist.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
-                                            artistAdapter.notifyItemChanged(position);
-                                        });
-                                    }
-                                    else{
-                                        requireActivity().runOnUiThread(() -> {
-                                            Toast.makeText(getContext(), "Artsit 추가 실패, 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
-                                        });
-                                    }
-                                });
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
 
-                            } catch (SQLiteConstraintException e) {
-                                requireActivity().runOnUiThread(() -> {
-                                    Toast.makeText(getContext(), artist.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
-                                });
-                            }
-                        }).start();
+        TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+        TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+        TextView titleTextView = dialog.findViewById(R.id.title);
+        TextView subTextView = dialog.findViewById(R.id.subtext);
 
-                    }
-                })
-                .show();
+        titleTextView.setText("관심목록에 추가");
+        subTextView.setText(artist.artistName  + " 을(를) Favorites List 에 추가할까요?");
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        confirmButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            new Thread(() -> {
+                try {
+                    favoriteArtistViewModel.insert(artist, today, result -> {
+                        if (result > 0) {
+                            requireActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(), artist.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                artistAdapter.notifyItemChanged(position);
+                            });
+                        } else {
+                            requireActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(), "Artsit 추가 실패, 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    });
+
+                } catch (SQLiteConstraintException e) {
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), artist.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }).start();
+
+        }
+        );
+
+        dialog.show();
     }
     private void showOptionDialog(){
-        String[] options = {"노래 검색", "아티스트 검색"};
-        new AlertDialog.Builder(requireContext())
-                .setTitle("검색 모드")
-                .setSingleChoiceItems(options, searchViewModel.selectedOption, (dialog, which) -> {
-                    searchViewModel.selectedOption = which;
-                })
-                .setPositiveButton("확인", (dialog, which) -> {
-                    String selectedText = options[searchViewModel.selectedOption];
-                    if (searchViewModel.selectedOption == 0) {
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom_with_radio_group);
+
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+
+        RadioGroup radioGroup = dialog.findViewById(R.id.radio_group_container);
+        TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+        TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+        confirmButton.setText("확인");
+
+        TextView title = dialog.findViewById(R.id.title);
+        title.setText("검색 모드");
+        RadioButton radioOption1 = dialog.findViewById(R.id.radio_option1);
+        RadioButton radioOption2 = dialog.findViewById(R.id.radio_option2);
+        RadioButton radioOption3 = dialog.findViewById(R.id.radio_option3);
+        radioOption1.setText("노래 검색");
+        radioOption2.setText("아티스트 검색");
+        radioOption3.setVisibility(View.GONE);
+
+        cancelButton.setOnClickListener(v1 -> dialog.dismiss());
+
+        confirmButton.setOnClickListener(v2 -> {
+            int selectedId = radioGroup.getCheckedRadioButtonId();
+            if (selectedId != -1) {
+                dialog.dismiss();
+                RadioButton selected = dialog.findViewById(selectedId);
+                String selectedText = selected.getText().toString();
+
+                switch (selectedText) {
+                    case "노래 검색":
                         searchEditText.setHint("노래 제목을 입력하세요");
                         if (searchEditText.getText().toString().length() > 0){
                             search(searchEditText.getText().toString(), accessToken, 0);
                             hideKeyboard();
                         }
-                    }
-                    else {
+                        break;
+                    case "아티스트 검색":
                         searchEditText.setHint("아티스트 이름을 입력하세요");
                         if (searchEditText.getText().toString().length() > 0){
                             search(searchEditText.getText().toString(), accessToken, 1);
                             hideKeyboard();
                         }
-                    }
-                })
-                .setNegativeButton("취소", null)
-                .show();
+                        break;
+                }
+
+            } else {
+                Toast.makeText(getContext(), "검색모드를 선택하세요.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
+
     }
 
     public void onTrackClick(Track track, ImageView sharedImageView, int position){

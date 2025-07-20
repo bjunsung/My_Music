@@ -19,370 +19,409 @@
                 android:id="@+id/swipe_content"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <!-- 🔽 기존 내용 전부 그대로 유지 -->
-                <androidx.core.widget.NestedScrollView
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:fillViewport="true">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-                    <LinearLayout
+                    <!-- 🔽 기존 내용 전부 그대로 유지 -->
+                    <androidx.core.widget.NestedScrollView
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingLeft="12dp"
-                        android:paddingRight="12dp"
-                        android:layout_marginTop="6dp">
+                        android:layout_height="match_parent"
+                        android:fillViewport="true">
 
-                        <!-- 아티스트 정보 영역 -->
                         <LinearLayout
-                            android:id="@+id/linear_layout_1"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal">
+                            android:orientation="vertical"
+                            android:layout_marginTop="6dp">
 
+                            <!-- 아티스트 정보 영역 -->
                             <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                            <androidx.viewpager2.widget.ViewPager2
-                                android:id="@+id/image_pager"
-                                android:layout_width="@dimen/artwork_size"
-                                android:layout_height="@dimen/artwork_size"
-                                android:scaleType="centerCrop"
-                                android:clipToPadding="false"
-                                android:clipChildren="false"
-                                android:overScrollMode="never" />
-
-                            <LinearLayout
+                                android:id="@+id/linear_layout_1"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:layout_marginLeft="-27dp"
-                                android:layout_marginTop="1dp"
-                                android:layout_gravity="bottom">
-                            <ImageView
-                                android:id="@+id/enlarge_button"
-                                android:layout_width="wrap_content"
-                                android:elevation="4dp"
-                                android:layout_height="wrap_content"
-                                android:scaleType="centerCrop"
-                                android:layout_marginLeft="0dp"
-                                android:layout_marginBottom="-23dp"
-                                android:layout_gravity="bottom"
-                                android:src="@drawable/ic_enlargement_white"/>
+                                android:layout_gravity="center"
+                                android:orientation="vertical">
 
-                            <ImageView
-                                android:id="@+id/enlarge_button_shadow"
-                                android:layout_width="wrap_content"
-                                android:elevation="2dp"
-                                android:layout_height="wrap_content"
-                                android:scaleType="centerCrop"
-                                android:layout_marginLeft="1dp"
-                                android:layout_marginBottom="2dp"
-                                android:src="@drawable/ic_enlargement_gray" />
-                            </LinearLayout>
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:paddingLeft="16dp"
-                                android:paddingTop="4dp">
-
-                                <LinearLayout
+                                <androidx.constraintlayout.widget.ConstraintLayout
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:orientation="horizontal">
+                                    android:layout_height="@dimen/artwork_height_in_view_pager">
 
-                                    <TextView
-                                        android:id="@+id/artist_name"
+
+                                    <!-- 겹치는 enlarge 버튼 -->
+
+                                    <androidx.cardview.widget.CardView
                                         android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:paddingTop="4dp"
-                                        android:text="Apink"
-                                        android:textSize="@dimen/text_size_artist_name_in_artist_info"
-                                        android:textStyle="bold" />
+                                        android:layout_height="0dp"
+                                        android:layout_marginBottom="1dp"
+                                        app:cardBackgroundColor="@android:color/transparent"
+                                        app:cardCornerRadius="@dimen/rounded_background_radius"
+                                        app:cardElevation="0dp"
+                                        app:cardPreventCornerOverlap="false"
+                                        app:cardUseCompatPadding="true"
+                                        android:clipChildren="false"
+                                        android:clipToPadding="false"
+                                        android:clipToOutline="true"
+                                        android:background="@drawable/rounded_background"
+                                        app:layout_constraintBottom_toBottomOf="parent"
+                                        app:layout_constraintEnd_toEndOf="parent"
+                                        app:layout_constraintStart_toStartOf="parent"
+                                        app:layout_constraintTop_toTopOf="parent"
+                                        app:layout_constraintWidth_percent="1">
 
-                                    <ImageButton
-                                        android:id="@+id/add_button"
+                                    <androidx.viewpager2.widget.ViewPager2
+                                            android:id="@+id/image_pager"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:clipChildren="false"
+                                            android:clipToPadding="false"
+                                            android:overScrollMode="never" />
+                                    </androidx.cardview.widget.CardView>
+
+                                    <LinearLayout
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_gravity="center"
-                                        android:padding="8dp"
-                                        android:src="@drawable/ic_add_button"
-                                        android:background="?attr/selectableItemBackgroundBorderless" />
-                                </LinearLayout>
+                                        android:orientation="vertical"
+                                        android:layout_marginEnd="30dp"
+                                        app:layout_constraintBottom_toBottomOf="parent"
+                                        app:layout_constraintEnd_toEndOf="parent">
+                                        <ImageView
+                                            android:id="@+id/enlarge_button_shadow"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:src="@drawable/ic_enlargement_white"
+                                            android:layout_marginBottom="-23dp"
+                                            android:visibility="gone"/>
+                                        <ImageView
+                                            android:id="@+id/enlarge_button"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:src="@drawable/ic_enlargement_gray"
+                                            android:visibility="gone"/>
+
+                                    </LinearLayout>
+                                </androidx.constraintlayout.widget.ConstraintLayout>
 
 
                                 <LinearLayout
-                                    android:id="@+id/debut_layout"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
+                                    android:orientation="vertical"
+                                    android:paddingLeft="16dp"
+                                    android:paddingTop="4dp">
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="데뷔일: "
-                                        android:textSize="@dimen/text_size_basic" />
+                                        android:orientation="horizontal">
 
-                                    <TextView
-                                        android:id="@+id/debut_date"
-                                        android:layout_width="wrap_content"
+                                        <TextView
+                                            android:id="@+id/artist_name"
+                                            android:layout_width="0dp"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="1"
+                                            android:paddingTop="4dp"
+                                            android:text="Apink"
+                                            android:gravity="center"
+                                            android:textSize="@dimen/text_size_artist_name_in_artist_info"
+                                            android:textStyle="bold" />
+
+                                        <ImageButton
+                                            android:id="@+id/add_button"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:padding="8dp"
+                                            android:src="@drawable/ic_heart_plus"
+                                            android:background="?attr/selectableItemBackgroundBorderless" />
+                                    </LinearLayout>
+
+
+                                    <LinearLayout
+                                        android:id="@+id/debut_layout"
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="2011-04-19"
-                                        android:textSize="@dimen/text_size_basic"  />
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="데뷔일: "
+                                            android:textSize="@dimen/text_size_basic" />
+
+                                        <TextView
+                                            android:id="@+id/debut_date"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="2011-04-19"
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:id="@+id/activity_years_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="연대: "
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                                        <TextView
+                                            android:id="@+id/activity_years"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="2010, 2020"
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                    </LinearLayout>
+
+
+                                    <LinearLayout
+                                        android:id="@+id/members_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="멤버: "
+                                            android:layout_gravity="top"
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                                        <TextView
+                                            android:id="@+id/members"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="박초롱, 정은지, 윤보미, 김남주, 오하영"
+                                            android:textSize="@dimen/text_size_between_small_and_basic"
+                                            android:textStyle="italic"/>
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:id="@+id/agency_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="소속사: "
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                                        <TextView
+                                            android:id="@+id/agency"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="아이에스티엔터테인먼트"
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:id="@+id/activity_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="활동: "
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                                        <TextView
+                                            android:id="@+id/activity"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="에이핑크"
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
+                                    </LinearLayout>
+
+                                    <View
+                                        android:id="@+id/gesture_overlay"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:background="@android:color/transparent" />
+
+                                    <LinearLayout
+                                        android:id="@+id/added_date_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="추가한 날짜: "
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                                        <TextView
+                                            android:id="@+id/added_date"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="2025-04-19"
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:id="@+id/genres_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="장르: "
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
+
+                                        <TextView
+                                            android:id="@+id/genres"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="[k-pop]"
+                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:id="@+id/followers_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:layout_marginTop="8dp"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="followers: "
+                                            android:textSize="@dimen/text_size_between_small_and_basic"/>
+
+                                        <TextView
+                                            android:id="@+id/followers"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="1,303,633"
+                                            android:textSize="@dimen/text_size_between_small_and_basic"
+                                            />
+                                    </LinearLayout>
+
+
                                 </LinearLayout>
-
-                                <LinearLayout
-                                    android:id="@+id/activity_years_layout"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="연대: "
-                                        android:textSize="@dimen/text_size_basic"  />
-
-                                    <TextView
-                                        android:id="@+id/activity_years"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="2010, 2020"
-                                        android:textSize="@dimen/text_size_basic"  />
-                                </LinearLayout>
-
-
-                                <LinearLayout
-                                    android:id="@+id/members_layout"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="멤버: "
-                                        android:textSize="@dimen/text_size_basic"  />
-
-                                    <TextView
-                                        android:id="@+id/members"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="박초롱, 정은지, 윤보미, 김남주, 오하영"
-                                        android:textSize="@dimen/text_size_basic"
-                                        android:textStyle="italic"/>
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:id="@+id/agency_layout"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="소속사: "
-                                        android:textSize="@dimen/text_size_basic"  />
-
-                                    <TextView
-                                        android:id="@+id/agency"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="아이에스티엔터테인먼트"
-                                        android:textSize="@dimen/text_size_basic"  />
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:id="@+id/activity_layout"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="활동: "
-                                        android:textSize="@dimen/text_size_basic"  />
-
-                                    <TextView
-                                        android:id="@+id/activity"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="에이핑크"
-                                        android:textSize="@dimen/text_size_basic" />
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:id="@+id/added_date_layout"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="추가한 날짜: "
-                                        android:textSize="@dimen/text_size_basic"  />
-
-                                    <TextView
-                                        android:id="@+id/added_date"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="2025-04-19"
-                                        android:textSize="@dimen/text_size_basic" />
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:id="@+id/genres_layout"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="장르: "
-                                        android:textSize="@dimen/text_size_basic" />
-
-                                    <TextView
-                                        android:id="@+id/genres"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="[k-pop]"
-                                        android:textSize="@dimen/text_size_basic"  />
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:id="@+id/followers_layout"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="followers: "
-                                        android:textSize="@dimen/text_size_basic" />
-
-                                    <TextView
-                                        android:id="@+id/followers"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="1,303,633"
-                                        android:textSize="@dimen/text_size_basic"
-                                        />
-                                </LinearLayout>
-
-
                             </LinearLayout>
-                        </LinearLayout>
 
-                        <!-- 앨범 타이틀 -->
-                        <TextView
-                            android:id="@+id/album_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="30dp"
-                            android:text="Albums"
-                            android:textSize="@dimen/text_size_sector_in_artist_info"
-                            android:textStyle="bold" />
+                            <!-- 앨범 타이틀 -->
 
-                        <!-- 앨범 RecyclerView -->
+                            <!-- 앨범 RecyclerView -->
 
-                        <!-- 곡 타이틀 -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/album_result_recycler_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:nestedScrollingEnabled="false" />
-
-                        <TextView
-                            android:id="@+id/track_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="30dp"
-                            android:text="Songs"
-                            android:textSize="@dimen/text_size_sector_in_artist_info"
-                            android:textStyle="bold" />
-
-                        <!-- 트랙 RecyclerView -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/track_result_recycler_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:nestedScrollingEnabled="false"
-                            android:layout_marginBottom="20dp"/>
-
-
-                        <LinearLayout
-                            android:id="@+id/biography_layout"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:paddingBottom="@dimen/navigation_bar_margin"
-                            android:orientation="vertical">
-
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:paddingLeft="12dp"
+                                android:paddingRight="12dp"
+                                android:orientation="vertical">
+                            <!-- 곡 타이틀 -->
                             <TextView
+                                android:id="@+id/album_text"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="30dp"
-                                android:text="Biography"
+                                android:text="Albums"
                                 android:textSize="@dimen/text_size_sector_in_artist_info"
                                 android:textStyle="bold" />
 
-                            <TextView
-                                android:id="@+id/biography_text"
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/album_result_recycler_view"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:padding="10dp"
-                                android:layout_marginRight="@dimen/margin_right_value_of_biography_in_artist_info"
-                                android:lineSpacingExtra="8dp"
-                                android:text="statement"
-                                android:textSize="@dimen/text_size_biography_in_artist_info" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:id="@+id/empty_space_layout"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:paddingBottom="@dimen/navigation_bar_margin"
-                            android:orientation="vertical">
+                                android:nestedScrollingEnabled="false" />
 
                             <TextView
+                                android:id="@+id/track_text"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:padding="10dp"
-                                android:text="\n\n\n\n\n\n\n\n\n\n\n"
-                                android:textSize="@dimen/text_size_biography_in_artist_info" />
+                                android:layout_marginTop="30dp"
+                                android:text="Songs"
+                                android:textSize="@dimen/text_size_sector_in_artist_info"
+                                android:textStyle="bold" />
 
+                            <!-- 트랙 RecyclerView -->
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/track_result_recycler_view"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:nestedScrollingEnabled="false"
+                                android:layout_marginBottom="20dp"/>
+
+
+                            <LinearLayout
+                                android:id="@+id/biography_layout"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:paddingBottom="@dimen/navigation_bar_margin"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="30dp"
+                                    android:text="Biography"
+                                    android:textSize="@dimen/text_size_sector_in_artist_info"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/biography_text"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:padding="10dp"
+                                    android:layout_marginRight="@dimen/margin_right_value_of_biography_in_artist_info"
+                                    android:lineSpacingExtra="8dp"
+                                    android:text="statement"
+                                    android:textSize="@dimen/text_size_biography_in_artist_info" />
+
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/empty_space_layout"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:paddingBottom="@dimen/navigation_bar_margin"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:padding="10dp"
+                                    android:text="\n\n\n\n\n\n\n\n\n\n\n"
+                                    android:textSize="@dimen/text_size_biography_in_artist_info" />
+
+                            </LinearLayout>
                         </LinearLayout>
+                        </LinearLayout>
+                    </androidx.core.widget.NestedScrollView>
 
-                    </LinearLayout>
-                </androidx.core.widget.NestedScrollView>
 
-
-            </LinearLayout>
+                </LinearLayout>
 
             </FrameLayout>
         </androidx.core.widget.NestedScrollView>
@@ -391,11 +430,6 @@
 
 
     <!-- ✅ 제스처 감지용 오버레이 -->
-    <View
-        android:id="@+id/gesture_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/transparent" />
 
 
     <!-- ✅ 화면 디밍용 오버레이 -->

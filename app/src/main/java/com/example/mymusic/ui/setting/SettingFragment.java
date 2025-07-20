@@ -1,6 +1,8 @@
 package com.example.mymusic.ui.setting;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -14,7 +16,10 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +29,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.mymusic.R;
+import com.example.mymusic.cache.CacheUtil;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -35,7 +41,8 @@ public class SettingFragment extends Fragment {
     private int originalTracksLimit, originalArtistsLimit, originalAlbumsLimit;
     private SwitchCompat numericPadStateSwitch, favoritesColorStateSwitch;
     private boolean numericPadState, favoritesTrackColorUnificationState;
-    private ImageView colorCircleStrawberryPink, colorCircleManchesterCity, colorCircleNavy, colorCirclePantone;
+    private ImageView colorCircleStrawberryPink, colorCircleManchesterCity, colorCircleBasic, colorCirclePantone;
+    private ImageButton clearCacheImageButton;
     private SharedPreferences prefs;
 
     @Override
@@ -66,9 +73,10 @@ public class SettingFragment extends Fragment {
         colorCircleStrawberryPink = view.findViewById(R.id.color_circle_strawberry_pink);
         colorCircleManchesterCity  = view.findViewById(R.id.color_circle_manhester_city);
         colorCirclePantone = view.findViewById(R.id.color_circle_color_pantone_712c);
-        colorCircleNavy = view.findViewById(R.id.color_circle_navy_blue);
+        colorCircleBasic = view.findViewById(R.id.color_circle_navy_blue);
         perSonalColorEditText = view.findViewById(R.id.personal_color);
         favoritesColorStateSwitch = view.findViewById(R.id.favorites_color_state_switch);
+        clearCacheImageButton = view.findViewById(R.id.clear_cache_button);
     }
 
     private void setViewInitialState(){
@@ -170,6 +178,61 @@ public class SettingFragment extends Fragment {
                 perSonalColorEditText.setSelection(perSonalColorEditText.getText().length());
             }
         });
+
+
+        Context context = getContext();
+        clearCacheImageButton.setOnClickListener(v -> {
+            Dialog dialog = new Dialog(context);
+            dialog.setContentView(R.layout.dialog_custom_with_radio_group);
+
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.setCancelable(true);
+
+            RadioGroup radioGroup = dialog.findViewById(R.id.radio_group_container);
+            TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+            TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+            confirmButton.setText("삭제");
+
+            TextView title = dialog.findViewById(R.id.title);
+            title.setText("캐시 삭제");
+            RadioButton radioOption1 = dialog.findViewById(R.id.radio_option1);
+            RadioButton radioOption2 = dialog.findViewById(R.id.radio_option2);
+            RadioButton radioOption3 = dialog.findViewById(R.id.radio_option3);
+            radioOption1.setText("Memory Cache");
+            radioOption2.setText("Disk Cache");
+            radioOption3.setText("모든 캐시 삭제");
+
+            cancelButton.setOnClickListener(v1 -> dialog.dismiss());
+
+            confirmButton.setOnClickListener(v2 -> {
+                int selectedId = radioGroup.getCheckedRadioButtonId();
+                if (selectedId != -1) {
+                    RadioButton selected = dialog.findViewById(selectedId);
+                    String selectedText = selected.getText().toString();
+
+                    switch (selectedText) {
+                        case "Memory Cache":
+                            CacheUtil.clearMemoryCache(context);
+                            Toast.makeText(context, "Memory Cache를 삭제했습니다.", Toast.LENGTH_SHORT).show();
+                            break;
+                        case "Disk Cache":
+                            CacheUtil.clearDiskCache(context);
+                            Toast.makeText(context, "Disk Cache를 삭제했습니다.", Toast.LENGTH_SHORT).show();
+                            break;
+                        case "모든 캐시 삭제":
+                            CacheUtil.celarAllCaches(context);
+                            Toast.makeText(context, "모든 Cache를 삭제했습니다.", Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(context, "삭제할 캐시를 선택하세요.", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            dialog.show();
+        });
+
 
     }
 
@@ -323,10 +386,18 @@ public class SettingFragment extends Fragment {
 
     private void colorSetting() {
         colorCircleStrawberryPink.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.apink_official_color)));
-        colorCircleNavy.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.navy_blue)));
+        colorCircleBasic.setOnClickListener(v -> {
+            change_color(ContextCompat.getColor(requireContext(), R.color.textPrimary));
+            if (prefs == null) {
+                prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+            }
+            prefs.edit().putBoolean("basic_color", true).apply();
+        });
         colorCirclePantone.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.pantone)));
         colorCircleManchesterCity.setOnClickListener(v -> change_color(ContextCompat.getColor(requireContext(), R.color.machester_city_official_color)));
     }
+
+
 
 
     private int parseColorCode(String hexCode) {
@@ -338,6 +409,35 @@ public class SettingFragment extends Fragment {
         }
     }
 
+    public static void applyDarkModeSensitiveCustomStyling(Activity activity){
+        // get color value
+        SharedPreferences prefs = activity.getSharedPreferences("settings", Context.MODE_PRIVATE);
+        if (prefs.getBoolean("basic_color", false)){
+            change_color(activity, ContextCompat.getColor(activity, R.color.textPrimary));
+        }
+    }
+
+    private static void change_color(Activity activity, int color) {
+       BottomNavigationView bottomNav = activity.findViewById(R.id.nav_view);
+        if (bottomNav != null) {
+            int unselectedColor = Color.GRAY;
+
+            int[][] states = new int[][] {
+                    new int[] { android.R.attr.state_checked },
+                    new int[] { -android.R.attr.state_checked }
+            };
+
+            int[] colors = new int[] {
+                    color,
+                    unselectedColor
+            };
+
+            ColorStateList colorStateList = new ColorStateList(states, colors);
+
+            bottomNav.setItemIconTintList(colorStateList);
+            bottomNav.setItemTextColor(colorStateList);
+        }
+    }
     private void change_color(int color) {
         BottomNavigationView bottomNav = getActivity().findViewById(R.id.nav_view);
         if (bottomNav != null) {
@@ -363,6 +463,7 @@ public class SettingFragment extends Fragment {
                 prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
             }
             prefs.edit().putInt("selected_color", color).apply();
+            prefs.edit().putBoolean("basic_color", false).apply();
         }
     }
 

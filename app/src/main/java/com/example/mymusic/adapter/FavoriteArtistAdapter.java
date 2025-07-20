@@ -1,10 +1,13 @@
 package com.example.mymusic.adapter;
 
+import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -12,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -29,11 +33,13 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.example.mymusic.MainActivity;
 import com.example.mymusic.R;
 
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.model.FavoriteArtistDiffCallback;
+import com.example.mymusic.simpleArtistInfo.SimpleArtistDialogHelper;
 import com.example.mymusic.util.NumberUtils;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
@@ -79,6 +85,11 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         void onNavigateClick(FavoriteArtist favorite, ImageView sharedImageView, String transitionNameForm, int position);
     }
 
+    private OnDetailButtonClickListener detailButtonClickListener;
+    public interface OnDetailButtonClickListener{
+        void onItemClick(int position);
+    }
+
     public FavoriteArtistAdapter(List<FavoriteArtist> favoriteArtistList,
                                  OnDeleteClickListener deleteClickListener,
                                  OnMetadataClickListener metadataClickListener,
@@ -86,7 +97,8 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
                                  FavoriteArtistViewModel viewModel,
                                  OnItemNavigateClickListener navigateClickListener,
                                  OnAddSelectedListener addSelectedListener,
-                                 OnRemoveSelectedListener removeSelectedListener){
+                                 OnRemoveSelectedListener removeSelectedListener,
+                                 OnDetailButtonClickListener detailButtonClickListener){
         this.favoriteArtistList = favoriteArtistList;
         this.deleteClickListener = deleteClickListener;
         this.metadataClickListener = metadataClickListener;
@@ -95,6 +107,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
         this.addSelectedListener = addSelectedListener;
         this.removeSelectedListener = removeSelectedListener;
         this.metadataLongClickListener = metadataLongClickListener;
+        this.detailButtonClickListener = detailButtonClickListener;
     }
 
     public static class FavoriteArtistViewHolder extends RecyclerView.ViewHolder{
@@ -303,6 +316,11 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
             else{
                 removeSelectedListener.onItemClick(artist);
             }
+        });
+
+        holder.imageAlbumButton.setOnClickListener(v -> {
+            if (detailButtonClickListener != null)
+                detailButtonClickListener.onItemClick(holder.getAdapterPosition());
         });
 
     }

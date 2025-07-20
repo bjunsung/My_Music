@@ -7,38 +7,35 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.LruCache;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public class CustomImageCache {
-    private static final String TAG = "CustomImageCache";
-    private static CustomImageCache instance;
+public class CustomFavoriteArtistImageCacheL2 {
+    private static final String TAG = "CustomFavoriteArtistImageCacheL2";
+    private static CustomFavoriteArtistImageCacheL2 instance;
     private final LruCache<String, Bitmap> memoryCache;
     private String pinnedKey = null;
 
     private static int cacheSize;
 
-    private CustomImageCache(int cacheSize) {
-        CustomImageCache.cacheSize = cacheSize;
+    private CustomFavoriteArtistImageCacheL2(int cacheSize) {
+        CustomFavoriteArtistImageCacheL2.cacheSize = cacheSize;
         memoryCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(@NonNull String key, @NonNull Bitmap value) {
-                return 1; // 모든 항목의 크기를 1로 설정 → 개수 기준
+                return value.getByteCount() / 1024; // 모든 항목의 크기를 1로 설정 → 개수 기준
             }
 
             @Override
             protected void entryRemoved(boolean evicted, @NonNull String key, @NonNull Bitmap oldValue, @Nullable Bitmap newValue) {
                 if (key.equals(pinnedKey)){
-                    Log.d("CustomImageCache", "Pinned key tried to be evicted. Restoring: " + key);
+                    Log.d(TAG, "Pinned key tried to be evicted. Restoring: " + key);
                     memoryCache.put(key, oldValue);
                 }
             }
         };
     }
 
-    public static synchronized CustomImageCache getInstance() {
+    public static synchronized CustomFavoriteArtistImageCacheL2 getInstance() {
         if (instance == null) {
-            throw new IllegalStateException("CustomImageCache is not initialized. Call init() first.");
+            throw new IllegalStateException("CustomFavoriteArtistImageCacheL2 is not initialized. Call init() first.");
         }
         return instance;
     }
@@ -65,7 +62,7 @@ public class CustomImageCache {
 
     public static synchronized void init(int size) {
         if (instance == null) {
-            instance = new CustomImageCache(size);
+            instance = new CustomFavoriteArtistImageCacheL2(size);
         }
     }
 

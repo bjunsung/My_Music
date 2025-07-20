@@ -126,7 +126,7 @@ public class ArtistMetadataRepository {
     }
 
 
-    public long setRepresentativeImage(String vibeId, int position) {
+    public long setRepresentativeImage(String vibeId, int position, String prevRepresentativeUrl) {
         ArtistMetadata existingMetadata = artistMetadataDao.getArtistMetadata(vibeId);
         if (existingMetadata == null || existingMetadata.images == null || existingMetadata.images.isEmpty()) {
             return 0;  // 실패
@@ -141,6 +141,7 @@ public class ArtistMetadataRepository {
         String selectedImage = originalImages.get(position);
         List<String> reorderedImages = new ArrayList<>();
         reorderedImages.add(selectedImage);
+        reorderedImages.add(prevRepresentativeUrl);
 
         for (int i = 0; i < originalImages.size(); i++) {
             if (i == position) continue;

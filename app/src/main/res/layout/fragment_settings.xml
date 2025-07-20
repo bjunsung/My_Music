@@ -15,7 +15,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginRight="16dp"
-        android:layout_marginTop="28dp"
         android:src="@drawable/ic_info"
         >
     </TextView>
@@ -32,7 +31,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/confirm_button"
         android:layout_marginRight="16dp"
-        android:layout_marginTop="28dp"
         android:src="@drawable/ic_info"
         >
     </TextView>
@@ -86,6 +84,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:text="아티스트 검색시 표시할 최대 아티스트 수"
             android:textSize="16sp"/>
 
@@ -116,6 +115,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:text="Artist Information 에서 표시할 최대 앨범 수"
             android:textSize="16sp"/>
 
@@ -145,6 +145,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_gravity="center"
             android:text="가사를 추가할때 키보드를 Number Pad Mode로 설정합니다."
             android:textSize="16sp">
         </TextView>
@@ -160,12 +161,46 @@
 
     </LinearLayout>
 
+    <!-- 캐시 삭제 -->
     <LinearLayout
         android:id="@+id/color_setting_in_favorites"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="16dp"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/keyboard_mode_on_add_lyrics"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/keyboard_mode_on_add_lyrics">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Artist의 다른노래 리스트 배경 색상을 단일화합니다."
+            android:layout_gravity="center"
+            android:textSize="16sp">
+        </TextView>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/favorites_color_state_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:gravity="center"
+            android:padding="8dp"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cache_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/color_setting_in_favorites"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"
@@ -174,31 +209,28 @@
 
         <TextView
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Artist의 다른노래 리스트 배경 색상을 단일화합니다."
-            android:textSize="16sp">
-        </TextView>
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/favorites_color_state_switch"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_gravity="center"
+            android:text="메모리/디스크 캐시를 삭제합니다"
+            android:textSize="16sp"/>
+
+        <ImageButton
+            android:id="@+id/clear_cache_button"
+            android:layout_width="50dp"
+            android:src="@drawable/ic_delete_button"
+            android:background="@drawable/logo_transparent"
+            android:layout_height="wrap_content"
             android:padding="8dp"
-            android:checked="false"
-            tools:ignore="UseSwitchCompatOrMaterialXml" />
-
+            android:textSize="16sp"/>
     </LinearLayout>
-
-
 
     <LinearLayout
         android:id="@+id/navigation_icon_color"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/color_setting_in_favorites"
+        app:layout_constraintTop_toBottomOf="@id/cache_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"
@@ -210,52 +242,54 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            app:layout_constraintTop_toTopOf="@+id/number_pad_state_switch"
+            android:text="하단 아이콘 색상"
+            android:textSize="16sp"
+            android:layout_gravity="center"
             app:layout_constraintStart_toStartOf="parent"
-            android:text="하단 아이콘 색상 (사용자 지정 색상 코드 가능)"
-            android:textSize="16sp"/>
+            app:layout_constraintTop_toTopOf="@+id/number_pad_state_switch" />
 
-    <LinearLayout
-        android:id="@+id/color_palette"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:gravity="center"
-        android:visibility="visible">
+        <LinearLayout
+            android:id="@+id/color_palette"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+             android:layout_gravity="center"
+            android:padding="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:gravity="center"
+            android:visibility="visible">
 
         <ImageView
             android:id="@+id/color_circle_color_pantone_712c"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_margin="8dp"
+            android:layout_width="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_height="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_margin="4dp"
             android:background="@drawable/color_circle_pantone_712c"
             android:clickable="true"
             android:focusable="true"/>
 
         <ImageView
             android:id="@+id/color_circle_strawberry_pink"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_margin="8dp"
+            android:layout_width="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_height="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_margin="4dp"
             android:background="@drawable/color_circle_strawberry_pink"
             android:clickable="true"
             android:focusable="true"/>
         <ImageView
             android:id="@+id/color_circle_manhester_city"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_margin="8dp"
+            android:layout_width="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_height="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_margin="4dp"
             android:background="@drawable/color_circle_manhester_city"
             android:clickable="true"
             android:focusable="true"/>
 
         <ImageView
             android:id="@+id/color_circle_navy_blue"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_margin="8dp"
+            android:layout_width="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_height="@dimen/circle_color_palette_on_setting_fragment"
+            android:layout_margin="4dp"
             android:background="@drawable/color_circle_navy_blue"
             android:clickable="true"
             android:focusable="true"/>
@@ -270,7 +304,7 @@
             android:imeOptions="actionDone"
             android:inputType="text"
             android:hint="#000000"
-            >
+            android:visibility="gone">
         </EditText>
 
         <!-- 나머지 색상도 같은 방식으로 반복 -->

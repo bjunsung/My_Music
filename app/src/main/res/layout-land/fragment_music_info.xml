@@ -4,6 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <!-- 숨김 웹뷰 include -->
+    <include layout="@layout/include_webview_hidden" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -70,7 +72,7 @@
                     android:layout_gravity="center"
                     android:layout_marginTop="30dp"
                     android:padding="8dp"
-                    android:src="@drawable/ic_add_button"
+                    android:src="@drawable/ic_heart_plus"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:visibility="invisible"/>
 
@@ -133,7 +135,7 @@
                     <LinearLayout
                         android:orientation="vertical"
                         android:paddingLeft="16dp"
-                        android:paddingTop="30dp"
+                        android:paddingTop="14dp"
                         android:layout_marginBottom="@dimen/navigation_bar_margin"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
@@ -177,7 +179,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
                                 android:padding="8dp"
-                                android:src="@drawable/ic_add_button"
+                                android:layout_marginRight="8dp"
+                                android:src="@drawable/ic_heart_plus"
                                 android:background="?attr/selectableItemBackgroundBorderless" />
                         </LinearLayout>
 

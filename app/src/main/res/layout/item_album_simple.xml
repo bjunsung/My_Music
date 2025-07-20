@@ -9,8 +9,8 @@
     <!-- 앨범 이미지 -->
     <ImageView
         android:id="@+id/album_image"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="@dimen/simple_album_size"
+        android:layout_height="@dimen/simple_album_size"
         android:layout_gravity="center"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_image_not_found_foreground"
@@ -31,7 +31,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:visibility="visible"
-            android:maxWidth="150dp"
+            android:maxWidth="@dimen/simple_album_max_text_length"
             android:maxLines="1"
             android:ellipsize="marquee"
             />

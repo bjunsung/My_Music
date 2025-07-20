@@ -13,13 +13,24 @@ public class ArtistInfoViewModel extends AndroidViewModel {
     private String initialTransitionNameForm = null;
     private int initialPosition = -1;
     private String currentTransitionName = null;
+
     private int trackPosition = -1;
     private int albumPosition = -1;
+
+    private int reenterAlbumScrollPosition = 0;
+    private int reenterAlbumScrollOffset = 0;
+
     private boolean firstFragmentCreation = true;
-    private boolean secondPostponeFlag = false; //return from detail fragment
     private boolean metadataExist = false;
-    private int lastPositionAtImageDetailFragment = -1;
+
+
+    private int scrollY = 0;
+
+
+    private boolean secondPostponeFlag = false; //return from detail fragment
     private int startPositionAtImageDetailFragment = -1;
+    private int lastPositionAtImageDetailFragment = -1;
+
 
 
     public ArtistInfoViewModel(@NonNull Application application) {
@@ -112,5 +123,29 @@ public class ArtistInfoViewModel extends AndroidViewModel {
 
     public void setStartPositionAtImageDetailFragment(int startPositionAtImageDetailFragment) {
         this.startPositionAtImageDetailFragment = startPositionAtImageDetailFragment;
+    }
+
+    public int getReenterAlbumScrollPosition() {
+        return reenterAlbumScrollPosition;
+    }
+
+    public void setReenterAlbumScrollPosition(int reenterAlbumScrollPosition) {
+        this.reenterAlbumScrollPosition = reenterAlbumScrollPosition;
+    }
+
+    public int getReenterAlbumScrollOffset() {
+        return reenterAlbumScrollOffset;
+    }
+
+    public void setReenterAlbumScrollOffset(int reenterAlbumScrollOffset) {
+        this.reenterAlbumScrollOffset = reenterAlbumScrollOffset;
+    }
+
+    public int getScrollY() {
+        return scrollY;
+    }
+
+    public void setScrollY(int scrollY) {
+        this.scrollY = scrollY;
     }
 }

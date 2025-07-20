@@ -243,9 +243,9 @@ public class FavoriteArtistViewModel extends AndroidViewModel {
         void onFailure(ArtistMetadata metadata, String reason);
     }
 
-    public void setRepresentativeArtistImage(String vibeId, int selectedPosition, Consumer<Boolean> callback){
+    public void setRepresentativeArtistImage(String vibeId, int selectedPosition, String prevRepresentativeUrl, Consumer<Boolean> callback){
         new Thread(() -> {
-            long result = artistMetadataRepository.setRepresentativeImage(vibeId, selectedPosition);
+            long result = artistMetadataRepository.setRepresentativeImage(vibeId, selectedPosition, prevRepresentativeUrl);
             if (result > 0) new Handler(Looper.getMainLooper()).post(() -> callback.accept(true));
             else new Handler(Looper.getMainLooper()).post(() -> callback.accept(false));
         }).start();

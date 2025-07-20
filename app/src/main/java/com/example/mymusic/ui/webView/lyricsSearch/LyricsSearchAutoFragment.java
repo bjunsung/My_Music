@@ -257,7 +257,7 @@ public class LyricsSearchAutoFragment extends Fragment {
         if (trackName != null && !trackName.isEmpty()) {
             StringBuilder query = new StringBuilder(trackName);
             if (artistName != null && !artistName.isEmpty()) query.append(" ").append(artistName);
-            if (albumName != null && !albumName.isEmpty()) query.append(" ").append(albumName);
+            //if (albumName != null && !albumName.isEmpty()) query.append(" ").append(albumName);
 
             try {
                 String searchLink = "https://vibe.naver.com/search?query=" + URLEncoder.encode(query.toString(), "UTF-8");

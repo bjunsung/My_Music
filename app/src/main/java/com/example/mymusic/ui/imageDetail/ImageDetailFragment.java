@@ -29,18 +29,15 @@ import androidx.transition.Transition;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.example.mymusic.R; // 자신의 R 클래스 경로
-import com.example.mymusic.cache.ImagePreloader;
-import com.example.mymusic.cache.customCache.CustomImageCache;
+import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL2;
 import com.example.mymusic.databinding.FragmentImageDetailBinding;
 import com.example.mymusic.ui.artistInfo.ArtistInfoFragment;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,7 +51,6 @@ public class ImageDetailFragment extends Fragment {
     private ImageButton closeButton;
     private FrameLayout detailContainer;
     private boolean isLightMode = false;
-    ImageButton backButtonImageButton, emptySpaceImageButton;
     private FragmentImageDetailBinding binding;
     private String transitionName;
     private final String TAG = "ImageDetailFragment";
@@ -156,6 +152,10 @@ public class ImageDetailFragment extends Fragment {
         viewPager.setAdapter(pagerAdapter);
         // 시작 위치로 바로 이동 (애니메이션 없이)
         viewPager.setCurrentItem(startPosition, false);
+
+        viewPager.setOffscreenPageLimit(1);
+
+
         if (transitionName != null)
             viewPager.setTransitionName(transitionName);
 
@@ -222,10 +222,10 @@ public class ImageDetailFragment extends Fragment {
     }
 
     private void saveCache(int currentPosition) {
-        for (int idx = currentPosition  ; idx < currentPosition + 1; ++idx){
+        for (int idx = currentPosition - 1 ; idx <= currentPosition + 0; ++idx){
             if (idx > 0 && idx < imageUrls.size()){ //0 이면 저장 x
                 String url = imageUrls.get(idx);
-                if (CustomImageCache.getInstance().get(url) == null) { //캐시에 없을 때만 저장
+                if (CustomFavoriteArtistImageCacheL2.getInstance().get(url) == null) {//캐시에 없을 때만 저장
                     Glide.with(viewGroupContext)
                             .asBitmap()
                             .load(url)
@@ -234,13 +234,12 @@ public class ImageDetailFragment extends Fragment {
                             .into(new CustomTarget<Bitmap>() {
                                 @Override
                                 public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
-                                    CustomImageCache.getInstance().put(url, resource);
+                                    CustomFavoriteArtistImageCacheL2.getInstance().put(url, resource);
+                                    Log.d(TAG, "current Cache Size: " + CustomFavoriteArtistImageCacheL2.getInstance().getSize());
                                 }
 
                                 @Override
-                                public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                                }
+                                public void onLoadCleared(@Nullable Drawable placeholder) {}
                             });
                 }
             }
@@ -253,11 +252,6 @@ public class ImageDetailFragment extends Fragment {
         viewPager = view.findViewById(R.id.detail_view_pager);
         closeButton = view.findViewById(R.id.close_button);
         detailContainer = view.findViewById(R.id.detail_container);
-        Activity activity = requireActivity();
-        if (activity != null){
-            backButtonImageButton = activity.findViewById(R.id.back_button);
-            emptySpaceImageButton = activity.findViewById(R.id.empty_space);
-        }
         imageCountInfoLayout = view.findViewById(R.id.image_count_info_layout);
         currentPositionNumberTextView = view.findViewById(R.id.current_number);
         totalImageSizeTextView = view.findViewById(R.id.total_image_count);
@@ -286,29 +280,6 @@ public class ImageDetailFragment extends Fragment {
         //keep screen on
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // backButtonImageButton이 null이면 다시 시도하여 가져오기
-        if (backButtonImageButton == null) {
-            backButtonImageButton = activity.findViewById(R.id.back_button);
-        }
-
-        if (backButtonImageButton != null) {
-            backButtonImageButton.setVisibility(View.GONE);
-        } else {
-            // 여전히 null인 경우 다시 시도 (한 번 더)
-            backButtonImageButton = activity.findViewById(R.id.back_button);
-            if (backButtonImageButton != null) {
-                backButtonImageButton.setVisibility(View.GONE);
-            }
-        }
-
-        // emptySpaceImageButton도 같은 방식 적용
-        if (emptySpaceImageButton == null) {
-            emptySpaceImageButton = activity.findViewById(R.id.empty_space);
-        }
-
-        if (emptySpaceImageButton != null) {
-            emptySpaceImageButton.setVisibility(View.GONE);
-        }
 
         // 시스템 바 숨기기
         insetsController = WindowCompat.getInsetsController(
@@ -350,8 +321,6 @@ public class ImageDetailFragment extends Fragment {
         if (insetsController != null) {
             insetsController.show(WindowInsetsCompat.Type.systemBars());
         }
-        if (backButtonImageButton != null) { backButtonImageButton.setVisibility(View.VISIBLE); }
-        if (emptySpaceImageButton != null) { emptySpaceImageButton.setVisibility(View.VISIBLE); }
         sliderHandler.removeCallbacks(sliderRunnable);
 
     }

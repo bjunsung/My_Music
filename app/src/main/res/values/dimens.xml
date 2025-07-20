@@ -5,16 +5,33 @@
     <dimen name="navigation_bar_margin">48dp</dimen>
 
     <dimen name="bottom_bar_back_space_margin">10dp</dimen>
-    <dimen name="artwork_size">250dp</dimen>
-    <dimen name="text_size_basic">20sp</dimen>
+    <dimen name="artwork_size">320dp</dimen>
+
+    <dimen name="artwork_height_in_view_pager">320dp</dimen>
+    <dimen name="text_size_basic">18sp</dimen>
+    <dimen name="text_size_between_small_and_basic">16sp</dimen>
     <dimen name="text_size_small">14sp</dimen>
 
     <!-- Artist info. -->
     <dimen name="text_size_artist_name_in_artist_info">24sp</dimen>
     <dimen name="text_size_sector_in_artist_info">26sp</dimen>
-    <dimen name="text_size_biography_in_artist_info">18sp</dimen>
+    <dimen name="text_size_biography_in_artist_info">16sp</dimen>
     <dimen name="margin_right_value_of_biography_in_artist_info">14dp</dimen>
 
     <!-- Favorites. -->
-    <dimen name="artwork_size_on_lyrics_in_favorites_fragment">100dp</dimen>
+    <dimen name="artwork_size_on_lyrics_in_favorites_fragment">80dp</dimen>
+    <dimen name="artwork_size_in_favorites_list">70dp</dimen>
+
+    <!-- settings. -->
+    <dimen name="circle_color_palette_on_setting_fragment">20dp</dimen>
+
+    <!-- item simple album. -->
+    <dimen name="simple_album_size">140dp</dimen>
+    <dimen name="simple_album_max_text_length">100dp</dimen>
+
+    <dimen name="artwork_side_margin">20dp</dimen>
+
+    <dimen name="rounded_background_radius">16dp</dimen>
+
+    <dimen name="custom_dialog_width">300dp</dimen>
 </resources>

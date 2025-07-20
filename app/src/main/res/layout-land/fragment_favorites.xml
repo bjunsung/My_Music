@@ -227,6 +227,8 @@
                                 android:orientation="horizontal">
 
                                 <!-- 앨범 이미지 -->
+
+                                <!-- 텍스트 정보 (제목, 아티스트) -->
                                 <ImageView
                                     android:id="@+id/focused_image"
                                     android:layout_width="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
@@ -234,7 +236,6 @@
                                     android:layout_marginEnd="12dp"
                                     android:scaleType="centerCrop" />
 
-                                <!-- 텍스트 정보 (제목, 아티스트) -->
                                 <LinearLayout
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"

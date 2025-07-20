@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,14 +18,19 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
-import com.example.mymusic.cache.customCache.CustomImageCache;
+import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1;
+import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL2;
+import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageDiskCacheL3;
+import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
+import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.model.Artist;
 
 import java.util.List;
@@ -40,6 +46,8 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     private OnImageLoadListener imageLoadListener;
     private  ArtistInfoViewModel viewModel;
     private Context viewGroupContext;
+
+    private OnImageClickListener imageClickListener;
     public interface OnImageLoadListener{
         void onLoadSuccess(ImageView imageView);
         void onLoadFailed();
@@ -47,12 +55,16 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
     }
 
+    public interface OnImageClickListener{
+        void onImageClick();
+    }
+
     public interface OnImageLongClickListener {
         void onLongClick(ImageView imageView, MotionEvent event, String imageUrl);
     }
 
 
-    public ImagePagerAdapter(Context context, List<String> urls, OnImageLongClickListener longClickListener, Artist artist, ArtistInfoViewModel viewModel) {
+    public ImagePagerAdapter(Context context, List<String> urls, OnImageLongClickListener longClickListener, OnImageClickListener imageClickListener, Artist artist, ArtistInfoViewModel viewModel) {
         this.context = context;
         this.imageUrls = urls;
         this.longClickListener = longClickListener;
@@ -60,7 +72,7 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
         this.transitionNameForm = viewModel.getInitialTransitionNameForm();
         this.recyclerviewPosition = viewModel.getInitialPosition();
         this.viewModel = viewModel;
-
+        this.imageClickListener = imageClickListener;
     }
 
     public void setImageLoadListener(OnImageLoadListener imageLoadListener) {
@@ -70,14 +82,12 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
     @NonNull
     @Override
     public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        ImageView imageView = new ImageView(context);
-        imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_image_pager, parent, false);
         viewGroupContext = parent.getContext();
-        return new ImageViewHolder(imageView);
+        return new ImageViewHolder(view);
     }
+
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -97,15 +107,15 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
 
         if (position == 0){
-            loadImageWithGlide(position, holder);
+            loadImageWithCustomCache(position, holder);
         }
-        else{
-            Bitmap cached = CustomImageCache.getInstance().get(imageUrls.get(position));
+        else{ //L2 cache 우선 탐색
+            Bitmap cached = CustomFavoriteArtistImageCacheL2.getInstance().get(imageUrls.get(position));
             if (cached == null){
-                Log.d(TAG, "Custom Cache Miss for position " + position + " load with Glide");
-                loadImageWithGlide(position, holder);
+                Log.d(TAG, "Custom L1 Cache Miss for position " + position + " load with Glide");
+                loadImageWithCustomCache(position, holder);
             } else{
-                Log.d(TAG, "Custom Cache Hit for position " + position);
+                Log.d(TAG, "Custom L1 Cache Hit for position " + position);
                 holder.imageView.setImageBitmap(cached);
                 if (position == viewModel.getStartPositionAtImageDetailFragment()){
                     imageLoadListener.onCustomCacheLoadSuccess();
@@ -115,14 +125,23 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
 
 
+
         // ✅ 2. 롱클릭을 감지할 GestureDetector 생성
         GestureDetector gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public void onLongPress(MotionEvent e) {
+                Log.d(TAG, "onLongPress()");
                 if (longClickListener != null) {
                     // 롱클릭이 발생하면 인터페이스를 통해 이벤트와 이미지 URL 전달
                     longClickListener.onLongClick(holder.imageView, e, url);
                 }
+            }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e){
+                imageClickListener.onImageClick();
+                Log.d(TAG, "onSingleTapConfirmed()");
+                return true;
             }
         });
 
@@ -135,22 +154,38 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
     }
 
-    private void loadImageWithGlide(int position, ImagePagerAdapter.ImageViewHolder holder) {
-        DiskCacheStrategy strategy = (position == 0)
-                ? DiskCacheStrategy.RESOURCE
-                : DiskCacheStrategy.NONE;
 
+    private void loadImageWithCustomCache(int position, ImagePagerAdapter.ImageViewHolder holder){ //L1 cache && L3 cache
+        String imageUrl = imageUrls.get(position);
+        Bitmap cachedBitmap = CustomFavoriteArtistImageReader.get(viewGroupContext, imageUrl);
+        if (cachedBitmap != null){
+            holder.imageView.setImageBitmap(cachedBitmap);
+            Log.d(TAG, "Loaded from custom cache for artist name: " + artist.artistName + " at position: " + position);
+            if (ViewCompat.getTransitionName(holder.imageView) != null) {
+                imageLoadListener.onLoadSuccess(holder.imageView);
+            }
+        } else{
+            loadImageWithGlide(position, holder);
+        }
+    }
+
+    private void loadImageWithGlide(int position, ImagePagerAdapter.ImageViewHolder holder) {
+        String imageUrl = imageUrls.get(position);
         Glide.with(viewGroupContext)
-                .load(imageUrls.get(position))
-                .diskCacheStrategy(strategy)
+                .load(imageUrl)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                //.skipMemoryCache(false)
                 .dontAnimate()
-                .override(480, 480)
+                .override(ArtistInfoFragment.ARTIST_ARTWORK_SIZE, ArtistInfoFragment.ARTIST_ARTWORK_SIZE)
                 .centerCrop()
                 .listener(new RequestListener<>() {
                     @Override
                     public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, @NonNull Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                        Log.d(TAG, "Image resourceReady for position " + holder.getAdapterPosition() + " and load from " + dataSource.toString());
-                        if (ViewCompat.getTransitionName(holder.imageView) != null) {
+                        Log.d(TAG, "Loaded with Glide from " + dataSource + " at position " + position);
+
+                        //CustomFavoriteArtistImageWriter.saveRepresentativeImage(viewGroupContext, imageUrl);
+
+                        if (ViewCompat.getTransitionName(holder.imageView) != null && (position == 0 || position == viewModel.getStartPositionAtImageDetailFragment() )) {
                             imageLoadListener.onLoadSuccess(holder.imageView);
                         }
                         return false;
@@ -158,7 +193,7 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
-                        Log.d(TAG, "Image load failed at " + holder.getAdapterPosition());
+                        Log.d(TAG, "Glide failed for position " + position);
                         imageLoadListener.onLoadFailed();
                         return false;
                     }
@@ -183,7 +218,8 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
         ImageView imageView;
         ImageViewHolder(@NonNull View itemView) {
             super(itemView);
-            imageView = (ImageView) itemView;
+            imageView = itemView.findViewById(R.id.image_view);  // ✅ 레이아웃 내 imageView를 찾음
         }
     }
+
 }

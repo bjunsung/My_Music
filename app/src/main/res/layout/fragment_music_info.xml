@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
+    <!-- 숨김 웹뷰 include -->
+    <include layout="@layout/include_webview_hidden" />
     <FrameLayout
         android:id="@+id/root_container"
         android:layout_width="match_parent"
@@ -133,7 +134,8 @@
                                         android:layout_height="wrap_content"
                                         android:layout_gravity="center"
                                         android:padding="8dp"
-                                        android:src="@drawable/ic_add_button"
+                                        android:layout_marginRight="8dp"
+                                        android:src="@drawable/ic_heart_plus"
                                         android:background="?attr/selectableItemBackgroundBorderless" />
                                 </LinearLayout>
 

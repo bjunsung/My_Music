@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/dialog_card"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="16dp"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@android:color/transparent">
+
+    <LinearLayout
+        android:id="@+id/dialog_root"
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:background="@color/basic">
+
+        <!-- 상단 배경 + 이미지 -->
+
+        <!-- 아래쪽 컨텐츠 영역 -->
+
+        <FrameLayout
+            android:id="@+id/palette_frame"
+            android:layout_width="360dp"
+            android:layout_height="240dp"
+            android:background="@color/purple_200"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <ImageView
+                android:id="@+id/rectangle_image_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <!-- ✅ 이미지가 절반 아래로 튀어나오게 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/circle_image_card"
+                android:layout_width="260dp"
+                android:layout_height="260dp"
+                android:layout_gravity="center_horizontal|bottom"
+                android:layout_marginBottom="-50dp"
+                android:visibility="visible"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="300dp"
+                app:cardElevation="4dp">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/circle_image_pager"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"/>
+            </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="60dp"
+            android:paddingBottom="20dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
+
+            <!-- 제목  -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/artist_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="G-DRAGON"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="@dimen/text_size_basic"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/expand_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:src="@drawable/ic_arrow_drop_down"
+                    android:contentDescription="Expand details" />
+                <ImageView
+                    android:id="@+id/contract_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:src="@drawable/ic_arrow_drop_up_24"
+                    android:contentDescription="contrack details"
+                    android:visibility="gone"/>
+            </LinearLayout>
+
+
+            <ScrollView
+                android:id="@+id/detail_container"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <LinearLayout
+                        android:id="@+id/debut_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="데뷔일: "
+                            android:textSize="@dimen/text_size_between_small_and_basic" />
+
+                        <TextView
+                            android:id="@+id/debut_date"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="2011-04-19"
+                            android:textSize="@dimen/text_size_between_small_and_basic" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/activity_years_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="연대: "
+                            android:textSize="@dimen/text_size_between_small_and_basic" />
+
+                        <TextView
+                            android:id="@+id/activity_years"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="2010, 2020"
+                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                    </LinearLayout>
+
+
+                    <LinearLayout
+                        android:id="@+id/members_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="멤버: "
+                            android:layout_gravity="top"
+                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                        <TextView
+                            android:id="@+id/members"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="박초롱, 정은지, 윤보미, 김남주, 오하영"
+                            android:textSize="@dimen/text_size_between_small_and_basic" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/agency_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="소속사: "
+                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                        <TextView
+                            android:id="@+id/agency"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="아이에스티엔터테인먼트"
+                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/activity_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="활동: "
+                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+
+                        <TextView
+                            android:id="@+id/activity"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="에이핑크"
+                            android:textSize="@dimen/text_size_between_small_and_basic" />
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

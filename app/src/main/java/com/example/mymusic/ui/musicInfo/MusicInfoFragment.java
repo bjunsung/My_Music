@@ -3,6 +3,7 @@ package com.example.mymusic.ui.musicInfo;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -19,10 +20,13 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,7 +76,6 @@ public class MusicInfoFragment extends Fragment {
     private ImageOverlayManager imageOverlayManager;
     private int artworkSize;
     private View bottomNavView;
-    ImageButton backButton;
     private TextView daysBetween;
     private int primaryColor, selectedColor, unselectedColor;
     // ✅ ViewBinding 사용을 권장합니다
@@ -80,6 +83,7 @@ public class MusicInfoFragment extends Fragment {
     private MusicInfoViewModel viewModel;
     public static final String REQUEST_KEY = "music_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_track_artwork_ended";
+    private WebView hiddenWebView;
 
 
     //ViewModel 연결
@@ -149,7 +153,6 @@ public class MusicInfoFragment extends Fragment {
 
 
         bottomNavView = requireActivity().findViewById(R.id.nav_view);
-        backButton = requireActivity().findViewById(R.id.back_button);
 
         //사진 다운로드를 위한 매니저 객체 설정
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
@@ -207,6 +210,7 @@ public class MusicInfoFragment extends Fragment {
             addedDateLayout = view.findViewById(R.id.added_date_layout);
             addedDate = view.findViewById(R.id.added_date);
             ImageView enlargeButton = view.findViewById(R.id.enlarge_button);
+            hiddenWebView = view.findViewById(R.id.hidden_web_view);
 
 
             trackTitle.setText(track.trackName);
@@ -332,14 +336,6 @@ public class MusicInfoFragment extends Fragment {
                         }
                         if (bottomNavView != null) {
                             bottomNavView.setBackgroundColor(primaryColor);
-                            backButton = activity.findViewById(R.id.back_button);
-
-                            if (backButton != null) {
-                                backButton.setBackgroundColor(primaryColor);
-                                backButton.setColorFilter(selectedColor);
-                            }
-                            ImageButton emptySpace = activity.findViewById(R.id.empty_space);
-                            emptySpace.setBackgroundColor(primaryColor);
                         }
                     }
 
@@ -518,29 +514,40 @@ public class MusicInfoFragment extends Fragment {
         }
 
         addButton.setOnClickListener(v -> {
-            new AlertDialog.Builder(getContext())
-                    .setTitle("관심목록에 추가")
-                    .setMessage(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?")
-                    .setNegativeButton("취소", null)
-                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                            new Thread(() -> {
-                                try {
-                                    favoritesViewModel.insert(track, today);
-                                    requireActivity().runOnUiThread(() -> {
-                                        Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
-                                    });
-                                } catch (SQLiteConstraintException e) {
-                                    requireActivity().runOnUiThread(() -> {
-                                        Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
-                                    });
-                                }
-                            }).start();
-                        }
-                    })
-                    .show();
+            Dialog dialog = new Dialog(getContext());
+            dialog.setContentView(R.layout.dialog_custom);
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.setCancelable(true);
+
+            TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+            TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+            confirmButton.setText("확인");
+
+            TextView subText = dialog.findViewById(R.id.subtext);
+            TextView title = dialog.findViewById(R.id.title);
+            title.setText("관심목록에 추가");
+            subText.setText(track.trackName + " - " + track.artistName + " 을(를) Favorites List 에 추가할까요?");
+            cancelButton.setOnClickListener(v1 -> dialog.dismiss());
+
+            confirmButton.setOnClickListener(v1 -> {
+                dialog.dismiss();
+                String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                new Thread(() -> {
+                    try {
+                        favoritesViewModel.insert(track, today);
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                            addButton.setVisibility(View.GONE);
+                        });
+                    } catch (SQLiteConstraintException e) {
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), track.trackName + " - " + track.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }).start();
+            });
+
+            dialog.show();
         });
 
 
