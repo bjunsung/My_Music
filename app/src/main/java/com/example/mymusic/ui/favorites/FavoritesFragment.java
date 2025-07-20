@@ -683,7 +683,7 @@ public class FavoritesFragment extends Fragment {
         Boolean isLyrics = favoritesViewModel.getLyricsMode().getValue();
         if (isLyrics != null && isLyrics && focused != null){
             Log.d(TAG, "lyrics on mode");
-            LyricsOnMode(focused, favoritesViewModel.getFocusedPosition());
+            LyricsOnMode(focused, favoritesViewModel.getFocusedPosition(), false);
             loadFavoritesAndUpdateUI();
             if (favoritesViewModel.getFocusedTransitionName() != null){
                 ViewCompat.setTransitionName(focusedImageView, favoritesViewModel.getFocusedTransitionName());
@@ -849,6 +849,7 @@ public class FavoritesFragment extends Fragment {
 
     private void updateHighlightedPositionList(){
         if (favoriteOption == 0){
+
             String keyword = favoritesViewModel.getKeyword();
             favoriteTrackAdapter.setKeyword(keyword);
             favoritesViewModel.clearHighlightedPositions();
@@ -860,22 +861,27 @@ public class FavoritesFragment extends Fragment {
                 return null;
             });
 
+
+
+            int visibility = Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue()) ? View.GONE : View.VISIBLE;
+
+
             if (highlightedPositions != null && !highlightedPositions.isEmpty()){
-                previousKeywordButton.setVisibility(View.VISIBLE);
-                nextKeywordButton.setVisibility(View.VISIBLE);
-                keywordSearchedCountTextView.setVisibility(View.VISIBLE);
+                previousKeywordButton.setVisibility(visibility);
+                nextKeywordButton.setVisibility(visibility);
+                keywordSearchedCountTextView.setVisibility(visibility);
                 favoritesViewModel.setFocusedHighlightedPosition(highlightedPositions.get(0));
                 String count = "1/" + highlightedPositions.size();
                 keywordSearchedCountTextView.setText(count);
                 trackRecyclerView.smoothScrollToPosition(highlightedPositions.get(0));
             } else{
                 keywordSearchedCountTextView.setText("");
-                //previousKeywordButton.setVisibility(View.INVISIBLE);
-                //nextKeywordButton.setVisibility(View.INVISIBLE);
                 keywordSearchedCountTextView.setVisibility(View.INVISIBLE);
             }
 
             favoritesViewModel.setHighlightedPositions(highlightedPositions);
+
+
             Log.d(TAG, "highlighted positions: " + favoritesViewModel.getHighlightedPositions());
         }
 
@@ -901,8 +907,6 @@ public class FavoritesFragment extends Fragment {
                 keywordSearchedCountTextView.setText(count);
                 artistRecyclerView.smoothScrollToPosition(highlightedPositions.get(0));
             } else{
-                //previousKeywordButton.setVisibility(View.INVISIBLE);
-                //nextKeywordButton.setVisibility(View.INVISIBLE);
                 keywordSearchedCountTextView.setText("");
                 keywordSearchedCountTextView.setVisibility(View.INVISIBLE);
             }
@@ -922,7 +926,13 @@ public class FavoritesFragment extends Fragment {
                 int index = (indexOfCurrentPosition + highlightedPositions.size() - 1) % highlightedPositions.size();
                 int previousPosition = highlightedPositions.get(index);
                 favoritesViewModel.setFocusedHighlightedPosition(previousPosition);
-                trackRecyclerView.smoothScrollToPosition(previousPosition);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) trackRecyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    layoutManager.scrollToPositionWithOffset(previousPosition, 0);
+                } else{
+                    trackRecyclerView.smoothScrollToPosition(previousPosition);
+                }
                 String count = (index + 1) + "/" + highlightedPositions.size();
                 keywordSearchedCountTextView.setText(count);
             }
@@ -936,7 +946,13 @@ public class FavoritesFragment extends Fragment {
                 int index = (indexOfCurrentPosition + highlightedPositions.size() - 1) % highlightedPositions.size();
                 int previousPosition = highlightedPositions.get(index);
                 favoriteArtistViewModel.setFocusedHighlightedPosition(previousPosition);
-                artistRecyclerView.smoothScrollToPosition(previousPosition);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    layoutManager.scrollToPositionWithOffset(previousPosition, 0);
+                } else{
+                    artistRecyclerView.smoothScrollToPosition(previousPosition);
+                }
                 String count = (index + 1) + "/" + highlightedPositions.size();
                 keywordSearchedCountTextView.setText(count);
             }
@@ -951,7 +967,14 @@ public class FavoritesFragment extends Fragment {
                 int index = (indexOfCurrentPosition + highlightedPositions.size() + 1) % highlightedPositions.size();
                 int nextPosition = highlightedPositions.get(index);
                 favoritesViewModel.setFocusedHighlightedPosition(nextPosition);
-                trackRecyclerView.smoothScrollToPosition(nextPosition);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) trackRecyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    layoutManager.scrollToPositionWithOffset(nextPosition, 0);
+                } else{
+                    trackRecyclerView.smoothScrollToPosition(nextPosition);
+                }
+
                 String count = (index + 1) + "/" + highlightedPositions.size();
                 keywordSearchedCountTextView.setText(count);
             }
@@ -963,9 +986,16 @@ public class FavoritesFragment extends Fragment {
                 int currentPosition = favoriteArtistViewModel.getFocusedHighlightedPosition();
                 int indexOfCurrentPosition = highlightedPositions.indexOf(currentPosition);
                 int index = (indexOfCurrentPosition + highlightedPositions.size() + 1) % highlightedPositions.size();
-                int previousPosition = highlightedPositions.get(index);
-                favoriteArtistViewModel.setFocusedHighlightedPosition(previousPosition);
-                artistRecyclerView.smoothScrollToPosition(previousPosition);
+                int nextPosition = highlightedPositions.get(index);
+                favoriteArtistViewModel.setFocusedHighlightedPosition(nextPosition);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) artistRecyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    layoutManager.scrollToPositionWithOffset(nextPosition, 0);
+                } else{
+                    artistRecyclerView.smoothScrollToPosition(nextPosition);
+                }
+
                 String count = (index + 1) + "/" + highlightedPositions.size();
                 keywordSearchedCountTextView.setText(count);
             }
@@ -1286,7 +1316,7 @@ public class FavoritesFragment extends Fragment {
 
         favoritesViewModel.loadFavoriteItem(trackIdDb, favorite -> {
             if (favorite != null && favorite.metadata != null && favorite.metadata.lyrics != null && !favorite.metadata.lyrics.isEmpty()){
-                LyricsOnMode(favorite, recyclerViewPosition);
+                LyricsOnMode(favorite, recyclerViewPosition, true);
             } else {
                 favoritesViewModel.setLyricsSearchTrackId(trackIdDb);
                 favoritesViewModel.setFocusedPosition(recyclerViewPosition);
@@ -1302,12 +1332,15 @@ public class FavoritesFragment extends Fragment {
         });
     }
 
-    private void LyricsOnMode(Favorite favorite, int recyclerViewPosition){
+    private void LyricsOnMode(Favorite favorite, int recyclerViewPosition, boolean showSlideAnimation){
         if (getView() == null || lyricsModeCancelButton == null) {
             Log.w(TAG, "View not ready yet, skipping LyricsOnMode()");
             return;
         }
-        toggleLyricsVisibility(true);
+
+        if (showSlideAnimation) {
+            toggleLyricsVisibility(true);
+        }
         favoritesViewModel.setLyricsMode(true);
         favoritesViewModel.setFocusedTrack(favorite);
         favoritesViewModel.setFocusedPosition(recyclerViewPosition);
@@ -1327,6 +1360,10 @@ public class FavoritesFragment extends Fragment {
         dropUpImageButton.setVisibility(View.GONE);
         dropDownImageButton.setVisibility(View.GONE);
         onLyricsContainer.setVisibility(View.VISIBLE);
+        keywordSearchedCountTextView.setVisibility(View.GONE);
+        searchKeywordEditText.setVisibility(View.GONE);
+        previousKeywordButton.setVisibility(View.GONE);
+        nextKeywordButton.setVisibility(View.GONE);
 
         int[] currentPrimaryColor = {0};
         ImageColorAnalyzer.analyzePrimaryColor(requireContext(), track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
@@ -2198,6 +2235,10 @@ public class FavoritesFragment extends Fragment {
         dropUpImageButton.setVisibility(View.VISIBLE);
         loadSortDirectionAndUpdateUi();
         countLayout.setVisibility(View.VISIBLE);
+        keywordSearchedCountTextView.setVisibility(View.VISIBLE);
+        searchKeywordEditText.setVisibility(View.VISIBLE);
+        previousKeywordButton.setVisibility(View.VISIBLE);
+        nextKeywordButton.setVisibility(View.VISIBLE);
         toggleLyricsVisibility(false);
     }
 

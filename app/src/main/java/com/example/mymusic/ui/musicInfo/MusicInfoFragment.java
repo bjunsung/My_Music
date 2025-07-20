@@ -73,6 +73,7 @@ import com.example.mymusic.util.DateFormatMismatchException;
 import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.ImageOverlayManager;
+import com.example.mymusic.util.MyColorUtils;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
 
@@ -816,8 +817,8 @@ public class MusicInfoFragment extends Fragment {
                     super.updateDrawState(ds);
                     ds.setUnderlineText(false); // 밑줄 제거
                     Context context = getContext();
-                    SharedPreferences prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
-                    int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
+
+                    int selectedColor = MyColorUtils.getMyPrefColor(context);
 
                     ds.setColor(selectedColor);    // 클릭 가능한 색상
                 }

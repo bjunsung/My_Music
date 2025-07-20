@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.model.Favorite
+import com.kizitonwose.calendar.core.yearMonth
 import java.time.LocalDate // java.time.LocalDate 사용
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap // 스레드 안전한 맵 사용 권장
 
@@ -23,6 +25,8 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
     // Value: 해당 날짜의 Favorite 리스트
     private val _eventsByDate: ConcurrentHashMap<LocalDate, MutableList<Favorite>> = ConcurrentHashMap()
     val eventsByDate: Map<LocalDate, List<Favorite>> get() = _eventsByDate // 외부에 읽기 전용으로 노출
+
+    var currentMonth: YearMonth = LocalDate.now().yearMonth
 
     /**
      * 모든 Favorite 리스트를 기반으로 날짜별 이벤트를 미리 계산하는 함수.

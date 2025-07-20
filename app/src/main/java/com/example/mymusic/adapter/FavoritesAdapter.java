@@ -307,7 +307,14 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     public void setKeyword(String keyword){
         this.keyword = keyword;
+<<<<<<< HEAD
         notifyDataSetChanged();
+=======
+        updateData(this.favoritesList);
+        for (Favorite item : favoritesList){
+            item.keyword = keyword;
+        }
+>>>>>>> b8bc983 (Preserve RecyclerView animations when highlighting search keywords by using DiffUtil with keyword in Favorite)
     }
     private void highlightText(TextView textView, String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) return;
@@ -356,15 +363,6 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     }
 
 
-
-
-
-
-
-
-
-
-
     public void setSelectionMode(boolean enable) {
         isSelectionMode = enable;
         notifyDataSetChanged(); // 전체 갱신
@@ -378,7 +376,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     public void updateData(List<Favorite> newList){
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                new FavoriteDiffCallback(this.favoritesList, newList));
+                new FavoriteDiffCallback(this.favoritesList, newList, keyword));
         this.favoritesList = newList;
         diffResult.dispatchUpdatesTo(this);
     }

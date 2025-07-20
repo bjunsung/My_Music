@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="textPrimary">#DBDBDB</color>
+    <color name="text_secondary">#DBDBDB</color>
     <color name="background_basic">#212121</color>
     <color name="navBarBasic">#FF000000</color>
-    <color name="basic">#212121</color>
-    <color name="color_secondary">#212121</color>
+    <color name="background_basic2">#212121</color>
+    <color name="background_color_secondary">#212121</color>
     <color name="basic_soft">#DBDBDB</color>
     <color name="cancel_text_color">#DBDBDB</color>
     <color name="light_gray">#808080</color>

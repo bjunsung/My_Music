@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp"
-        android:background="@color/basic">
+        android:background="@color/background_basic2">
 
         <!-- 정렬 기준 -->
         <TextView

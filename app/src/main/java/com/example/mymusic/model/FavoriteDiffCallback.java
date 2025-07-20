@@ -8,10 +8,14 @@ import java.util.Objects;
 public class FavoriteDiffCallback extends DiffUtil.Callback {
     private final List<Favorite> oldList;
     private final List<Favorite> newList;
+    private String keyword = "";
 
-    public FavoriteDiffCallback(List<Favorite> oldList, List<Favorite> newList) {
+    public FavoriteDiffCallback(List<Favorite> oldList, List<Favorite> newList, String keyword) {
         this.oldList = oldList;
         this.newList = newList;
+        if (keyword != null) {
+            this.keyword = keyword;
+        }
     }
 
     @Override
@@ -40,6 +44,7 @@ public class FavoriteDiffCallback extends DiffUtil.Callback {
         return Objects.equals(oldItem.metadata, newItem.metadata)
                 && Objects.equals(oldItem.track, newItem.track)
                 && oldItem.isSelected == newItem.isSelected
-                && oldItem.addedDate.equals(newItem.addedDate);
+                && oldItem.addedDate.equals(newItem.addedDate)
+                && Objects.equals(oldItem.keyword, keyword);
     }
 }

@@ -14,7 +14,9 @@ public class Favorite implements Parcelable {
     public TrackMetadata metadata;
 
 
+    //for adapter
     public Boolean isSelected = false;
+    public String keyword = null;
 
     public int recyclerViewPosition = -1;
     public Favorite(Track track){

@@ -1,10 +1,24 @@
 package com.example.mymusic.util;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 
+import com.example.mymusic.R;
+
 public class MyColorUtils {
+
+    public static int getMyPrefColor(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
+        int result = prefs.getInt("selected_color", Color.GRAY);
+        if (prefs.getBoolean("basic_color", true)){
+            result = ContextCompat.getColor(context, R.color.textPrimary);
+        }
+        return result;
+    }
 
     public static int ensureContrastWithWhite(int color) {
         double contrast = androidx.core.graphics.ColorUtils.calculateContrast(Color.WHITE, color);

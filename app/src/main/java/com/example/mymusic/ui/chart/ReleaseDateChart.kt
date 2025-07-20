@@ -263,10 +263,13 @@ class ReleaseDateChart: Fragment() {
                 }
 
                 override fun onNothingSelected() {
+                    /*
                     artworkCardView1.visibility = View.GONE
                     artworkCardView2.visibility = View.GONE
                     artworkCardView3.visibility = View.GONE
                     seeMoreButton?.visibility = View.GONE
+
+                     */
                 }
 
             })

@@ -1,6 +1,7 @@
 package com.example.mymusic.ui.myCalendar
 
 import android.animation.ValueAnimator
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -19,10 +21,13 @@ import com.example.mymusic.R
 import com.example.mymusic.databinding.FragmentMyCalendarBinding
 import com.example.mymusic.model.Favorite
 import com.kizitonwose.calendar.core.CalendarDay
+import com.kizitonwose.calendar.core.CalendarMonth
+import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.yearMonth
 import com.kizitonwose.calendar.view.CalendarView
 import com.kizitonwose.calendar.view.DaySize
 import com.kizitonwose.calendar.view.MonthDayBinder
+import com.kizitonwose.calendar.view.MonthScrollListener
 import com.kizitonwose.calendar.view.ViewContainer
 import java.time.DayOfWeek // 요청하신 import
 import java.time.LocalDate // 요청하신 import
@@ -56,7 +61,7 @@ class MyCalendar : Fragment() {
                 // UI 업데이트는 메인 스레드에서 진행
                 view.post { // 뷰가 완전히 준비된 후 캘린더 설정을 보장
                     setupCalendar() // 캘린더의 기본 설정 (setup, dayBinder 등)
-                    calendarView.scrollToMonth(YearMonth.now()) // java.time.YearMonth 사용
+                    calendarView.scrollToMonth(calendarViewModel.currentMonth) // java.time.YearMonth 사용
                     calendarView.notifyCalendarChanged() // 데이터가 변경되었음을 캘린더 뷰에 알림
                 }
             }
@@ -66,7 +71,7 @@ class MyCalendar : Fragment() {
                 Log.d(TAG, "Favorite list duplicated. Notifying calendar changed to refresh UI.")
                 view.post {
                     setupCalendar() // 캘린더의 기본 설정 (setup, dayBinder 등)
-                    calendarView.scrollToMonth(YearMonth.now()) // java.time.YearMonth 사용
+                    calendarView.scrollToMonth(calendarViewModel.currentMonth) // java.time.YearMonth 사용
                     calendarView.notifyCalendarChanged() // 캘린더 뷰 갱신
                 }
             }
@@ -92,25 +97,26 @@ class MyCalendar : Fragment() {
     private fun setupCalendar() {
         calendarView = binding.calendarView
 
-        // 월 스크롤 리스너: 월이 변경될 때 상단 텍스트 업데이트
+
         calendarView.monthScrollListener = { month ->
+            calendarViewModel.currentMonth = month.yearMonth
             val yearText = month.yearMonth.year.toString().toCharArray().joinToString("\n") // month.yearMonth는 YearMonth 사용
             val monthTextEn = month.yearMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }
             binding.yearText.text = yearText
             binding.monthText.text = monthTextEn
         }
 
-        // 각 날짜 셀의 레이아웃 및 크기 설정
+
         calendarView.dayViewResource = R.layout.calendar_day_layout
         calendarView.daySize = DaySize.Rectangle
 
         // 캘린더 뷰의 시작 월, 끝 월, 요일 시작 설정
-        // java.time.YearMonth와 java.time.DayOfWeek 사용
         calendarView.setup(
-            startMonth = YearMonth.from(today.minusMonths(12)),
-            endMonth = YearMonth.from(today.plusMonths(1)),
+            startMonth = YearMonth.from(today.minusMonths(11)),
+            endMonth = YearMonth.from(today.plusMonths(11)),
             firstDayOfWeek = DayOfWeek.SUNDAY
         )
+
 
         // 날짜 셀 바인더: 각 날짜 셀에 데이터를 바인딩하는 로직
         calendarView.dayBinder = object : MonthDayBinder<DayViewContainer> {
@@ -126,14 +132,18 @@ class MyCalendar : Fragment() {
                 if (data.date == LocalDate.now()) { // LocalDate (java.time)
                     container.dayText.setBackgroundResource(R.drawable.calendar_today_background)
                     container.dayText.setTypeface(null, Typeface.BOLD)
-                } else {
+                } else if (data.position != DayPosition.MonthDate) {
                     container.dayText.background = null
+                    container.dayText.setTextColor(Color.LTGRAY)
+                    container.dayText.setTypeface(null, Typeface.NORMAL)
+                }
+                else {
+                    container.dayText.background = null
+                    container.dayText.setTextColor(ContextCompat.getColor(context!!, R.color.text_secondary))
                     container.dayText.setTypeface(null, Typeface.NORMAL)
                 }
 
                 // ViewModel에서 미리 계산된 맵에서 해당 날짜의 이벤트 리스트를 가져옴
-                // 이전에 전달받았던 getEventsForDate(calendarViewModel.favoriteList, data.date) 부분을
-                // 변경된 ViewModel의 getEventsForDate(data.date) 형식으로 수정했습니다.
                 var dateEvents = calendarViewModel.getEventsForDate(data.date)
 
                 // 로그 출력 (이벤트 확인용)
@@ -159,7 +169,7 @@ class MyCalendar : Fragment() {
         val panel = binding.cardSidePanel
         val menuText = binding.moveTodayText
         val releaseDateChart = binding.releaseDateChartText
-        val targetWidth = if (isExpanded) 60 else 220  // dp 단위로 가로폭 조절
+        val targetWidth = if (isExpanded) 60 else 220
         val widthInPx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             targetWidth.toFloat(),
@@ -196,5 +206,5 @@ class MyCalendar : Fragment() {
 class DayViewContainer(view: View) : ViewContainer(view) {
     var eventRecyclerView: RecyclerView = view.findViewById(R.id.calendar_day_event_recycler_view)
     val dayText: TextView = view.findViewById(R.id.calendar_day_text)
-    lateinit var day: CalendarDay // CalendarDay는 내부적으로 LocalDate (java.time) 사용
+    lateinit var day: CalendarDay
 }

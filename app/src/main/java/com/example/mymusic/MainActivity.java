@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("settings", Context.MODE_PRIVATE);
         int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
 
-        if (prefs.getBoolean("basic_color", false)){
+        if (prefs.getBoolean("basic_color", true)){
             selectedColor = ContextCompat.getColor(this, R.color.textPrimary);
         }
 
