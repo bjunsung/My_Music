@@ -19,6 +19,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.mymusic.R
 import com.example.mymusic.model.Favorite
+import com.google.android.material.card.MaterialCardView
 import com.google.common.base.Objects
 
 class PlaylistDetailAdapter(

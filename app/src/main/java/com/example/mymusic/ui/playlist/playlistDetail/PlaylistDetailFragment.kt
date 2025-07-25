@@ -7,11 +7,17 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.transition.ArcMotion
+import android.transition.ChangeBounds
+import android.transition.ChangeTransform
+import android.transition.TransitionSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AccelerateInterpolator
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.PopupWindow
@@ -19,11 +25,15 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.Fade
+import androidx.transition.Transition
+import androidx.transition.TransitionInflater
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.data.repository.PlaylistRepository
@@ -32,6 +42,8 @@ import com.example.mymusic.model.Favorite
 import com.example.mymusic.model.Playlist
 import com.example.mymusic.util.ImageCollageUtil
 import com.example.mymusic.util.VerticalSpaceItemDecoration
+import com.google.android.material.transition.platform.MaterialArcMotion
+import com.google.android.material.transition.platform.MaterialContainerTransform
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -212,6 +224,60 @@ class PlaylistDetailFragment: Fragment() {
             }
         )
     }
+    val arc = ArcMotion().apply {
+        minimumHorizontalAngle = 60f // 좌우 곡률 최소 각도
+        minimumVerticalAngle = 80f   // 상하 곡률 최소 각도
+        maximumAngle = 90f           // 전체 곡률 최대 각도
+    }
+    fun buildTextTransition(targetName: String): TransitionSet {
+        return TransitionSet().apply {
+            ordering = TransitionSet.ORDERING_TOGETHER
+            addTransition(ChangeBounds())
+            addTransition(ChangeTransform()) // 스케일/회전 변환 추가
+            pathMotion = arc
+            duration = 435L
+            interpolator = AccelerateDecelerateInterpolator()
+            addTarget(targetName) // transitionName
+        }
+    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val playlist = requireArguments()
+            .getParcelable<Playlist>(ARGUMENT_KEY)!!
+        val playlistId = playlist.playlistId
+
+
+        //  1. 전환 애니메이션 종류 설정
+        //  이미지 전환 — ArcMotion 경로
+        val imageTrans = TransitionSet().apply {
+            ordering = TransitionSet.ORDERING_TOGETHER
+            addTransition(ChangeBounds())
+            addTransition(ChangeTransform())
+            pathMotion = ArcMotion()
+            duration = 350L
+            interpolator = AccelerateDecelerateInterpolator()
+            addTarget("artworks_$playlistId")
+        }
+
+        // 텍스트도 동일한 전환 구성
+        val nameTrans = buildTextTransition("name_$playlistId")
+        val countTrans = buildTextTransition("count_$playlistId")
+        val durationTrans = buildTextTransition("duration_$playlistId")
+
+        sharedElementEnterTransition = TransitionSet().apply {
+            ordering = TransitionSet.ORDERING_TOGETHER
+            addTransition(imageTrans)
+            addTransition(nameTrans)
+            addTransition(countTrans)
+            addTransition(durationTrans)
+        }
+
+        sharedElementReturnTransition = (sharedElementEnterTransition as TransitionSet).clone()
+
+
+
+
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -224,6 +290,7 @@ class PlaylistDetailFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        postponeEnterTransition()
         receiveBundle()
         bind()
         setObserver()
@@ -257,8 +324,11 @@ class PlaylistDetailFragment: Fragment() {
         updatePlaylistInformation()
     }
 
+
+
     private fun updatePlaylistInformation() {
         val playlist = vmPlaylistDetail.playlist.value
+        playlist?.let { setTransitionName(it.playlistId) }
 
         binding.playlistName.text = playlist?.playlistName ?: "플레이리스트 정보 없음"
         binding.playlistTotalDuration.text = playlist?.getDurationStr() ?: "0분"
@@ -274,8 +344,17 @@ class PlaylistDetailFragment: Fragment() {
             )
             withContext(Dispatchers.Main) {
                 binding.combinedArtworks.setImageBitmap(bitmap)
+                startPostponedEnterTransition()
             }
         }
+    }
+
+    private fun setTransitionName(playlistId: String) {
+        // 2) transitionName을 '출발 프래그먼트'에서 준 값과 동일하게 세팅
+        binding.combinedArtworksCard.transitionName = "artworks_$playlistId"
+        binding.playlistName.transitionName = "name_$playlistId"
+        binding.playlistCount.transitionName = "count_$playlistId"
+        binding.playlistTotalDuration.transitionName = "duration_$playlistId"
     }
 
     private fun setObserver() {

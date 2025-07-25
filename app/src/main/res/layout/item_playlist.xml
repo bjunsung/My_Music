@@ -9,6 +9,7 @@
     android:clipToPadding="false" >
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/combined_artworks_card"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="12dp"
@@ -16,7 +17,8 @@
         app:cardElevation="4dp"
         app:strokeWidth="0dp"
         app:cardPreventCornerOverlap="false"
-        app:cardUseCompatPadding="false">
+        app:cardUseCompatPadding="false"
+        android:background="@android:color/transparent">
 
         <ImageView
             android:id="@+id/artwork_images"

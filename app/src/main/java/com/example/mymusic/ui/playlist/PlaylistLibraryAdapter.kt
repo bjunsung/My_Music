@@ -24,6 +24,7 @@ import kotlinx.coroutines.withContext
 import androidx.recyclerview.widget.AdapterListUpdateCallback
 import androidx.recyclerview.widget.ListUpdateCallback
 import com.example.mymusic.util.ImageCollageUtil
+import com.google.android.material.card.MaterialCardView
 
 class PlaylistLibraryAdapter (
     private var playlists: List<Playlist>,
@@ -32,11 +33,13 @@ class PlaylistLibraryAdapter (
     ) : RecyclerView.Adapter<PlaylistLibraryAdapter.ViewHolder>() {
 
     interface OnClickListener {
-        fun onItemClick(playlist: Playlist)
+        fun onItemClick(holder:
+                        PlaylistLibraryAdapter.ViewHolder, playlist: Playlist)
         fun onPlayButtonClick(playlist: Playlist)
         fun onShuffleButtonClick(playlist: Playlist)
         fun onMenuClick(anchorView: View, playlist: Playlist)
         fun onAddNewPlaylist()
+        fun onImageReady(playlistId: String)
     }
 
 
@@ -79,6 +82,12 @@ class PlaylistLibraryAdapter (
         holder.playlistCountTextVIew.text = "${playlist.trackIds.size} 곡"
         holder.playlistPlayTimeTextView.text = playlist.getDurationStr()
 
+        val id = playlist.playlistId
+        holder.artworkImageCardHolder.transitionName = "artworks_${id}"
+        holder.playlistNameTextView.transitionName = "name_${id}"
+        holder.playlistCountTextVIew.transitionName = "count_${id}"
+        holder.playlistPlayTimeTextView.transitionName = "duration_${id}"
+
         jobs[holder]?.cancel()
         holder.artwork_images.setImageResource(R.drawable.ic_round_playlist_play)
         val urls: List<String> = playlist.getUrls().take(4)
@@ -98,13 +107,14 @@ class PlaylistLibraryAdapter (
                     holder.artwork_images.imageTintList = null
                     holder.artwork_images.colorFilter = null
                     holder.artwork_images.setImageBitmap(bmp)
+                    listener.onImageReady(playlistId = playlist.playlistId)
                 }
             }
         }
         jobs[holder] = job
 
 
-        holder.itemView.setOnClickListener { listener.onItemClick(playlist) }
+        holder.itemView.setOnClickListener { listener.onItemClick(holder, playlist) }
         holder.playButton.setOnClickListener { listener.onPlayButtonClick(playlist) }
         holder.shuffleButton.setOnClickListener { listener.onShuffleButtonClick(playlist) }
         holder.hamburgerButton.setOnClickListener { listener.onMenuClick(holder.itemView, playlist) }
@@ -170,6 +180,7 @@ class PlaylistLibraryAdapter (
         val shuffleButton = view.findViewById<ImageButton>(R.id.playlist_shuffle_button)
         val hamburgerButton = view.findViewById<ImageButton>(R.id.hamburger_button)
         val playlistPlayTimeTextView = view.findViewById<TextView>(R.id.playlist_play_time_text)
+        val artworkImageCardHolder = view.findViewById<MaterialCardView>(R.id.combined_artworks_card)
     }
 
 

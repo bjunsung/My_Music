@@ -26,6 +26,8 @@ class PlaylistLibraryViewModel(application: Application) : AndroidViewModel(appl
 
     val playlistNameSet = mutableSetOf<String>()
 
+    var sharedElementTargetPlaylistId: String? = null
+
     fun loadPlaylists() {
         viewModelScope.launch(Dispatchers.IO) {
             val playlists = playlistRepository.getAllWithFavorites()

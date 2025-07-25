@@ -35,6 +35,7 @@ import com.example.mymusic.model.Playlist
 import com.example.mymusic.ui.playlist.searchPlaylist.SearchPlaylistFragment
 import java.util.ArrayList
 import androidx.core.graphics.drawable.toDrawable
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import coil.request.Tags
 import com.example.mymusic.data.repository.PlaylistRepository
 import com.example.mymusic.ui.playlist.playlistDetail.PlaylistDetailFragment
@@ -50,11 +51,19 @@ class PlaylistLibraryFragment : Fragment() {
         emptyList(),
         playlistLibraryViewModel.viewModelScope,
         object : PlaylistLibraryAdapter.OnClickListener {
-            override fun onItemClick(playlist: Playlist) {
+            override fun onItemClick(holder: PlaylistLibraryAdapter.ViewHolder, playlist: Playlist) {
                 val args = Bundle().apply {
                     putParcelable(PlaylistDetailFragment.ARGUMENT_KEY, playlist)
                 }
-                findNavController().navigate(R.id.action_navPlaylistLibrary_to_fragPlaylistDetail, args)
+                val extras = FragmentNavigatorExtras(
+                    holder.artworkImageCardHolder to "artworks_${playlist.playlistId}",
+                    holder.playlistNameTextView to "name_${playlist.playlistId}",
+                    holder.playlistCountTextVIew to "count_${playlist.playlistId}",
+                    holder.playlistPlayTimeTextView to "duration_${playlist.playlistId}"
+                )
+
+                playlistLibraryViewModel.sharedElementTargetPlaylistId = playlist.playlistId
+                findNavController().navigate(R.id.action_navPlaylistLibrary_to_fragPlaylistDetail, args, null, extras)
             }
 
             override fun onPlayButtonClick(playlist: Playlist) {
@@ -292,6 +301,15 @@ class PlaylistLibraryFragment : Fragment() {
 
             }
 
+            override fun onImageReady(playlistId: String) {
+                val sharedElementTargetPlaylistId = playlistLibraryViewModel.sharedElementTargetPlaylistId
+                if (sharedElementTargetPlaylistId == null)
+                    startPostponedEnterTransition()
+                else if (playlistId.equals(sharedElementTargetPlaylistId)) {
+                    startPostponedEnterTransition()
+                    playlistLibraryViewModel.sharedElementTargetPlaylistId = null
+                }
+            }
         }
     ) }
 
@@ -306,6 +324,9 @@ class PlaylistLibraryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        postponeEnterTransition()
+        if (playlistLibraryViewModel.sharedElementTargetPlaylistId == null)
+            startPostponedEnterTransition()
         playlistLibraryViewModel.loadPlaylists()
         bind()
         setObserve()
