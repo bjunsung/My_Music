@@ -30,7 +30,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     var exoPlayer: ExoPlayer? = ExoPlayer.Builder(application).build()
     var lastPlayedTrack: Favorite? = null
 
-    private var playlist: List<Favorite> = emptyList()
+    private var _playlist = MutableLiveData<List<Favorite>>(emptyList())
+
+    val playlist : LiveData<List<Favorite>> get() = _playlist
+
     var currentIndex = 0
     private val _repeatMode = MutableLiveData(Player.REPEAT_MODE_OFF)
     val repeatMode: LiveData<Int> get() = _repeatMode
@@ -55,7 +58,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         if (exoPlayer == null) return
         shuffledMode = false
 
-        this.playlist = playlist
+        _playlist.value = playlist
         currentIndex = startPosition.coerceIn(0, playlist.lastIndex)
         _currentTrack.value = playlist.get(startPosition)
 
@@ -78,7 +81,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     private fun initPlayer() {
         if (exoPlayer == null) return
         exoPlayer!!.clearMediaItems()
-        val mediaItems = playlist.map { MediaItem.fromUri(it.audioUri) } // track.url은 Favorite 모델에서 곡 URL
+        val mediaItems = playlist.value!!.map { MediaItem.fromUri(it.audioUri) } // track.url은 Favorite 모델에서 곡 URL
         exoPlayer!!.setMediaItems(mediaItems)
         exoPlayer!!.prepare()
 
@@ -103,7 +106,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             override fun onPlaybackStateChanged(playbackState: Int) {
                 super.onPlaybackStateChanged(playbackState)
                 if (playbackState == Player.STATE_ENDED) {
-                    if ( repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == playlist.lastIndex) {
+                    if ( repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == playlist.value!!.lastIndex) {
                         _isPlaying.value = false
                     }
                 }
@@ -193,8 +196,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     var shuffledMode = false
 
     fun shufflePlayList() {
-        if (playlist.isEmpty()) return
-        val newPlayList = playlist.shuffled()
+        if (playlist.value!!.isEmpty()) return
+        val newPlayList = playlist.value!!.shuffled()
         setPlaylist(newPlayList, 0)
         shuffledMode = true
     }
@@ -214,31 +217,31 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     /** 특정 인덱스 재생 */
     fun playAt(index: Int) {
-        if (playlist.isEmpty()) return
+        if (playlist.value!!.isEmpty()) return
         // <<< [추가] 트랙 넘기기 전에 현재 곡 카운트 체크
         checkPlayCount()
-        currentIndex = index.coerceIn(0, playlist.lastIndex)
-        _currentTrack.value = playlist[currentIndex]
+        currentIndex = index.coerceIn(0, playlist.value!!.lastIndex)
+        _currentTrack.value = playlist.value!![currentIndex]
         exoPlayer?.seekTo(currentIndex, 0)
         exoPlayer?.playWhenReady = true
         _isPlaying.value = true
-        lastPlayedTrack = playlist[currentIndex]
+        lastPlayedTrack = playlist.value!![currentIndex]
     }
 
     /** 다음 곡 */
     fun playNext() {
-        if (playlist.isEmpty() || exoPlayer == null) return
+        if (playlist.value!!.isEmpty() || exoPlayer == null) return
 
         when (repeatMode.value) {
             Player.REPEAT_MODE_OFF -> {
                 // 마지막 곡이면 그냥 멈춤
-                if (currentIndex < playlist.lastIndex) {
+                if (currentIndex < playlist.value!!.lastIndex) {
                     playAt(currentIndex + 1)
                 }
             }
             Player.REPEAT_MODE_ALL -> {
                 // 마지막 곡이면 첫 곡으로
-                playAt((currentIndex + 1) % playlist.size)
+                playAt((currentIndex + 1) % playlist.value!!.size)
             }
             Player.REPEAT_MODE_ONE -> {
                 // 같은 곡 반복
@@ -251,7 +254,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     /** 이전 곡 */
     fun playPrevious() {
-        if (playlist.isEmpty() || exoPlayer == null) return
+        if (playlist.value!!.isEmpty() || exoPlayer == null) return
 
         when (repeatMode.value) {
             Player.REPEAT_MODE_OFF -> {
@@ -260,7 +263,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 }
             }
             Player.REPEAT_MODE_ALL -> {
-                playAt((currentIndex + playlist.size - 1) % playlist.size)
+                playAt((currentIndex + playlist.value!!.size - 1) % playlist.value!!.size)
             }
             Player.REPEAT_MODE_ONE -> {
                 playAt(currentIndex)
@@ -276,7 +279,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 _isPlaying.value = false
             } else {
                 val isAtEnd = it.currentPosition >= (it.duration - 500)
-                if (repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == playlist.lastIndex && isAtEnd) playAt(currentIndex)
+                if (repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == playlist.value!!.lastIndex && isAtEnd) playAt(currentIndex)
                 it.play()
                 _isPlaying.value = true
             }

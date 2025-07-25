@@ -1669,7 +1669,6 @@ public class FavoritesFragment extends Fragment {
                        @Override
                        public void onSuccess() {
                            new Handler(Looper.getMainLooper()).post(() -> Log.d(TAG, "primary color stored in db"));
-                           //loadFavoritesAndUpdateUI();
                        }
 
                        @Override
