@@ -2,8 +2,6 @@ package com.example.mymusic.ui.playlist
 
 import android.app.Dialog
 import android.content.res.Resources
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -18,7 +16,6 @@ import android.util.Log
 import android.view.Gravity
 import android.widget.LinearLayout
 
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -26,26 +23,24 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView.LayoutManager
-import androidx.room.util.query
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.databinding.FragmentPlaylistLibraryBinding
 import com.example.mymusic.model.Playlist
 import com.example.mymusic.ui.playlist.searchPlaylist.SearchPlaylistFragment
-import java.util.ArrayList
 import androidx.core.graphics.drawable.toDrawable
+import androidx.core.view.isVisible
 import androidx.navigation.fragment.FragmentNavigatorExtras
-import coil.request.Tags
 import com.example.mymusic.data.repository.PlaylistRepository
 import com.example.mymusic.ui.playlist.playlistDetail.PlaylistDetailFragment
 
 @UnstableApi
 class PlaylistLibraryFragment : Fragment() {
     private val mainActivityViewModel: MainActivityViewModel by activityViewModels()
-    private val playlistLibraryViewModel: PlaylistLibraryViewModel by viewModels()
+    private val playlistLibraryViewModel: PlaylistLibraryViewModel by activityViewModels()
     private var _binding : FragmentPlaylistLibraryBinding? = null
     val binding get() = _binding!!
+    private val bottomSheet: PlaylistFilterBottomSheet by lazy { PlaylistFilterBottomSheet() }
 
     val adapter: PlaylistLibraryAdapter by lazy { PlaylistLibraryAdapter(
         emptyList(),
@@ -305,7 +300,7 @@ class PlaylistLibraryFragment : Fragment() {
                 val sharedElementTargetPlaylistId = playlistLibraryViewModel.sharedElementTargetPlaylistId
                 if (sharedElementTargetPlaylistId == null)
                     startPostponedEnterTransition()
-                else if (playlistId.equals(sharedElementTargetPlaylistId)) {
+                else if (playlistId == sharedElementTargetPlaylistId) {
                     startPostponedEnterTransition()
                     playlistLibraryViewModel.sharedElementTargetPlaylistId = null
                 }
@@ -329,18 +324,57 @@ class PlaylistLibraryFragment : Fragment() {
             startPostponedEnterTransition()
         playlistLibraryViewModel.loadPlaylists()
         bind()
+        setUpSort()
         setObserve()
     }
 
     private fun bind() {
         binding.playlistRecyclerView.adapter = adapter
         binding.playlistRecyclerView.layoutManager = LinearLayoutManager(context)
+        binding.inOrderButtonDropDown.visibility = if (playlistLibraryViewModel.isDescending) View.VISIBLE else View.INVISIBLE
+        binding.inOrderButtonDropUp.visibility = if (binding.inOrderButtonDropDown.isVisible) View.INVISIBLE else View.VISIBLE
+    }
+    private fun setUpSort() {
+        updateSortText()
+        binding.orderTypeText.setOnClickListener {
+            if (!bottomSheet.isAdded && !bottomSheet.isVisible) {
+                bottomSheet.show(getParentFragmentManager(), "FilterBottomSheet")
+            }
+        }
+    }
+    private fun updateSortText() {
+        val sortOpt = playlistLibraryViewModel.sortOption.value
+        binding.orderTypeText.text = when (sortOpt) {
+            PlaylistLibraryViewModel.ADDED_DATE -> "추가일"
+            PlaylistLibraryViewModel.RECENTLY_PLAYED -> "최근재생"
+            PlaylistLibraryViewModel.DURATION -> "재생시간"
+            else -> "재생횟수"
+        }
     }
     private fun setObserve() {
         playlistLibraryViewModel.playlists.observe(viewLifecycleOwner) { playlists ->
+            Log.d(TAG, "lists -> ${playlists}")
             adapter.updateList(playlists)
         }
+        playlistLibraryViewModel.sortOption.observe(viewLifecycleOwner) {
+            updateSortText()
+            playlistLibraryViewModel.updateListOrder()
+        }
+        binding.inOrderButtonDropDown.setOnClickListener {
+            it.visibility = View.INVISIBLE
+            binding.inOrderButtonDropUp.visibility = View.VISIBLE
+            playlistLibraryViewModel.isDescending = false
+            playlistLibraryViewModel.updateListOrder()
+        }
+        binding.inOrderButtonDropUp.setOnClickListener {
+            it.visibility = View.INVISIBLE
+            binding.inOrderButtonDropDown.visibility = View.VISIBLE
+            playlistLibraryViewModel.isDescending = true
+            playlistLibraryViewModel.updateListOrder()
+        }
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -27,7 +27,7 @@ class PlaylistRepository(
     suspend fun getByIdWithFavorites(playlistId: String): Playlist? {
         val entity = dao.getById(playlistId) ?: return null
         val model = entity.toModel()
-        val favorites = favoriteSongRepository.getFavoritesByIds(model.trackIds)
+        val favorites = favoriteSongRepository.getFavoritesByIdsIncludeHidden(model.trackIds)
         model.favorites = favorites
 
         if (model.trackIds.size != favorites.size) {

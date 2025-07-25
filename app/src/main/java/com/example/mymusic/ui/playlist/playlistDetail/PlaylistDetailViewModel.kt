@@ -127,6 +127,10 @@ class PlaylistDetailViewModel(application: Application) : AndroidViewModel(appli
 
     var focusedTrackId: String? = null
 
+    var keyword: String? = null
+    var highlightedPositions: List<Int>? = null
+    var scrolledHighlightedPosition: Int = 0
+
 
 
     companion object {

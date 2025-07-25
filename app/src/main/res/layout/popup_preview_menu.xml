@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/bg_popup_dark"
-    android:padding="8dp">
+    android:padding="4dp">
 
     <LinearLayout
         android:id="@+id/add_mp3_button"
@@ -68,13 +68,29 @@
 
 
     <TextView
-        android:id="@+id/edit_button"
+        android:id="@+id/add_now_playing_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="6dp"
-        android:text="편집"
+        android:text="임시 재생목록에 추가"
         android:textColor="@android:color/white"
         android:textSize="@dimen/text_size_xsmall" />
+
+    <View
+        android:id="@+id/now_playing_separate_line"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#555555" />
+
+    <TextView
+        android:id="@+id/hide_track"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="숨김"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_size_xsmall" >
+    </TextView>
 
     <View
         android:layout_width="match_parent"

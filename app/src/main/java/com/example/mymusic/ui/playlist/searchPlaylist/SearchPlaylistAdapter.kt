@@ -1,6 +1,12 @@
 package com.example.mymusic.ui.playlist.searchPlaylist
 
 import android.content.Context
+import android.graphics.Color
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.BackgroundColorSpan
+import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -10,11 +16,13 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.InspectableProperty
+import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.mymusic.R
 import com.example.mymusic.model.Favorite
+import java.util.Locale
 
 class SearchPlaylistAdapter(
     private var favoriteList: List<Favorite>,
@@ -30,6 +38,7 @@ class SearchPlaylistAdapter(
     }
 
     private lateinit var viewGroupContext: Context
+    private var keyword: String? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         viewGroupContext = parent.context
@@ -51,6 +60,13 @@ class SearchPlaylistAdapter(
             holder.selectionCheckBox.isEnabled = !alreadyExist
             return
         }
+        else if (payloads.isNotEmpty() && payloads.contains(PAYLOAD_KEYWORD_CHANGED)) {
+            keyword?.let {
+                highlightText(holder.titleTextView, it)
+                highlightText(holder.artistNameTextView, it)
+            }
+        }
+
 
         // payload 없으면 풀 바인딩 실행
         super.onBindViewHolder(holder, position, payloads)
@@ -82,8 +98,6 @@ class SearchPlaylistAdapter(
                 holder.selectionCheckBox.toggle()
         }
 
-
-
         // 썸네일/텍스트 바인딩
         Glide.with(viewGroupContext)
             .load(item.track.artworkUrl)
@@ -97,7 +111,64 @@ class SearchPlaylistAdapter(
         holder.durationTextView.text = item.durationStr
         holder.releaseDateTextViwe.text = item.releaseDate
 
+        keyword?.let {
+            highlightText(holder.titleTextView, it)
+            highlightText(holder.artistNameTextView, it)
+        }
+
         holder.playButton.setOnClickListener { listener.onPlayButtonClick(item, holder.bindingAdapterPosition) }
+    }
+
+    fun setKeyword(keyword: String?) {
+        this.keyword = keyword
+        Log.d(TAG, "keyword: $keyword")
+        for (i in 0 until favoriteList.size) {
+            val item = favoriteList[i]
+            notifyItemChanged(i, PAYLOAD_KEYWORD_CHANGED)
+            item.keyword = keyword
+        }
+
+    }
+
+    private fun highlightText(textView: TextView, keyword: String) {
+        if (keyword.trim().isEmpty()) return
+        val original = textView.text.toString()
+        val normalizedTitle = original.replace("\\s+".toRegex(), "").lowercase(Locale.getDefault())
+        val normalizedKeyword = keyword.replace("\\s+".toRegex(), "").lowercase(Locale.getDefault())
+
+        if (normalizedTitle.contains(normalizedKeyword)){
+            var start = normalizedTitle.indexOf(normalizedKeyword)
+            var end = start + normalizedKeyword.length - 1
+            val cleaned = original.replace('\u00A0', ' ')
+            Log.d(TAG, "textview: ${textView.text} contains keyword: $keyword  start: $start end: $end")
+            for (i in 0..start) {
+                if (cleaned.get(i) == ' ') {
+                    start++
+                }
+            }
+            for (i in 0..end) {
+                if (cleaned[i] == ' ') {
+                    end++
+                }
+            }
+
+            val spannable = SpannableString(original)
+            spannable.setSpan(
+                BackgroundColorSpan("#4682b4".toColorInt()),
+                start,
+                end + 1,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            spannable.setSpan(
+                ForegroundColorSpan(Color.WHITE),
+                start,
+                end + 1,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            textView.text = spannable
+            return
+        }
+        textView.text = original
     }
 
     /**
@@ -132,10 +203,9 @@ class SearchPlaylistAdapter(
                 val oldHas = oldExist.contains(oldId)
                 val newHas = newExist.contains(newId)
 
-
                 return (oldChecked == newChecked) &&
                         (oldHas == newHas)
-
+                        && oldList[o].keyword == keyword
             }
         })
 
@@ -151,13 +221,16 @@ class SearchPlaylistAdapter(
         //todo
         this.alreadyExistSet = newAlreadyExistSet.toSet()
         notifyDataSetChanged()
+
         /*
         for (trackId: String in newAlreadyExistSet) {
             val pos = favoriteList.indexOfFirst { it.track.trackId == trackId }
             if (pos != -1) notifyItemChanged(pos, PAYLOAD_EXIST_CHANGED)
         }
-
          */
+
+
+
 
     }
 
@@ -175,5 +248,7 @@ class SearchPlaylistAdapter(
 
     companion object {
         private const val PAYLOAD_EXIST_CHANGED = "exist_state"
+        private const val PAYLOAD_KEYWORD_CHANGED = "keyword"
+        const val TAG = "SearchPlaylistAdapter"
     }
 }

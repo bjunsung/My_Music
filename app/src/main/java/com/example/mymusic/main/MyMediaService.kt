@@ -50,6 +50,7 @@ class MyMediaService : MediaSessionService() {
 
         val newPlayer = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, true)
+            .setHandleAudioBecomingNoisy(true)
             .build()
 
 

@@ -63,7 +63,8 @@ class PlayTimeCalendar : Fragment() {
                         mainActivityViewModel.favoriteSongRepository.getFavoriteSongWithPlayCount(
                             favorite.track.trackId
                         )
-                    Handler(Looper.getMainLooper()).post { updateUi(favoriteWithPlayCount) }
+                    favoriteWithPlayCount?.let { Handler(Looper.getMainLooper()).post { updateUi(favoriteWithPlayCount) } }
+
                 }
             }
         }
@@ -106,29 +107,32 @@ class PlayTimeCalendar : Fragment() {
 
         mainActivityViewModel.viewModelScope.launch(Dispatchers.IO) {
             val favoriteWithPlayCount = mainActivityViewModel.favoriteSongRepository.getFavoriteSongWithPlayCount(favorite!!.track.trackId)
-            mainActivityViewModel.viewModelScope.launch(Dispatchers.Main) {
-                updateUi(favoriteWithPlayCount)
+            favoriteWithPlayCount?.let {
+                mainActivityViewModel.viewModelScope.launch(Dispatchers.Main) {
+                    updateUi(favoriteWithPlayCount)
 
-                musicPlayingViewModel.currentPage.observe(viewLifecycleOwner) {page ->
-                    Log.d(TAG, "page changed: " + page + " day size: " + daySize)
-                    if (page == 2) {
-                        //recyclerView.post {recyclerView.scrollToPosition(daySize-1) }
+                    musicPlayingViewModel.currentPage.observe(viewLifecycleOwner) {page ->
+                        Log.d(TAG, "page changed: " + page + " day size: " + daySize)
+                        if (page == 2) {
+                            //recyclerView.post {recyclerView.scrollToPosition(daySize-1) }
 
-                        recyclerView.post {
-                            val scroller = object : LinearSmoothScroller(context) {
-                                override fun getHorizontalSnapPreference() = SNAP_TO_END
+                            recyclerView.post {
+                                val scroller = object : LinearSmoothScroller(context) {
+                                    override fun getHorizontalSnapPreference() = SNAP_TO_END
+                                }
+                                scroller.targetPosition = daySize - 1
+                                recyclerView.layoutManager?.startSmoothScroll(scroller)
+                                Log.d(TAG, "scroll to today (post)")
                             }
-                            scroller.targetPosition = daySize - 1
-                            recyclerView.layoutManager?.startSmoothScroll(scroller)
-                            Log.d(TAG, "scroll to today (post)")
+
+
+
+
                         }
-
-
-
-
                     }
                 }
             }
+
         }
 
         selectedDateTextView.alpha = 0f

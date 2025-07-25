@@ -172,12 +172,14 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
                 holder.title.setTextColor(textColor);
         }
 
+        holder.artist.setText(track.artistName);
 
         if (keyword != null && !keyword.isEmpty()){
             highlightText(holder.title, keyword);
+            highlightText(holder.artist, keyword);
         }
 
-        holder.artist.setText(track.artistName);
+
         if (textColor != invalidColor){
             holder.artist.setTextColor(textColor);
         }

@@ -171,26 +171,26 @@
         </LinearLayout>
 
         <ImageButton
-            android:id="@+id/deleteButton"
+            android:id="@+id/music_play"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_delete_button"
+            android:src="@drawable/ic_play_arrow"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="4dp"
             android:layout_marginBottom="4dp"
             android:padding="4dp"
-            android:visibility="gone" />
+            android:visibility="visible" />
         <ImageButton
-            android:id="@+id/lyric_button"
+            android:id="@+id/more_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_lyrics"
+            android:src="@drawable/round_more_vertical"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_gravity="center_vertical"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="8dp"
             android:layout_marginBottom="4dp"
             android:padding="4dp"
-            android:visibility="gone"/>
+            android:visibility="visible"/>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

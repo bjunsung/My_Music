@@ -15,6 +15,8 @@ import java.time.LocalDate
 
 class SearchPlaylistViewModel(application: Application) : AndroidViewModel(application) {
     // 전체 즐겨찾기 (오디오 URI 있는 것만)
+    var _rawList = MutableLiveData<List<Favorite>?>()
+    val rawList get() = _rawList
     private val _favoriteList = MutableLiveData<List<Favorite>?>()
     val favoriteList get() = _favoriteList
 
@@ -30,6 +32,10 @@ class SearchPlaylistViewModel(application: Application) : AndroidViewModel(appli
     val alreadyExistSet get() = _alreadyExistSet
 
 
+    var keyword: String? = null
+    var highlightedPositions: List<Int>? = null
+    var scrolledHighlightedPosition: Int = 0
+
     /** 순서 유지용 (표시/재생용 큐) */
     val selectedList: MutableList<Favorite> = mutableListOf()
 
@@ -41,7 +47,7 @@ class SearchPlaylistViewModel(application: Application) : AndroidViewModel(appli
             val list = favoriteSongRepository.allFavoriteTracks
                 .filter { !it.audioUri.isNullOrEmpty() }
                 .reversed()
-            _favoriteList.postValue(list)
+            _rawList.postValue(list)
         }
     }
 

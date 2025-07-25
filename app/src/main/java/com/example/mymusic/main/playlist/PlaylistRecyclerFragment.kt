@@ -140,8 +140,13 @@ class PlaylistRecyclerFragment : Fragment() {
                         )
                     }
                     val removeTrack = popupView.findViewById<LinearLayout>(R.id.remove_from_playlist_layout)
-                    if (favorite.track.trackId == vmMainActivity.currentTrack.value?.track?.trackId)
+                    if (favorite.track.trackId == vmMainActivity.currentTrack.value?.track?.trackId) {
                         removeTrack.visibility = View.GONE
+                        popupView.findViewById<View>(R.id.separate_line).visibility = View.GONE
+                    }
+                    else {
+                        popupView.findViewById<View>(R.id.separate_line).visibility = View.VISIBLE
+                    }
                     removeTrack.setOnClickListener {
                         popupWindow.dismiss()
                         playlistAdapter?.currentOrder()?.let { before ->

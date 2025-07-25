@@ -2,7 +2,10 @@ package com.example.mymusic
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,6 +18,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
+import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -168,6 +172,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 if (playbackState == Player.STATE_ENDED) {
                     if (repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == (_nowPlayingList.value?.lastIndex ?: -1)) {
                         _isPlaying.value = false
+                        checkPlayCount(currentTrack.value)
                     }
                 }
 
@@ -381,6 +386,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         val today = LocalDate.now()
         viewModelScope.launch(Dispatchers.IO) {
             val lastPlayedSync = favoriteSongRepository.getFavoriteSongWithPlayCount(lastPlayedTrack.track.trackId)
+            if (lastPlayedSync == null) return@launch
             lastPlayedSync.addPlayCount(today)
             favoriteSongRepository.updateFavoriteSongWithPlayCount(lastPlayedSync, object : FavoriteSongRepository.FavoriteDbCallback {
                 override fun onSuccess() {
@@ -915,4 +921,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
 
+
 }
+
+
+
+

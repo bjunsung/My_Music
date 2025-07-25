@@ -34,7 +34,6 @@ import com.example.mymusic.data.repository.FavoriteSongRepository;
 import com.example.mymusic.main.MusicPlayingBottomSheet;
 
 import com.example.mymusic.main.NotificationUtils;
-import com.example.mymusic.main.PlayerManager;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.SessionKind;
 import com.example.mymusic.ui.favorites.FavoritesFragment;
@@ -253,9 +252,8 @@ public class MainActivity extends AppCompatActivity {
                 R.id.navigation_home, R.id.navigation_favorites, R.id.fragment_my_calendar, R.id.navigation_settings)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
-//        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        //NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-
 
         binding.navView.setOnItemSelectedListener(item -> {
             // 항상 클릭한 탭만 강조
@@ -383,6 +381,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        SharedPreferences prefs = this.getSharedPreferences("filter_prefs_in_search_playlist_track", Context.MODE_PRIVATE);
+        prefs.edit()
+                .putString("sort_option", "ADDED_DATE")
+                .putString("filter_option", "ALL")
+                .apply();
         /**
          * end of onCreate
          */

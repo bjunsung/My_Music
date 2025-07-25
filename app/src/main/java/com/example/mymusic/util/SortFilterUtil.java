@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 
@@ -46,6 +48,15 @@ public class SortFilterUtil {
         List<Favorite> filteredList = filterList(originalList, filter, null);
         return sortList(filteredList, sort, isDescending);
     }
+
+    public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, String filterOption, String sortOption, boolean isDescending) {
+        SortFilterUtil.context = context;
+        if (context == null || originalList == null) return originalList;
+        if (filterOption == null) filterOption = "ALL";
+        List<Favorite> filteredList = filterList(originalList, filterOption, null);
+        if (sortOption == null) sortOption = "ADDED_DATE";
+        return sortList(filteredList, sortOption, isDescending);
+    }
     public static List<Favorite> sortAndFilterFavoritesList(Context context, List<Favorite> originalList, String filterOption, Track track, String sortOption, boolean isDescending) {
         SortFilterUtil.context = context;
         if (context == null || originalList == null) return originalList;
@@ -55,7 +66,7 @@ public class SortFilterUtil {
         return sortList(filteredList, sortOption, isDescending);
     }
 
-    private static List<Favorite> filterList(List<Favorite> list, String filter, Track queryTrack) {
+    private static List<Favorite> filterList(List<Favorite> list, String filter, @Nullable Track queryTrack) {
         List<Favorite> result = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate threeMonthsAgo = LocalDate.now().minusMonths(3);

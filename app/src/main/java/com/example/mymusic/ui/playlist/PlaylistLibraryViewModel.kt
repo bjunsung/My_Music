@@ -2,16 +2,12 @@ package com.example.mymusic.ui.playlist
 
 import android.app.Application
 import android.util.Log
-import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.data.repository.PlaylistRepository
-import com.example.mymusic.model.Favorite
 import com.example.mymusic.model.Playlist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,6 +16,8 @@ import kotlinx.coroutines.withContext
 class PlaylistLibraryViewModel(application: Application) : AndroidViewModel(application) {
     private val _playlists = MutableLiveData<List<Playlist>>()
     val playlists: LiveData<List<Playlist>> get() = _playlists
+    var rawList: List<Playlist>? = null
+    var isDescending = false
 
     private val playlistRepository by lazy { PlaylistRepository(application) }
     private val favoriteSongRepository by lazy { FavoriteSongRepository(application) }
@@ -28,11 +26,50 @@ class PlaylistLibraryViewModel(application: Application) : AndroidViewModel(appl
 
     var sharedElementTargetPlaylistId: String? = null
 
+    private val _sortOption = MutableLiveData<String>(ADDED_DATE)
+    val sortOption get() = _sortOption
+    fun setSortOption(sortOpt: String) {
+        Log.d("debugPlaylistLibrary", "set sort option: $sortOpt")
+        _sortOption.value = sortOpt
+    }
+
+    fun setPlaylists(playlists: List<Playlist>?) {
+        playlists?.let { _playlists.value = it }
+    }
     fun loadPlaylists() {
         viewModelScope.launch(Dispatchers.IO) {
             val playlists = playlistRepository.getAllWithFavorites()
-            _playlists.postValue(playlists)
+            rawList = playlists
+            withContext(Dispatchers.Main) { updateListOrder() }
         }
+    }
+
+    fun updateListOrder() {
+        val list = rawList.orEmpty()
+        if (list.isEmpty()) return
+        val ascending = when (sortOption.value) {
+            //PLAY_COUNT -> list.sortedBy { it.playCount }
+            PLAY_COUNT -> {
+                list.sortedWith(
+                    compareBy<Playlist> { it.playCount }
+                        .thenBy { it.lastPlayedTimeMs }
+                )
+            }
+            RECENTLY_PLAYED -> {
+                // 첫 항목 고정 + 나머지만 정렬
+                val fixed = list.first()
+                val tail = list.drop(1)
+                val sortedTail =
+                        tail.sortedBy { it.lastPlayedTimeMs }
+                (sortedTail + listOf(fixed))
+            }
+            DURATION -> list.sortedBy { it.totalDurationSec }
+            else -> list
+        }
+        setPlaylists(
+            if (isDescending) ascending.reversed()
+            else ascending
+        )
     }
 
     fun createNewPlaylist(playlist: Playlist) {
@@ -111,6 +148,10 @@ class PlaylistLibraryViewModel(application: Application) : AndroidViewModel(appl
 
     companion object {
         const val TAG = "PlaylistLibraryViewModel"
+        const val ADDED_DATE = "ADDED_DATE"
+        const val RECENTLY_PLAYED = "RECENTLY_PLAYED"
+        const val DURATION = "DURATION"
+        const val PLAY_COUNT = "PLAY_COUNT"
     }
 
 }

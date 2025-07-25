@@ -11,20 +11,29 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
+import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.databinding.FragmentHomeBinding
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.ui.home.trackStat.TrackDropStatAdapter
+import com.example.mymusic.ui.home.trackStat.TrackStatAdapter
 import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import com.example.mymusic.ui.search.SearchFragment
 import com.example.mymusic.util.ViewPagerAutoScroller
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import kotlin.math.max
 
 @UnstableApi
 class HomeFragment : Fragment() {
@@ -32,7 +41,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     var viewGroupContext: Context? = null
     val mainActivityViewModel: MainActivityViewModel by activityViewModels()
-    val homeViewModel: HomeViewModel by viewModels()
+    val homeViewModel: HomeViewModel by activityViewModels()
     var onThisDaysPageAdapter: OnThisDaysPageAdapter  = OnThisDaysPageAdapter(emptyList(),
         object : OnThisDaysPageAdapter.OnClickListener {
             override fun onItemClick(holder: OnThisDaysPageAdapter.ViewHolder, favorite: Favorite) {
@@ -79,6 +88,48 @@ class HomeFragment : Fragment() {
 
     val today = LocalDate.now()
 
+    val trackStatAdapter: TrackStatAdapter by lazy {
+        TrackStatAdapter(
+            emptyList(),
+            0,
+            object : TrackStatAdapter.OnClickListener {
+                override fun onItemClick(holder : TrackStatAdapter.TrackStatViewHolder,favorite: Favorite) {
+                    val args = Bundle().apply {
+                        putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+                        putString(MusicInfoFragment.TRANSITION_NAME_KEY, holder.artworkCard.transitionName)
+                    }
+                    val extras = FragmentNavigatorExtras(
+                        holder.artworkCard to holder.artworkCard.transitionName
+                    )
+                    findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
+                }
+            })
+    }
+
+    val trackDropStatAdapter: TrackDropStatAdapter by lazy {
+        TrackDropStatAdapter(
+            emptyList(),
+            dropWindowPresetWeek = 12,
+            maxCountDiff = 0,
+            object : TrackDropStatAdapter.OnClickListener {
+                override fun onItemClick(
+                    holder: TrackDropStatAdapter.TrackStatViewHolder,
+                    favorite: Favorite,
+                ) {
+                    val args = Bundle().apply {
+                        putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+                        putString(MusicInfoFragment.TRANSITION_NAME_KEY, holder.artworkCard.transitionName)
+                    }
+                    val extras = FragmentNavigatorExtras(
+                        holder.artworkCard to holder.artworkCard.transitionName
+                    )
+                    findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
+                }
+
+            }
+        )
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -112,17 +163,14 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bind()
-
-        mainActivityViewModel.favoriteList.observe(viewLifecycleOwner) { newList ->
-            homeViewModel.checkOnThisDayReleases(newList)
-        }
-
+        setObserver()
         setOnThisDayReleasesViewPager()
-
-
-
-
+        setupTrackStat()
+        loadFavoritesWithPlayCount()
     }
+
+
+
 
     private fun bind() {
         val searchBar = binding.searchBar
@@ -134,6 +182,42 @@ class HomeFragment : Fragment() {
                 navController.navigate(R.id.action_home_to_searchFragment,  args)
             } else{
                 Log.d(TAG, "navigation departure mismatch")
+            }
+        }
+    }
+
+    private fun setObserver() {
+        mainActivityViewModel.favoriteList.observe(viewLifecycleOwner) { newList ->
+            homeViewModel.checkOnThisDayReleases(newList)
+        }
+        homeViewModel.hotNowTop5.observe(viewLifecycleOwner) { hot5 ->
+            Log.d(TAG, "hot 5" + hot5.toString())
+            var maxCount: Int = 0
+            val list: List<Pair<Favorite, Int>> =
+                hot5.map { fav ->
+                    val lastMonthSum = fav.playCountByDay.entries
+                        .asSequence()
+                        .filter { (d, _) -> !d.isBefore(today.minusMonths(1)) && d.isBefore(today.plusDays(1)) }
+                        .sumOf { it.value ?: 0 }   // Java Integer 대응
+                    maxCount = max(maxCount, lastMonthSum)
+                    fav to lastMonthSum
+                }
+                    .sortedByDescending { it.second } // 필요하면 정렬
+            if (maxCount != 0) {
+                trackStatAdapter.updateList(list, maxCount)
+            }
+            binding.baselineText.text = "(기준 : ${homeViewModel.dropWindowPresetWeek}주 전)"
+        }
+
+        homeViewModel.comebackTop5.observe(viewLifecycleOwner) { comeback5 ->
+            Log.d(TAG, "comeback 5" + homeViewModel.dropWindowPresetWeek)
+
+            if (comeback5.isNotEmpty()) {
+                trackDropStatAdapter.updateList(
+                    comeback5,
+                    homeViewModel.dropWindowPresetWeek,
+                    newMaxCountDiff = homeViewModel.maxCountDiff
+                )
             }
         }
     }
@@ -234,6 +318,24 @@ class HomeFragment : Fragment() {
         binding.onThisDaysReleasesViewPager.setPageTransformer(pageTransformer)
         binding.onThisDaysReleasesViewPager.offscreenPageLimit = 1
 
+    }
+
+    private fun setupTrackStat() {
+        binding.hotNowRecyclerView.adapter = trackStatAdapter
+        binding.hotNowRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        binding.recentlyDropRecyclerView.adapter = trackDropStatAdapter
+        binding.recentlyDropRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+    }
+
+
+    private fun loadFavoritesWithPlayCount() {
+        mainActivityViewModel.viewModelScope.launch(Dispatchers.IO) {
+            val rawList = mainActivityViewModel.favoriteSongRepository.allFavoriteTracksWithPlayCount
+            withContext(Dispatchers.Main) {
+                homeViewModel.getRecommendedFavorites(rawList)
+            }
+        }
     }
 
     override fun onResume() {

@@ -1,6 +1,5 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/foreground_fragment_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -11,263 +10,293 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="@dimen/navigation_bar_margin">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <!-- ✅ NestedScrollView 제거하고 Coordinator 사용 -->
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="4dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp">
+            android:layout_height="match_parent">
 
-            <!-- 고정 상단 영역 -->
-            <FrameLayout
-                android:id="@+id/fixed_top_frame"
+            <!-- ✅ 상단 AppBar: (1) Collapsing 큰 이미지(스크롤로 사라짐) + (2) 고정 검색바 + (3) 스크롤 헤더 -->
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@+id/appbar"
                 android:layout_width="match_parent"
-                android:layout_height="33dp"
-                android:background="@android:color/transparent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
+                android:layout_height="wrap_content"
+                android:fitsSystemWindows="true"
+                app:liftOnScroll="true">
 
-                <EditText
-                    android:id="@+id/search_keyword"
-                    android:layout_width="120dp"
-                    android:layout_height="24dp"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginLeft="9dp"
-                    android:textSize="16sp"
-                    android:inputType="text"
-                    android:imeOptions="actionDone"
-                    android:drawableStart="@drawable/ic_search_button_18dp"
-                    android:background="@drawable/search_edittext_bg" />
-
-                <ImageButton
-                    android:id="@+id/previous_keyword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="135dp"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_arrow_north_16dp"
-                    android:background="@android:color/transparent" />
-
-                <ImageButton
-                    android:id="@+id/next_keyword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="160dp"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_arrow_south_16dp"
-                    android:background="@android:color/transparent" />
-
-                <TextView
-                    android:id="@+id/keyword_searched_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0/0"
-                    android:textSize="14sp"
-                    android:layout_marginLeft="205dp"
-                    android:layout_marginTop="6dp" />
-
-                <LinearLayout
-                    android:id="@+id/count_layout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end|top"
-                    android:layout_marginTop="3dp"
-                    android:layout_marginRight="8dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/cancel_selection_mode"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="취소"
-                        android:textSize="16sp"
-                        android:textColor="#666666"
-                        android:visibility="invisible"
-                        android:layout_marginRight="8dp" />
-
-                    <TextView
-                        android:id="@+id/select_favorites"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="선택"
-                        android:textSize="16sp"
-                        android:textColor="#666666"
-                        android:visibility="visible"
-                        android:layout_marginRight="10dp" />
-                    <TextView
-                        android:id="@+id/edit_location_favorites"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="편집"
-                        android:textSize="16sp"
-                        android:textColor="#666666"
-                        android:visibility="visible"
-                        android:layout_marginRight="10dp" />
-                </LinearLayout>
-
-            </FrameLayout>
-
-
-            <androidx.core.widget.NestedScrollView
-                android:id="@+id/scroll_area"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/fixed_top_frame">
-                <LinearLayout
+                <!-- (1) playlist  정보: 스크롤 시 접힘 -->
+                <com.google.android.material.appbar.CollapsingToolbarLayout
+                    android:id="@+id/collapsing"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    app:layout_constraintTop_toBottomOf="@id/fixed_top_frame"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    android:orientation="vertical">
+                    android:layout_height="360dp"
+                    android:fitsSystemWindows="true"
+                    app:layout_scrollFlags="scroll|exitUntilCollapsed"
+                    app:titleEnabled="false">
+
 
                     <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/combined_artworks_card"
-                        android:layout_width="300dp"
-                        android:layout_height="300dp"
-                        android:layout_gravity="center"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent"
                         app:cardCornerRadius="@dimen/combined_artworks_corner_radius"
-                        android:elevation="0dp"
+                        app:cardPreventCornerOverlap="true"
                         app:strokeWidth="0.5dp"
                         app:strokeColor="#8F8F8F"
-                        android:background="@android:color/transparent"
-                        app:cardPreventCornerOverlap="true"
+                        app:layout_collapseMode="parallax"
+                        app:layout_collapseParallaxMultiplier="0.7"
                         android:clipToOutline="false"
                         android:clipChildren="false">
-                        <com.google.android.material.imageview.ShapeableImageView
-                            android:id="@+id/combined_artworks"
+
+                        <!-- (3) 스크롤되는 헤더: 제목/카운트/버튼 (RV와 함께 올라감) -->
+                        <LinearLayout
+                            android:id="@+id/playlist_header"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            app:shapeAppearanceOverlay="@style/shape_rounded_artwork" />
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:paddingTop="8dp"
+                            android:paddingBottom="8dp"
+                            app:layout_scrollFlags="scroll|enterAlways">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/combined_artworks_card"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@android:color/transparent"
+                                android:layout_gravity="center"
+                                app:cardCornerRadius="@dimen/combined_artworks_corner_radius"
+                                app:cardPreventCornerOverlap="true"
+                                app:strokeWidth="0.5dp"
+                                app:strokeColor="#8F8F8F"
+                                app:layout_collapseMode="parallax"
+                                app:layout_collapseParallaxMultiplier="0.7"
+                                android:clipToOutline="false"
+                                android:clipChildren="false"
+                                android:layout_marginTop="6dp">
+                                <com.google.android.material.imageview.ShapeableImageView
+                                    android:id="@+id/combined_artworks"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    app:shapeAppearanceOverlay="@style/shape_rounded_artwork" />
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center"
+                                android:layout_marginTop="4dp"
+                                android:layout_marginEnd="4dp"
+                                android:layout_marginBottom="4dp"
+                                android:layout_marginStart="10dp"
+                                android:layout_gravity="center">
+                                <TextView
+                                    android:id="@+id/playlist_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="playlist name"
+                                    android:textSize="@dimen/text_size_large"
+                                    android:textStyle="bold" />
+
+                                <ImageButton
+                                    android:id="@+id/rename"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:src="@drawable/ic_round_edit"
+                                    android:background="@android:color/transparent"
+                                    app:tint="@color/text_secondary"
+                                    android:layout_marginStart="4dp"
+                                    android:scaleX="0.8"
+                                    android:scaleY="0.9" />
+                            </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center"
+                                android:layout_margin="4dp">
+
+                                <TextView
+                                    android:id="@+id/playlist_count"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="11곡"
+                                    android:textStyle="bold"
+                                    android:textSize="@dimen/text_size_xxsmall" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text=" · "
+                                    android:textStyle="bold"
+                                    android:textSize="@dimen/text_size_xxsmall" />
+
+                                <TextView
+                                    android:id="@+id/playlist_total_duration"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="54분 1초"
+                                    android:textStyle="bold"
+                                    android:textSize="@dimen/text_size_xxsmall" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center"
+                                android:layout_margin="8dp">
+
+                                <ImageButton
+                                    android:id="@+id/music_shuffle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:src="@drawable/ic_round_shuffle"
+                                    android:background="@android:color/transparent"
+                                    android:layout_marginStart="24dp"
+                                    android:layout_marginEnd="24dp" />
+
+                                <ImageButton
+                                    android:id="@+id/music_play"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:src="@drawable/ic_play_arrow"
+                                    android:background="@android:color/transparent"
+                                    android:layout_marginStart="24dp"
+                                    android:layout_marginEnd="24dp"
+                                    android:scaleY="1.2"
+                                    android:scaleX="1.2" />
+
+                                <ImageButton
+                                    android:id="@+id/add_tracks"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:src="@drawable/ic_round_playlist_add"
+                                    android:background="@android:color/transparent"
+                                    android:layout_marginStart="24dp"
+                                    android:layout_marginEnd="24dp"
+                                    android:scaleY="1.15"
+                                    android:scaleX="1.15" />
+                            </LinearLayout>
+                        </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
 
-                    <androidx.constraintlayout.widget.ConstraintLayout
+
+                    <!-- 필요하면 툴바 핀 고정
+                    <com.google.android.material.appbar.MaterialToolbar
+                        android:id="@+id/toolbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="?attr/actionBarSize"
+                        app:layout_collapseMode="pin"
+                        android:background="@android:color/transparent"/>
+                    -->
+
+                </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+                <!-- (2) 상단 고정 영역: 검색/이전/다음/카운트 (스크롤해도 항상 보임 = scrollFlags 없음) -->
+                <FrameLayout
+                    android:id="@+id/fixed_top_frame"
+                    android:layout_width="match_parent"
+                    android:layout_height="33dp"
+                    android:background="@android:color/transparent"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp">
+
+                    <EditText
+                        android:id="@+id/search_keyword"
+                        android:layout_width="120dp"
+                        android:layout_height="24dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginLeft="9dp"
+                        android:textSize="16sp"
+                        android:inputType="text"
+                        android:imeOptions="actionDone"
+                        android:drawableStart="@drawable/ic_search_button_18dp"
+                        android:background="@drawable/search_edittext_bg" />
+
+                    <ImageButton
+                        android:id="@+id/previous_keyword"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:layout_gravity="center"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:id="@+id/playlist_name"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="playlist name"
-                            android:textSize="@dimen/text_size_large"
-                            android:textStyle="bold"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent">
-                        </TextView>
+                        android:layout_marginLeft="135dp"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_arrow_north_16dp"
+                        android:background="@android:color/transparent" />
 
-                        <ImageButton
-                            android:id="@+id/rename"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:src="@drawable/ic_round_edit"
-                            android:background="@android:color/transparent"
-                            app:tint= "@color/text_secondary"
-                            android:layout_marginStart="4dp"
-                            android:scaleX="0.8"
-                            android:scaleY="0.9"
-                            app:layout_constraintStart_toEndOf="@id/playlist_name"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent">
-                        </ImageButton>
-                    </androidx.constraintlayout.widget.ConstraintLayout>
+                    <ImageButton
+                        android:id="@+id/next_keyword"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="160dp"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_arrow_south_16dp"
+                        android:background="@android:color/transparent" />
 
+                    <TextView
+                        android:id="@+id/keyword_searched_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0/0"
+                        android:textSize="14sp"
+                        android:layout_marginLeft="205dp"
+                        android:layout_marginTop="6dp" />
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:id="@+id/count_layout"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:layout_margin="4dp">
-                        <TextView
-                            android:id="@+id/playlist_count"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="11곡"
-                            android:textStyle="bold"
-                            android:textSize="@dimen/text_size_xxsmall">
-                        </TextView>
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=" · "
-                            android:textStyle="bold"
-                            android:textSize="@dimen/text_size_xxsmall">
-                        </TextView>
-                        <TextView
-                            android:id="@+id/playlist_total_duration"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="54분 1초"
-                            android:textStyle="bold"
-                            android:textSize="@dimen/text_size_xxsmall">
-                        </TextView>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:layout_margin="8dp">
-                       <ImageButton
-                           android:id="@+id/music_shuffle"
-                           android:layout_width="wrap_content"
-                           android:layout_height="wrap_content"
-                           android:src="@drawable/ic_round_shuffle"
-                           android:background="@android:color/transparent"
-                           android:layout_marginStart="24dp"
-                           android:layout_marginEnd="24dp">
-                       </ImageButton>
-                        <ImageButton
-                            android:id="@+id/music_play"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:src="@drawable/ic_play_arrow"
-                            android:background="@android:color/transparent"
-                            android:layout_marginStart="24dp"
-                            android:layout_marginEnd="24dp"
-                            android:scaleY="1.2"
-                            android:scaleX="1.2">
-                        </ImageButton>
-                        <ImageButton
-                            android:id="@+id/add_tracks"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:src="@drawable/ic_round_playlist_add"
-                            android:background="@android:color/transparent"
-                            android:layout_marginStart="24dp"
-                            android:layout_marginEnd="24dp"
-                            android:scaleY="1.15"
-                            android:scaleX="1.15">
-                        </ImageButton>
-                    </LinearLayout>
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/track_recycler_view"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="5"
-                        android:layout_marginLeft="8dp"
+                        android:layout_gravity="end|top"
+                        android:layout_marginTop="3dp"
                         android:layout_marginRight="8dp"
-                        android:layout_marginTop="18dp"
-                        android:visibility="visible" />
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp">
-                    </View>
-                </LinearLayout>
-            </androidx.core.widget.NestedScrollView>
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/cancel_selection_mode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="취소"
+                            android:textSize="16sp"
+                            android:textColor="#666666"
+                            android:visibility="invisible"
+                            android:layout_marginRight="8dp" />
+
+                        <TextView
+                            android:id="@+id/select_favorites"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="선택"
+                            android:textSize="16sp"
+                            android:textColor="#666666"
+                            android:visibility="visible"
+                            android:layout_marginRight="10dp" />
+
+                        <TextView
+                            android:id="@+id/edit_location_favorites"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="편집"
+                            android:textSize="16sp"
+                            android:textColor="#666666"
+                            android:visibility="visible"
+                            android:layout_marginRight="10dp" />
+                    </LinearLayout>
+                </FrameLayout>
+
+
+
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <!-- ✅ 유일한 스크롤러: RV. AppBar와 연동되게 behavior 지정 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/track_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="200dp"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
     </FrameLayout>
 </FrameLayout>

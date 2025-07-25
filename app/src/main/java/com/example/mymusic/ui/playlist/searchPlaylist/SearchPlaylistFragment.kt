@@ -1,18 +1,21 @@
 package com.example.mymusic.ui.playlist.searchPlaylist
 
 import android.app.Dialog
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mymusic.MainActivityViewModel
@@ -20,8 +23,8 @@ import com.example.mymusic.R
 import com.example.mymusic.databinding.FragmentSearchPlaylistBinding
 import com.example.mymusic.model.Favorite
 import com.example.mymusic.model.Playlist
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.example.mymusic.util.FavoritesSearchUtils
+import com.example.mymusic.util.SortFilterUtil
 
 @UnstableApi
 class SearchPlaylistFragment : Fragment() {
@@ -72,6 +75,8 @@ class SearchPlaylistFragment : Fragment() {
             })
     }
 
+    private val bottomSheet: FilterBottomSheetFragment by lazy { FilterBottomSheetFragment() }
+    private var isDescending = true
     val binding get() = _binding!!
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -88,6 +93,7 @@ class SearchPlaylistFragment : Fragment() {
         receiveArgument()
         bind()
         setObserver()
+        setClickEvent()
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -113,6 +119,9 @@ class SearchPlaylistFragment : Fragment() {
         binding.trackRelatedRecyclerView.layoutManager = LinearLayoutManager(context)
         binding.addSelectedFavorites.alpha = 0.6f
         binding.cancelSelectionMode.alpha = 0.6f
+        binding.keywordSearchedCount.visibility = View.INVISIBLE
+        binding.inOrderButtonDropUp.visibility = View.INVISIBLE
+        binding.inOrderButtonDropDown.visibility = View.VISIBLE
     }
     private fun updateSelectionButtonsState() {
         if (searchPlaylistViewModel.selectedList.isEmpty()) {
@@ -157,15 +166,49 @@ class SearchPlaylistFragment : Fragment() {
                     searchPlaylistViewModel.addTracksToPlaylist()
                 }
                 dialog.show()
-
-
             }
         }
     }
+
+    private fun sortAndFilteringList() {
+        val prefs = requireActivity().getSharedPreferences("filter_prefs_in_search_playlist_track", Context.MODE_PRIVATE)
+        val sortOpt = prefs.getString("sort_option", "ADDED_DATE")
+        val filterOpt = prefs.getString("filter_option", "ALL")
+        val sortAndFiltered = SortFilterUtil.sortAndFilterFavoritesList(
+            requireContext(),
+            searchPlaylistViewModel.rawList.value,
+            filterOpt,
+            sortOpt,
+            isDescending)
+        searchPlaylistViewModel.favoriteList.value = sortAndFiltered
+    }
+
     private fun setObserver(){
+        bottomSheet.setApplyListener(object : FilterBottomSheetFragment.OnApplyListener{
+            override fun onApply() {
+               sortAndFilteringList()
+            }
+        })
+        searchPlaylistViewModel.rawList.observe(viewLifecycleOwner) { rawList ->
+            sortAndFilteringList()
+        }
         searchPlaylistViewModel.favoriteList.observe(viewLifecycleOwner) { favoriteList ->
             favoriteList?.let {
                 favoriteAdapter.updateList(it, searchPlaylistViewModel.alreadyExistSet.value?.toSet() ?: setOf(), searchPlaylistViewModel.selectedIds)
+                val count = favoriteList.size
+                binding.emptyFavoriteSong.visibility = if (count == 0) View.VISIBLE else View.GONE
+                if (count == 0) {
+                    binding.favoritesLoadedCount.text = "No"
+                    binding.elementCount.text = "Songs"
+                }
+                else if (count == 1) {
+                    binding.favoritesLoadedCount.text = "A"
+                    binding.elementCount.text = "Song"
+                }
+                else {
+                    binding.favoritesLoadedCount.text = count.toString()
+                    binding.elementCount.text = "Songs"
+                }
             }
         }
         searchPlaylistViewModel.relatedList.observe(viewLifecycleOwner) { relatedList ->
@@ -197,6 +240,130 @@ class SearchPlaylistFragment : Fragment() {
             favList?.let {
                 favoriteAdapter.notifyExistChangedByIds(existSet.toSet())
             }
+        }
+    }
+
+    private fun updateHighlightedPositionList(newKeyword: String?, scrolling: Boolean) {
+        if (newKeyword == null || newKeyword.trim().isEmpty()) {
+            binding.keywordSearchedCount.visibility = View.GONE
+            favoriteAdapter.setKeyword(null)
+            return
+        }
+        val favorites = searchPlaylistViewModel.favoriteList.value
+        favorites.let {
+            favoriteAdapter.setKeyword(newKeyword.trim())
+            searchPlaylistViewModel.highlightedPositions = null
+            val highlightedPositions: List<Int> =
+                FavoritesSearchUtils.getContainPositions(newKeyword, it) { favorite ->
+                    favorite.title + favorite.artistName
+                }
+            if (highlightedPositions.isNotEmpty()) {
+                if (scrolling) binding.trackRecyclerView.smoothScrollToPosition(highlightedPositions[0])
+                searchPlaylistViewModel.highlightedPositions = highlightedPositions
+                val countText = "1/" + highlightedPositions.size
+                binding.keywordSearchedCount.visibility = View.VISIBLE
+                binding.keywordSearchedCount.text = countText
+            }
+            else {
+                binding.keywordSearchedCount.text = ""
+                binding.keywordSearchedCount.visibility = View.INVISIBLE
+            }
+
+
+        }
+    }
+
+    private fun scrollToPreviousSearched() {
+        val highlightPositions = searchPlaylistViewModel.highlightedPositions
+        if (!highlightPositions.isNullOrEmpty()) {
+            val currentPosition = searchPlaylistViewModel.scrolledHighlightedPosition
+            val indexOfCurrentPosition = highlightPositions.indexOf(currentPosition)
+            val index =(indexOfCurrentPosition + highlightPositions.size - 1) % highlightPositions.size
+            val previousPosition = highlightPositions[index]
+            searchPlaylistViewModel.scrolledHighlightedPosition = previousPosition
+
+            val layoutManager = binding.trackRecyclerView.layoutManager as LinearLayoutManager?
+            if (layoutManager != null) {
+                layoutManager.scrollToPositionWithOffset(previousPosition, 0)
+            } else {
+                binding.trackRecyclerView.smoothScrollToPosition(previousPosition)
+            }
+            val count = (index + 1).toString() + "/" + highlightPositions.size
+            binding.keywordSearchedCount.text = count
+        }
+    }
+    private fun scrollToNextSearched() {
+        val highlightPositions = searchPlaylistViewModel.highlightedPositions
+        if (!highlightPositions.isNullOrEmpty()) {
+            val currentPosition = searchPlaylistViewModel.scrolledHighlightedPosition
+            val indexOfCurrentPosition = highlightPositions.indexOf(currentPosition)
+            val index =(indexOfCurrentPosition + highlightPositions.size + 1) % highlightPositions.size
+            val previousPosition = highlightPositions[index]
+            searchPlaylistViewModel.scrolledHighlightedPosition = previousPosition
+
+            val layoutManager = binding.trackRecyclerView.layoutManager as LinearLayoutManager?
+            if (layoutManager != null) {
+                layoutManager.scrollToPositionWithOffset(previousPosition, 0)
+            } else {
+                binding.trackRecyclerView.smoothScrollToPosition(previousPosition)
+            }
+            val count = (index + 1).toString() + "/" + highlightPositions.size
+            binding.keywordSearchedCount.text = count
+            Log.d("RV", "itemCount=${binding.trackRecyclerView.adapter?.itemCount} " +
+                    "pos=$previousPosition " +
+                    "canScroll=${binding.trackRecyclerView.canScrollVertically(1) || binding.trackRecyclerView.canScrollVertically(-1)} " +
+                    "attached=${binding.trackRecyclerView.isAttachedToWindow}")
+
+        }
+    }
+
+
+    private fun setClickEvent() {
+        binding.searchKeyword.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (searchPlaylistViewModel.favoriteList.value.isNullOrEmpty()) return
+                searchPlaylistViewModel.keyword = s?.trim().toString()
+                updateHighlightedPositionList(
+                    newKeyword = s?.trim().toString(),
+                    scrolling = true
+                )
+            }
+
+        })
+        binding.previousKeyword.setOnClickListener {
+            if (binding.keywordSearchedCount.isVisible)
+                scrollToPreviousSearched()
+            else {
+                binding.trackRecyclerView.smoothScrollToPosition(0)
+            }
+        }
+
+        binding.nextKeyword.setOnClickListener {
+            if (binding.keywordSearchedCount.isVisible)
+                scrollToNextSearched()
+            else
+                binding.trackRecyclerView.smoothScrollToPosition((searchPlaylistViewModel.favoriteList.value?.size?.minus(1)) ?: 0)
+        }
+
+        binding.filterButton.setOnClickListener {
+            if (!bottomSheet.isAdded && !bottomSheet.isVisible) {
+                bottomSheet.show(getParentFragmentManager(), "FilterBottomSheet")
+            }
+        }
+        binding.inOrderButtonDropUp.setOnClickListener {
+            it.visibility = View.INVISIBLE
+            binding.inOrderButtonDropDown.visibility = View.VISIBLE
+            isDescending = true
+            sortAndFilteringList()
+
+        }
+        binding.inOrderButtonDropDown.setOnClickListener {
+            it.visibility = View.INVISIBLE
+            binding.inOrderButtonDropUp.visibility = View.VISIBLE
+            isDescending = false
+            sortAndFilteringList()
         }
     }
 

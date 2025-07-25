@@ -7,11 +7,6 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import androidx.transition.ArcMotion
-import androidx.transition.ChangeBounds
-import androidx.transition.ChangeTransform
-import androidx.transition.TransitionSet
-import androidx.transition.Slide
 import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
@@ -24,6 +19,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -34,7 +30,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
+import androidx.transition.ArcMotion
+import androidx.transition.ChangeBounds
+import androidx.transition.ChangeTransform
+import androidx.transition.Slide
+import androidx.transition.TransitionSet
 import com.bumptech.glide.Glide
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
@@ -44,6 +44,7 @@ import com.example.mymusic.model.Favorite
 import com.example.mymusic.model.Playlist
 import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import com.example.mymusic.ui.playlist.searchPlaylist.SearchPlaylistFragment
+import com.example.mymusic.util.FavoritesSearchUtils
 import com.example.mymusic.util.ImageCollageUtil
 import com.example.mymusic.util.VerticalSpaceItemDecoration
 import kotlinx.coroutines.Dispatchers
@@ -432,8 +433,83 @@ class PlaylistDetailFragment: Fragment() {
 
         binding.trackRecyclerView.addItemDecoration(VerticalSpaceItemDecoration(spacingPx))
         updatePlaylistInformation()
+
+        binding.keywordSearchedCount.visibility = View.GONE
     }
 
+    private fun updateHighlightedPositionList(newKeyword: String?, scrolling: Boolean) {
+        if (newKeyword == null || newKeyword.trim().isEmpty()) {
+            binding.keywordSearchedCount.visibility = View.GONE
+            adapter.setKeyword(null)
+            return
+        }
+        val favorites = vmPlaylistDetail.playlist.value?.favorites
+        favorites?.let {
+            adapter.setKeyword(newKeyword.trim())
+            vmPlaylistDetail.highlightedPositions = null
+            val highlightedPositions: List<Int> =
+                FavoritesSearchUtils.getContainPositions(newKeyword, it) { favorite ->
+                    favorite.title + favorite.artistName
+                }
+            if (highlightedPositions.isNotEmpty()) {
+                if (scrolling) binding.trackRecyclerView.smoothScrollToPosition(highlightedPositions[0])
+                vmPlaylistDetail.highlightedPositions = highlightedPositions
+                val countText = "1/" + highlightedPositions.size
+                binding.keywordSearchedCount.visibility = View.VISIBLE
+                binding.keywordSearchedCount.text = countText
+            }
+            else {
+                binding.keywordSearchedCount.text = ""
+                binding.keywordSearchedCount.visibility = View.INVISIBLE
+            }
+
+
+        }
+    }
+
+    private fun scrollToPreviousSearched() {
+        val highlightPositions = vmPlaylistDetail.highlightedPositions
+        if (!highlightPositions.isNullOrEmpty()) {
+            val currentPosition = vmPlaylistDetail.scrolledHighlightedPosition
+            val indexOfCurrentPosition = highlightPositions.indexOf(currentPosition)
+            val index =(indexOfCurrentPosition + highlightPositions.size - 1) % highlightPositions.size
+            val previousPosition = highlightPositions[index]
+            vmPlaylistDetail.scrolledHighlightedPosition = previousPosition
+
+            val layoutManager = binding.trackRecyclerView.layoutManager as LinearLayoutManager?
+            if (layoutManager != null) {
+                layoutManager.scrollToPositionWithOffset(previousPosition, 0)
+            } else {
+                binding.trackRecyclerView.smoothScrollToPosition(previousPosition)
+            }
+            val count = (index + 1).toString() + "/" + highlightPositions.size
+            binding.keywordSearchedCount.text = count
+        }
+    }
+    private fun scrollToNextSearched() {
+        val highlightPositions = vmPlaylistDetail.highlightedPositions
+        if (!highlightPositions.isNullOrEmpty()) {
+            val currentPosition = vmPlaylistDetail.scrolledHighlightedPosition
+            val indexOfCurrentPosition = highlightPositions.indexOf(currentPosition)
+            val index =(indexOfCurrentPosition + highlightPositions.size + 1) % highlightPositions.size
+            val previousPosition = highlightPositions[index]
+            vmPlaylistDetail.scrolledHighlightedPosition = previousPosition
+
+            val layoutManager = binding.trackRecyclerView.layoutManager as LinearLayoutManager?
+            if (layoutManager != null) {
+                layoutManager.scrollToPositionWithOffset(previousPosition, 0)
+            } else {
+                binding.trackRecyclerView.smoothScrollToPosition(previousPosition)
+            }
+            val count = (index + 1).toString() + "/" + highlightPositions.size
+            binding.keywordSearchedCount.text = count
+            Log.d("RV", "itemCount=${binding.trackRecyclerView.adapter?.itemCount} " +
+                    "pos=$previousPosition " +
+                    "canScroll=${binding.trackRecyclerView.canScrollVertically(1) || binding.trackRecyclerView.canScrollVertically(-1)} " +
+                    "attached=${binding.trackRecyclerView.isAttachedToWindow}")
+
+        }
+    }
 
 
     private fun updatePlaylistInformation() {
@@ -482,6 +558,14 @@ class PlaylistDetailFragment: Fragment() {
                 vmPlaylistDetail.selectedIdsSet.value?.toSet() ?: emptySet()
             )
             updatePlaylistInformation()
+            vmPlaylistDetail.keyword?.let { keyword ->
+                if (keyword.isNotEmpty()) {
+                    updateHighlightedPositionList(
+                        newKeyword =  keyword,
+                        scrolling = false
+                    )
+                }
+            }
         }
 
         vmPlaylistDetail.selectedIdsSet.observe(viewLifecycleOwner) {newSet ->
@@ -602,6 +686,37 @@ class PlaylistDetailFragment: Fragment() {
                         }
                     }
                 }
+            }
+
+
+
+            binding.searchKeyword.addTextChangedListener(object: TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    if (playlist?.favorites.isNullOrEmpty()) return
+                    vmPlaylistDetail.keyword = s?.trim().toString()
+                    updateHighlightedPositionList(
+                        newKeyword = s?.trim().toString(),
+                        scrolling = true
+                    )
+                }
+
+            })
+
+            binding.previousKeyword.setOnClickListener {
+                if (binding.keywordSearchedCount.isVisible)
+                    scrollToPreviousSearched()
+                else {
+                    binding.trackRecyclerView.smoothScrollToPosition(0)
+                }
+            }
+
+            binding.nextKeyword.setOnClickListener {
+                if (binding.keywordSearchedCount.isVisible)
+                    scrollToNextSearched()
+                else
+                    binding.trackRecyclerView.smoothScrollToPosition((vmPlaylistDetail.playlist.value?.favorites?.size?.minus(1)) ?: 0)
             }
         }
 

@@ -34,7 +34,7 @@ class LyricsPageFragment : Fragment() {
         val favorite = mainActivityViewModel.currentTrack.value
         favorite?.let {
             val lyrics = favorite.metadata.lyrics
-            lyrics?.let { lyricsTextView.setText("\n\n\n\n\n\n\n" + lyrics + "\n\n\n\n\n\n\n") } ?: run { lyricsTextView.setText("가사정보 없음") }
+            lyricsTextView.text = if (!lyrics.isNullOrEmpty()) "\n\n\n\n\n\n\n" + lyrics + "\n\n\n\n\n\n\n" else  "\n\n\n\n\n\n\n가사정보 없음"
         } ?: run { "정보 없음" }
     }
 }

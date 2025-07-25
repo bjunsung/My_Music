@@ -422,8 +422,13 @@ public class MusicInfoFragment extends Fragment {
             albumName.setTransitionName(TRANSITION_NAME_FORM_ALBUM + trackId);
             binding.durationLayout.setTransitionName(TRANSITION_NAME_FORM_DURATION + trackId);
             binding.releaseDateLayout.setTransitionName(TRANSITION_NAME_FORM_RELEASE_DATE + trackId);
+
+            //artwork image 의 transitionName 을 startTransition 이후에 설정해서 enter transition 은 무시하고 return transition 에만 적용
+            /*
             if(viewModel.getCurrentTransitionName() == null || viewModel.getCurrentTransitionName().equals(viewModel.getInitialTransitionName()))
                 artworkImage.setTransitionName(TRANSITION_NAME_FORM_ARTWORK_IMAGE + trackId);
+
+             */
 
 
 
@@ -462,11 +467,10 @@ public class MusicInfoFragment extends Fragment {
                                 public void onResourceReady(@NonNull Drawable resource, @Nullable com.bumptech.glide.request.transition.Transition <? super Drawable> transition) {
                                     artworkImage.setImageDrawable(resource);
                                     startPostponedEnterTransition();
-                                    artworkImage.post(() -> {
+                                    artworkImage.post(() -> { //artwork image 의 transitionName 을 startTransition 이후에 설정해서 enter transition 은 무시하고 return transition 에만 적용
                                         artworkImage.setTransitionName(viewModel.getInitialTransitionName());
                                         Log.d(TAG, "TransitionName set to initial transName: " + viewModel.getInitialTransitionName() );
                                     });
-
                                 }
 
                                 @Override

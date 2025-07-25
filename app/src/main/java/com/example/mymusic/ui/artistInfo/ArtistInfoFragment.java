@@ -319,6 +319,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         readyCounter.set(0);
         //전환 연기
         postponeEnterTransition();
+        new Handler(Looper.getMainLooper()).postDelayed(this::startPostponedEnterTransition, 50L);
 
 
         albumRecyclerView = binding.albumResultRecyclerView;

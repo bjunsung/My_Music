@@ -66,6 +66,25 @@ public class FavoriteSongRepository {
         return ordered;
     }
 
+    public List<Favorite> getFavoritesByIdsIncludeHidden(List<String> ids) {
+        if (ids == null || ids.isEmpty()) return new ArrayList<>();
+        LinkedHashSet<String> uniqueIds = new LinkedHashSet<>(ids);
+        List<Favorites> rawDataList = favoritesDao.getFavoritesByIds(new ArrayList<>(uniqueIds));
+        if (rawDataList == null || rawDataList.isEmpty()) return new ArrayList<>();
+        Map<String, Favorite> byId = new HashMap<>(rawDataList.size());
+        for (Favorites item : rawDataList) {
+            Favorite model = entityToModelWithoutPlayCountByDay(item);
+            byId.put(item.trackId, model);
+        }
+        List<Favorite> ordered = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            Favorite f = byId.get(id);
+            if (f != null) ordered.add(f);
+        }
+
+        return ordered;
+    }
+
 
     private Favorite entityToModelWithoutPlayCountByDay(Favorites entity) {
         if(entity == null) {
@@ -184,6 +203,7 @@ public class FavoriteSongRepository {
         entity.audioUri = model.audioUri;
         entity.primaryColor = model.track.primaryColor;
         entity.isHidden = model.isHidden;
+        entity.playCount = model.playCount;
         return entity;
     }
 

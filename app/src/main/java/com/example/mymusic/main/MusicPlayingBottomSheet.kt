@@ -449,7 +449,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
 
 
-        lyricsTextView.text = "\n\n\n\n\n\n\n" + (metadata?.lyrics ?: "제목없음")  + "\n\n\n\n\n\n\n"
+        lyricsTextView.text = "\n\n\n\n\n\n\n" + (metadata?.lyrics ?: "가사정보 없음")  + "\n\n\n\n\n\n\n"
 
         pauseButton.setOnClickListener {
             mainActivityViewModel.togglePlayPause()
