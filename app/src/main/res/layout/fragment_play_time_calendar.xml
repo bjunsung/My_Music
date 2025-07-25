@@ -55,10 +55,12 @@
         <!-- 오른쪽 기여도 캘린더 -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/calendar_recycler_view"
-            android:layout_width="0dp"
+            android:layout_width="700dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:padding="4dp" />
+
+
+
     </LinearLayout>
 
     <!-- 새로운 LinearLayout (RecyclerView 아래 텍스트 3개) -->

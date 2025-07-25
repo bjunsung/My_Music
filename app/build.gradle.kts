@@ -103,18 +103,25 @@ dependencies {    // Room core
     implementation("me.relex:circleindicator:2.1.6")
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")
     // Compose Core
-    implementation("androidx.compose.ui:ui:1.5.0")
+    //implementation("androidx.compose.ui:ui:1.5.0")
     implementation("androidx.compose.material:material:1.5.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
 
 // Activity-Compose (Java Activity에서도 ComposeView 쓸 때 필수)
-    implementation("androidx.activity:activity-compose:1.7.2")
+   // implementation("androidx.activity:activity-compose:1.7.2")
 
 // Coil (이미지 로드 시)
     implementation("io.coil-kt:coil-compose:2.3.0")
 
     implementation("com.google.android.flexbox:flexbox:3.0.0")
+
+    implementation(platform("androidx.compose:compose-bom:2024.05.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.activity:activity-compose:1.8.2")
+
     implementation(libs.palette)  //Glide
     implementation(libs.appcompat)
     implementation(libs.material)

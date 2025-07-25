@@ -20,8 +20,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -31,15 +29,8 @@ import com.example.mymusic.R
 import com.example.mymusic.customView.WaveformView
 import com.example.mymusic.databinding.FragmentArtworkWithWaveFormBinding
 import com.example.mymusic.model.Favorite
-import com.example.mymusic.model.FavoriteArtist
-import com.example.mymusic.network.ArtistApiHelper
-import com.example.mymusic.ui.artistInfo.ArtistInfoFragment
 import com.example.mymusic.ui.musicInfo.MusicInfoFragment
-import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Player
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ArtworkWithWaveFormFragment : Fragment() {
 

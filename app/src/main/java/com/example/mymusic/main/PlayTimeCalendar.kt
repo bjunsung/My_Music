@@ -1,5 +1,7 @@
 package com.example.mymusic.main
 
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,12 +11,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearSmoothScroller
-import androidx.recyclerview.widget.RecyclerView
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.databinding.FragmentPlayTimeCalendarBinding
 import com.example.mymusic.model.Favorite
@@ -24,12 +24,10 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import androidx.core.view.isVisible
-import com.example.mymusic.customLayout.StableGridLayoutManager
-import com.google.android.flexbox.AlignItems
-import com.google.android.flexbox.FlexDirection
-import com.google.android.flexbox.FlexWrap
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
+import androidx.recyclerview.widget.RecyclerView
+
 
 class PlayTimeCalendar : Fragment() {
 
@@ -73,15 +71,29 @@ class PlayTimeCalendar : Fragment() {
         recyclerView.post { recyclerView.scrollToPosition(daySize - 1) }
     }
 
-    private fun bind() {
-        //val layoutManager = GridLayoutManager(requireContext(), 7, RecyclerView.HORIZONTAL, false)
-        val layoutManager = FlexboxLayoutManager(context).apply {
-            flexDirection = FlexDirection.ROW         // 가로로 나열
-            flexWrap = FlexWrap.WRAP                 // 줄바꿈 허용 (wrap_content 느낌)
-            justifyContent = JustifyContent.FLEX_START  // 왼쪽 정렬
-            alignItems = AlignItems.FLEX_START          // 위쪽 정렬
+    private fun lockRecyclerViewWidth() {
+        val displayMetrics = Resources.getSystem().displayMetrics
+        val orientation = resources.configuration.orientation
+
+        val widthPx = if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            (displayMetrics.widthPixels * 0.92f).toInt()   // 세로 모드 → 92% 만 사용
+        } else {
+            (displayMetrics.widthPixels * 0.455f).toInt()  // 가로 모드 → 45.5%만 사용
         }
+
+        binding.calendarRecyclerView.layoutParams = binding.calendarRecyclerView.layoutParams.apply {
+            width = widthPx
+        }
+        binding.calendarRecyclerView.setHasFixedSize(true)
+    }
+
+
+    private fun bind() {
+        val layoutManager = GridLayoutManager(requireContext(), 7, RecyclerView.HORIZONTAL, false)
         recyclerView.layoutManager = layoutManager
+
+        lockRecyclerViewWidth()
+
 
         val favorite = mainActivityViewModel.currentTrack.value
         // 어댑터를 미리 초기화 (빈 데이터로)
@@ -90,19 +102,18 @@ class PlayTimeCalendar : Fragment() {
         Log.d(TAG, "play time calendar adapter initialized with empty list")
 
         recyclerView.adapter = adapter
-        recyclerView.isSaveEnabled = true
+        //recyclerView.isSaveEnabled = true
 
         mainActivityViewModel.viewModelScope.launch(Dispatchers.IO) {
             val favoriteWithPlayCount = mainActivityViewModel.favoriteSongRepository.getFavoriteSongWithPlayCount(favorite!!.track.trackId)
             mainActivityViewModel.viewModelScope.launch(Dispatchers.Main) {
-                //val data = generateDataFromFavorite(favoriteWithPlayCount)
-                //adapter.updateData(data)
                 updateUi(favoriteWithPlayCount)
 
                 musicPlayingViewModel.currentPage.observe(viewLifecycleOwner) {page ->
                     Log.d(TAG, "page changed: " + page + " day size: " + daySize)
                     if (page == 2) {
-                        //recyclerView.postDelayed( {recyclerView.scrollToPosition(daySize-1) }, 50)
+                        //recyclerView.post {recyclerView.scrollToPosition(daySize-1) }
+
                         recyclerView.post {
                             val scroller = object : LinearSmoothScroller(context) {
                                 override fun getHorizontalSnapPreference() = SNAP_TO_END
@@ -110,8 +121,11 @@ class PlayTimeCalendar : Fragment() {
                             scroller.targetPosition = daySize - 1
                             recyclerView.layoutManager?.startSmoothScroll(scroller)
                             Log.d(TAG, "scroll to today (post)")
-
                         }
+
+
+
+
                     }
                 }
             }
@@ -125,41 +139,30 @@ class PlayTimeCalendar : Fragment() {
 
         adapter.setOnItemClickListener(object : CalendarAdapter.OnItemClickListener {
             override fun onItemClick(date: LocalDate, playCount: Int, position: Int) {
-                //val layoutManager = recyclerView.layoutManager as GridLayoutManager
-                //val firstVisible = layoutManager.findFirstVisibleItemPosition()
-
-
                 selectedDateTextView.text = date.toString()
                 playCountForDateTextView.text = playCount.toString()
                 selectedDate = date
                 selectedDateTextView.alpha = 1f
                 playCountForDateTextView.alpha = 1f
-
-                //recyclerView.post { recyclerView.scrollToPosition(position) }
-                //recyclerView.postDelayed(  {layoutManager.scrollToPosition(firstVisible)}, 200 )
-                //Handler(Looper.getMainLooper()).postDelayed( {recyclerView.scrollToPosition(position)}, 200 )
-
-                /*
-                recyclerView.post {
-                    val scroller = object : LinearSmoothScroller(context) {
-                        override fun getHorizontalSnapPreference() = SNAP_TO_END
-                    }
-                    scroller.targetPosition = position
-                    recyclerView.layoutManager?.startSmoothScroll(scroller)
-                }
-
-                 */
-
-
             }
 
         })
     }
 
+
+
+
+
+
     private fun updateUi(favorite: Favorite){
         val data = generateDataFromFavorite(favorite)
+
+
+
+
         adapter.updateData(data)
 
+        /*
         recyclerView.post {
             val scroller = object : LinearSmoothScroller(context) {
                 override fun getHorizontalSnapPreference() = SNAP_TO_END
@@ -168,6 +171,7 @@ class PlayTimeCalendar : Fragment() {
             recyclerView.layoutManager?.startSmoothScroll(scroller)
             Log.d(TAG, "scroll to today (post)")
         }
+         */
 
         val playedCountLastYear = favorite.playCountByDay
             .filter { ChronoUnit.DAYS.between(it.key, today) < daySize }
