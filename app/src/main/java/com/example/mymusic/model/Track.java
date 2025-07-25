@@ -16,6 +16,7 @@ public class Track implements Parcelable{
     public String artworkUrl;
     public String releaseDate;
     public String durationMs;
+    public Integer primaryColor;
 
     public Track(String trackId, String albumId, String artistId,
                  String trackName, String albumName, String artistName,

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
 }
 
 
@@ -66,9 +67,13 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        compose = true
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.10"  // 사용하는 Compose 버전 맞게
     }
 }
 
@@ -96,6 +101,18 @@ dependencies {    // Room core
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     implementation("com.tbuonomo:dotsindicator:4.3") // 원형 인디케이터
     implementation("me.relex:circleindicator:2.1.6")
+    implementation("com.google.android.exoplayer:exoplayer:2.19.1")
+    // Compose Core
+    implementation("androidx.compose.ui:ui:1.5.0")
+    implementation("androidx.compose.material:material:1.5.0")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
+
+// Activity-Compose (Java Activity에서도 ComposeView 쓸 때 필수)
+    implementation("androidx.activity:activity-compose:1.7.2")
+
+// Coil (이미지 로드 시)
+    implementation("io.coil-kt:coil-compose:2.3.0")
     implementation(libs.palette)  //Glide
     implementation(libs.appcompat)
     implementation(libs.material)

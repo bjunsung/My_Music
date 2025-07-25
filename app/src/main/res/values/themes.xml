@@ -17,7 +17,16 @@
         <!--
         <item name="android:windowIsTranslucent">true</item>
         -->
-
     </style>
+
+    <style name="FullScreenBottomSheet" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+
+
+
 </resources>
 

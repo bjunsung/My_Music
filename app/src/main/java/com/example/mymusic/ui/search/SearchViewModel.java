@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SearchViewModel extends ViewModel {
+    boolean initialKeyboardUpDone = false;
     public final List<Track> searchTrackResults = new ArrayList<>();
     public final List<Artist> searchArtistResults = new ArrayList<>();
     public int selectedOption = 0; // 기본값: search Track

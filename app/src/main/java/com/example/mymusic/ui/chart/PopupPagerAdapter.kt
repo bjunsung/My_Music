@@ -1,5 +1,6 @@
 package com.example.mymusic.ui.chart
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -103,4 +104,8 @@ class PopupPagerAdapter (val item: Favorite, val listener: OnClickEventListener)
 
 
     override fun getItemViewType(position: Int): Int = position
+
+    companion object{
+        const val TAG = "PopupPagerAdapter"
+    }
 }

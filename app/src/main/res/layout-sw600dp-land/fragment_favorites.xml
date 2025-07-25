@@ -1,0 +1,574 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/foreground_fragment_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/background_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/navigation_bar_margin">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context=".ui.search.SearchFragment">
+
+            <!-- 고정 상단 영역 -->
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="33dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/favorite_option_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginTop="-10dp"
+                android:layout_marginRight="8dp"
+                android:background="@android:color/transparent"
+                android:checked="false"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+            <ImageButton
+                android:id="@+id/filter_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:layout_marginTop="3dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_filter_button"
+                app:layout_constraintStart_toEndOf="@+id/favorite_option_switch"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/in_order_button_drop_down"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginLeft="24dp"
+                android:layout_marginTop="3dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_arrow_drop_down"
+                android:visibility="gone"
+                app:layout_constraintStart_toEndOf="@+id/filter_button"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/in_order_button_drop_up"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_marginLeft="23dp"
+                android:layout_marginTop="3dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_arrow_drop_up_24"
+                app:layout_constraintStart_toEndOf="@+id/filter_button"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <EditText
+                android:id="@+id/search_keyword"
+                android:layout_width="120dp"
+                android:layout_height="24dp"
+                android:layout_marginLeft="9dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/search_edittext_bg"
+                android:drawableStart="@drawable/ic_search_button_18dp"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                android:textSize="16sp"
+                app:layout_constraintStart_toEndOf="@+id/in_order_button_drop_up"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/previous_keyword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:background="@android:color/transparent"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_north_16dp"
+                app:layout_constraintStart_toEndOf="@+id/search_keyword"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+            <ImageButton
+                android:id="@+id/next_keyword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="-6dp"
+                android:background="@android:color/transparent"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_south_16dp"
+                app:layout_constraintStart_toEndOf="@+id/previous_keyword"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/keyword_searched_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="2dp"
+                android:layout_marginTop="6dp"
+                android:text="0/0"
+                android:textSize="14sp"
+                app:layout_constraintStart_toEndOf="@+id/next_keyword"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+            <LinearLayout
+                android:id="@+id/count_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/cancel_selection_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginRight="8dp"
+                    android:text="취소"
+                    android:textColor="#666666"
+                    android:textSize="16sp"
+                    android:visibility="invisible" />
+
+                <TextView
+                    android:id="@+id/remove_selected_favorites"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginRight="10dp"
+                    android:text="삭제"
+                    android:textColor="#666666"
+                    android:textSize="16sp"
+                    android:visibility="invisible" />
+
+                <TextView
+                    android:id="@+id/favorites_loaded_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginRight="8dp"
+                    android:text="#"
+                    android:textColor="#666666"
+
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/element_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginRight="10dp"
+                    android:text="elements"
+                    android:textColor="#666666"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/cancel_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_marginRight="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/empty_favorite_song"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:text="Favorites List 가 비어있습니다. 좋아하는 노래를 추가하세요."
+                android:textSize="16sp"
+                android:visibility="visible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/filter_button" />
+
+            <TextView
+                android:id="@+id/empty_favorite_artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:text="Favorites List 가 비어있습니다. 좋아하는 아티스트를 추가하세요."
+                android:textSize="16sp"
+                android:visibility="visible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/filter_button" />
+
+            <!-- 리사이클러뷰: 기본 visible -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/track_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/filter_button" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/artist_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/filter_button" />
+
+
+            <!--  노래 정보 + 가사 보여줄 영역: 기본 gone -->
+            <LinearLayout
+                android:id="@+id/on_lyrics_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/lyrics_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="0dp"
+                    android:layout_marginRight="0dp"
+                    android:layout_weight="50"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    tools:ignore="MissingConstraints">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal">
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/simple_music_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginRight="5dp"
+                            android:padding="8dp"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="4dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal">
+
+                                <!-- 앨범 이미지 -->
+
+                                <!-- 텍스트 정보 (제목, 아티스트) -->
+                                <ImageView
+                                    android:id="@+id/focused_image"
+                                    android:layout_width="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
+                                    android:layout_height="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
+                                    android:layout_marginEnd="12dp"
+                                    android:scaleType="centerCrop" />
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical"
+                                    android:paddingTop="4dp">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:id="@+id/focused_title"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginEnd="4dp"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="The Wave"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="18sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginEnd="4dp"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="-"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="16sp"
+                                            android:textStyle="bold" />
+
+                                        <TextView
+                                            android:id="@+id/focused_album_title"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="Secret Garden"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="16sp"
+                                            android:textStyle="bold|italic" />
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="앨범: "
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="14sp"
+                                            android:visibility="gone" />
+
+                                        <TextView
+                                            android:id="@+id/focused_artist"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="Apink"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="16sp"
+                                            android:textStyle="bold" />
+
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="재생시간: "
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="14sp" />
+
+                                        <TextView
+                                            android:id="@+id/focused_duration"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="4분19초"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="14sp" />
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="발매일: "
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="14sp" />
+
+                                        <TextView
+                                            android:id="@+id/focused_release_date"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="2016-09-26"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="14sp" />
+                                    </LinearLayout>
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="horizontal"
+                                        android:visibility="gone">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="추가한 날짜: "
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="14sp" />
+
+                                        <TextView
+                                            android:id="@+id/focused_added_date"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:ellipsize="end"
+                                            android:maxLines="1"
+                                            android:text="2025-06-25"
+                                            android:textColor="#FFFFFF"
+                                            android:textSize="14sp" />
+                                    </LinearLayout>
+
+                                </LinearLayout>
+                            </LinearLayout>
+
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/artists_other_music_card_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginRight="5dp"
+                            android:layout_marginBottom="10dp"
+                            android:paddingLeft="2dp"
+                            android:paddingTop="2dp"
+                            android:paddingRight="2dp"
+                            android:paddingBottom="2dp"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="4dp">
+
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/artists_other_music_recycler"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1" />
+                        </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/lyrics_text_container"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_marginLeft="5dp"
+                        android:layout_weight="1"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="4dp">
+
+                        <FrameLayout
+                            android:id="@+id/lyrics_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:paddingLeft="24dp">
+
+                                <LinearLayout
+                                    android:id="@+id/metadata_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="10dp"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:ellipsize="end"
+                                        android:maxLines="1"
+                                        android:singleLine="true"
+                                        android:text="가사"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="18sp" />
+                                </LinearLayout>
+
+                                <ScrollView
+                                    android:id="@+id/scroll_area"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="0dp"
+                                    android:layout_marginTop="8dp"
+                                    android:layout_marginBottom="8dp"
+                                    android:layout_weight="1"
+                                    android:paddingRight="8dp"
+                                    android:scrollbars="none">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:id="@+id/metadata_lyrics"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:lineSpacingExtra="16dp"
+                                            android:text="(가사 내용)"
+                                            android:textColor="#FFFFFF"
+                                            android:textIsSelectable="true"
+                                            android:textSize="18sp" />
+                                    </LinearLayout>
+                                </ScrollView>
+                            </LinearLayout>
+
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+            <!-- 숨김 웹뷰 include -->
+            <include layout="@layout/include_webview_hidden" />
+
+            <include layout="@layout/include_webview_hidden_2" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
+</FrameLayout>

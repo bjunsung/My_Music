@@ -2,12 +2,10 @@ package com.example.mymusic.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.provider.Telephony;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +33,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     private static final String TAG = "FavoritesAdapter";
     private boolean isSelectionMode = false;
     List<Favorite> favoritesList;
-    OnDeleteClickListener deleteClickListener;
+    OnPreviewMenuListener previewMenuListener;
     OnLyricClickListener lyricClickListener;
     OnLyricLongClickListener lyricLongClickListener;
     OnItemLongClickListener itemLongClickListener;
@@ -51,14 +49,15 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         this.textColor = textColor;
     }
 
-    long lastClickTime = 0;
+    public OnPlayListener playListener;
 
-    public void setRemoveButtonVisibilityGone(boolean removeButtonVisibilityGone) {
-        this.removeButtonVisibilityGone = removeButtonVisibilityGone;
+    public interface OnPlayListener{
+        void onItemClick(Favorite favorite);
     }
 
-    public interface OnDeleteClickListener{
-        void onItemClick(Favorite favorite);
+
+    public interface OnPreviewMenuListener {
+        void onItemClick(Favorite favorite, View anchorView);
     }
 
     public interface OnLyricClickListener{
@@ -77,23 +76,25 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         void onNavigateClick(Favorite favorite, ImageView sharedImageView, int position);
     }
     public FavoritesAdapter(List<Favorite> favoritesList,
-                            OnDeleteClickListener deleteClickListener,
+                            OnPreviewMenuListener previewMenuListener,
                             OnLyricClickListener lyricClickListener,
                             OnLyricLongClickListener lyricLongClickListener,
                             OnItemLongClickListener itemLongClickListener,
-                            OnItemNavigateClickListener navigateClickListener){
+                            OnItemNavigateClickListener navigateClickListener,
+                            OnPlayListener playListener){
         this.favoritesList = favoritesList;
-        this.deleteClickListener = deleteClickListener;
+        this.previewMenuListener = previewMenuListener;
         this.lyricClickListener = lyricClickListener;
         this.lyricLongClickListener = lyricLongClickListener;
         this.itemLongClickListener = itemLongClickListener;
         this.navigateClickListener = navigateClickListener;
+        this.playListener = playListener;
     }
 
     public class FavoriteViewHolder extends RecyclerView.ViewHolder{
         ImageView image;
         TextView title, titleKr, artist, album, duration, releasedDate, addedDate;
-        ImageButton deleteButton, lyricButton;
+        ImageButton previewMenuButton, lyricButton, playToggleButton;
         CheckBox selectCheckBox;
         TextView textDash, textDuration, textReleaseDate;
         public FavoriteViewHolder(@NonNull View itemView){
@@ -106,12 +107,13 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             duration = itemView.findViewById(R.id.durationTextView);
             releasedDate = itemView.findViewById(R.id.releaseDateTextView);
             addedDate = itemView.findViewById(R.id.addedDateTextView);
-            deleteButton = itemView.findViewById(R.id.deleteButton);
+            previewMenuButton = itemView.findViewById(R.id.preview_menu);
             lyricButton = itemView.findViewById(R.id.lyric_button);
             selectCheckBox = itemView.findViewById(R.id.select_checkbox);
             textDash = itemView.findViewById(R.id.text_dash);
             textDuration = itemView.findViewById(R.id.text_duration);
             textReleaseDate = itemView.findViewById(R.id.text_release_date);
+            playToggleButton = itemView.findViewById(R.id.play_toggle_button);
         }
     }
 
@@ -136,6 +138,12 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             ViewCompat.setTransitionName(holder.image, null);
         }
 
+        if (favorite.audioUri == null) {
+            holder.playToggleButton.setVisibility(View.GONE);
+        }
+        else {
+            holder.playToggleButton.setVisibility(View.VISIBLE);
+        }
 
 
         Glide.with(context)
@@ -196,17 +204,13 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         }
 
         if (removeButtonVisibilityGone){
-            holder.deleteButton.setVisibility(View.GONE);
+            holder.previewMenuButton.setVisibility(View.GONE);
         }
 
-        holder.deleteButton.setOnClickListener(v -> {
-            deleteClickListener.onItemClick(favorite);
+        holder.previewMenuButton.setOnClickListener(v -> {
+            previewMenuListener.onItemClick(favorite, holder.itemView);
         });
 
-        if (textColor != invalidColor){
-            holder.deleteButton.setColorFilter(textColor);
-
-        }
 
         holder.lyricButton.clearColorFilter(); // 기본값으로
 
@@ -284,6 +288,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             itemLongClickListener.onItemClick();
         });
 
+        holder.playToggleButton.setOnClickListener(v -> this.playListener.onItemClick(favorite));
     }
 
 

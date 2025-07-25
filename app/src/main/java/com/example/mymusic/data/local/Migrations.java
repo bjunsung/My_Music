@@ -6,6 +6,23 @@ import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 public class Migrations {
+
+    public static final Migration MIGRATION_7_8 = new Migration(7, 8) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // 정수형 컬럼 (기본값 0)
+            db.execSQL("ALTER TABLE favorites_table ADD COLUMN playCount INTEGER DEFAULT 0");
+            // 문자열 컬럼 (기본값 NULL)
+            db.execSQL("ALTER TABLE favorites_table ADD COLUMN audioUri TEXT");
+        }
+    };
+
+    public static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE favorites_table ADD COLUMN primaryColor INTEGER");
+        }
+    };
     public static final Migration MIGRATION_5_6 = new Migration(5, 6) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase db) {

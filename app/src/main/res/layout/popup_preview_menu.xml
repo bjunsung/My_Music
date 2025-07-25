@@ -1,0 +1,102 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/popup_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_popup_dark"
+    android:padding="8dp">
+
+
+
+
+
+
+    <LinearLayout
+        android:id="@+id/add_mp3_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="6dp"
+            android:text="mp3 파일 추가"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_size_xsmall" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#555555" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/edit_mp3_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="6dp"
+            android:text="mp3 파일 편집"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_size_xsmall" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#555555" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/delete_mp3_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="6dp"
+            android:text="mp3 파일 삭제"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_size_xsmall" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#555555" />
+    </LinearLayout>
+
+
+    <TextView
+        android:id="@+id/edit_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="편집"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/text_size_xsmall" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#555555" />
+
+    <TextView
+        android:id="@+id/delete_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="삭제"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/text_size_xsmall" />
+
+
+
+
+
+</LinearLayout>

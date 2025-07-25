@@ -150,7 +150,10 @@ public class SearchFragment extends Fragment {
         Bundle args = getArguments();
         if (args != null) {
             boolean requestFocus = args.getBoolean(SearchFragment.ARG_REQUEST_FOCUS, false);
-            keyboardUp();
+            if (requestFocus && !searchViewModel.initialKeyboardUpDone) {
+                keyboardUp();
+                searchViewModel.initialKeyboardUpDone = true;
+            }
 
         }
     }

@@ -281,6 +281,7 @@ public class ImageDetailFragment extends Fragment {
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 
+
         // 시스템 바 숨기기
         insetsController = WindowCompat.getInsetsController(
                 activity.getWindow(),
@@ -293,6 +294,8 @@ public class ImageDetailFragment extends Fragment {
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             );
         }
+
+
     }
 
 
@@ -317,11 +320,14 @@ public class ImageDetailFragment extends Fragment {
             activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         }
+
         // 프래그먼트를 떠날 때 전체 화면 모드 해제
         if (insetsController != null) {
             insetsController.show(WindowInsetsCompat.Type.systemBars());
         }
         sliderHandler.removeCallbacks(sliderRunnable);
+
+
 
     }
 

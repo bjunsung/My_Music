@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -21,11 +23,21 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowMetrics;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.mymusic.cache.ImagePreloader;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.ui.favorites.FavoritesFragment;
 import com.example.mymusic.ui.setting.SettingFragment;
+import com.example.mymusic.util.DarkModeUtils;
+import com.example.mymusic.util.ImageColorAnalyzer;
+import com.example.mymusic.util.MyColorUtils;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
@@ -36,8 +48,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
@@ -48,6 +63,8 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.mymusic.databinding.ActivityMainBinding;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
@@ -62,6 +79,10 @@ public class MainActivity extends AppCompatActivity {
     //더블클릭시 해당 Fragment로 강제이동
     private static final long DOUBLE_CLICK_THRESHOLD = 500; // 0.5초
     public Size screenSize;
+    MainActivityViewModel viewModel;
+    private ExoPlayer exoPlayer;
+    private ImageButton audioPlayButton;
+    private ImageButton audioPauseButton;
 
     @Override
     protected void onResume() {
@@ -73,10 +94,123 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
+
         WebView.setWebContentsDebuggingEnabled(true);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+
+        FrameLayout musicPlayingBar = binding.musicPlayingBar;
+        musicPlayingBar.setOnClickListener(v-> {
+            MusicPlayingBottomSheet musicPlayingBottomSheet = new MusicPlayingBottomSheet().newInstance(viewModel.getCurrentTrack().getValue());
+            musicPlayingBottomSheet.show(getSupportFragmentManager(), MusicPlayingBottomSheet.TAG);
+        });
+
+        TextView titleTextView = binding.title;
+        TextView artistNameTextView = binding.artistName;
+        ImageView artworkImage = binding.artworkImage;
+        audioPlayButton = binding.audioPlayButton;
+        audioPauseButton = binding.audioPauseButton;
+
+        audioPauseButton.setOnClickListener(v -> {
+            togglePlayPause();
+        });
+
+        audioPlayButton.setOnClickListener(v-> togglePlayPause());
+
+
+
+        //media player setting
+        if (viewModel.getExoPlayer() == null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                exoPlayer = new ExoPlayer.Builder(this).build();
+                viewModel.setExoPlayer(exoPlayer);
+            }
+        }
+        else{
+            exoPlayer = viewModel.getExoPlayer();
+        }
+
+
+        viewModel.isPlaying().observe(this, aBoolean -> {
+            ExoPlayer player = viewModel.getExoPlayer();
+            if (player == null) return;
+            if (!aBoolean.booleanValue()) {
+                player.pause();
+                audioPauseButton.setVisibility(View.GONE);
+                audioPlayButton.setVisibility(View.VISIBLE);
+            } else {
+                player.play();
+                audioPlayButton.setVisibility(View.GONE);
+                audioPauseButton.setVisibility(View.VISIBLE);
+            }
+        });
+        /**
+         * currentTrack Listener
+         */
+        viewModel.getCurrentTrack().observe(this, favorite -> {
+            if (favorite == null) {
+                musicPlayingBar.setVisibility(View.GONE);
+            }
+            else {
+                if (!Objects.equals(viewModel.getCurrentTrack().getValue(), viewModel.getLastPlayedTrack()) || !viewModel.isPlaying().getValue()) {
+                    Log.d(TAG, "current track: " + viewModel.getCurrentTrack());
+                    playAudio(favorite);
+                }
+                musicPlayingBar.setVisibility(View.VISIBLE);
+                titleTextView.setText(favorite.getTitle());
+                artistNameTextView.setText(favorite.getArtistName());
+                Glide.with(this)
+                        .load(favorite.track.artworkUrl)
+                        .override(60, 60)
+                        .into(artworkImage);
+                if (favorite.track.primaryColor != null) {
+                    int primaryColor = favorite.track.primaryColor;
+
+                    int darkenColor;
+                    if (DarkModeUtils.isDarkMode(this)){
+                        darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.55f);
+                        int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(darkenColor, 0.66f);
+                        musicPlayingBar.setBackgroundColor(adjustedPrimaryColorForDarkMode);
+                        titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                        artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                    }else{
+                        darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                        musicPlayingBar.setBackgroundColor(darkenColor);
+                        titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                        artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                    }
+
+                } else {
+                    ImageColorAnalyzer.analyzePrimaryColor(this, favorite.track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
+                        @Override
+                        public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                            int darkenColor;
+                            if (DarkModeUtils.isDarkMode(MainActivity.this)){
+                                darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.55f);
+                                int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(darkenColor, 0.f);
+                                musicPlayingBar.setBackgroundColor(adjustedPrimaryColorForDarkMode);
+                                titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                                artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                            }else{
+                                darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                                musicPlayingBar.setBackgroundColor(darkenColor);
+                                titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                                artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                            }
+                        }
+
+                        @Override
+                        public void onFailure() {}
+                    });
+                }
+
+
+
+            }
+        });
 
 
 
@@ -146,7 +280,8 @@ public class MainActivity extends AppCompatActivity {
         // ✅ 목적지가 바뀔 때마다 호출되는 리스너 추가
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             // imageDetailFragment로 이동할 때는 하단 바를 숨김
-            if (destination.getId() == R.id.fragment_image_detail) {
+            if (destination.getId() == R.id.fragment_image_detail
+                    || destination.getId() == R.id.fragment_release_date_chart) {
                 navView.setVisibility(View.GONE);
             }
             // 다른 주요 프래그먼트들로 돌아올 때는 다시 보이게 함
@@ -154,7 +289,7 @@ public class MainActivity extends AppCompatActivity {
                 navView.setVisibility(View.VISIBLE);
             }
 
-            if (destination.getId() == R.id.navigation_favorites || destination.getId()  == R.id.navigation_settings || destination.getId() == R.id.navigation_searches  || destination.getId() == R.id.navigation_home){
+            if (destination.getId() == R.id.navigation_favorites || destination.getId()  == R.id.navigation_settings || destination.getId() == R.id.fragment_my_calendar  || destination.getId() == R.id.navigation_home){
                 setColor();
             }
 
@@ -170,8 +305,26 @@ public class MainActivity extends AppCompatActivity {
         Log.d("SizeDebug", "webview: " + getFolderSize(this.getDir("app_webview", Context.MODE_PRIVATE)) / (1024 * 1024) + " MB");
         Log.d("SizeDebug", "code_cache: " + getFolderSize(this.getCodeCacheDir()) / (1024 * 1024) + " MB");
 
+
+        //hideSystemBar();
     }
 
+
+
+    private void hideSystemBar() {
+        // 시스템 바 숨기기
+        WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(
+                this.getWindow(),
+                this.getWindow().getDecorView()
+        );
+
+        if (insetsController != null) {
+            insetsController.hide(WindowInsetsCompat.Type.systemBars());
+            insetsController.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            );
+        }
+    }
 
     public void getScreenSize(Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -279,6 +432,41 @@ public class MainActivity extends AppCompatActivity {
         return size;
     }
 
+    private void playAudio(Favorite fav) {
+        if (fav.audioUri != null) {
+            if (exoPlayer == null) {
+                exoPlayer = new ExoPlayer.Builder(this).build();
+                viewModel.setExoPlayer(exoPlayer);
+            } else {
+                // 기존 재생 목록 초기화
+                exoPlayer.stop();
+                exoPlayer.clearMediaItems();
+            }
+
+            // 새로운 미디어 아이템 추가
+            MediaItem mediaItem = MediaItem.fromUri(Uri.parse(fav.audioUri));
+            exoPlayer.setMediaItem(mediaItem);
+
+            // 준비 및 재생
+            exoPlayer.prepare();
+            exoPlayer.play();
+
+            viewModel.isPlaying().setValue(true);
+            viewModel.setLastPlayedTrack(fav);
+        }
+
+    }
+
+    private void togglePlayPause() {
+        ExoPlayer player = viewModel.getExoPlayer();
+        if (player != null) {
+            if (player.isPlaying()) {
+                viewModel.isPlaying().setValue(false);
+            } else {
+                viewModel.isPlaying().setValue(true);
+            }
+        }
+    }
 
 
 }

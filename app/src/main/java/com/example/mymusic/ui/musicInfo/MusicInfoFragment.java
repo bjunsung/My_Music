@@ -9,6 +9,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -77,6 +78,7 @@ import com.example.mymusic.util.DateUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.ImageOverlayManager;
 import com.example.mymusic.util.MyColorUtils;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.transition.MaterialArcMotion;
 import com.google.android.material.transition.MaterialContainerTransform;
 
@@ -164,6 +166,7 @@ public class MusicInfoFragment extends Fragment {
                 @Override
                 public void onTransitionResume(@NonNull androidx.transition.Transition transition) {}
             });
+
         }
 
 
@@ -193,20 +196,36 @@ public class MusicInfoFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        Activity activity = getActivity();
-        if (activity != null) {
-            if (bottomNavView == null) {
-                bottomNavView = activity.findViewById(R.id.nav_view);
-            }
-            if (bottomNavView != null) {
-                bottomNavView.setBackground(originalBottomNavBackground);
-            }
-        }
-        bnv.setItemTextColor(originalTextColorStateList);
-        bnv.setItemIconTintList(originalIconColorStateList);
+
+        restoreBottomNavColor();
         setEnterTransition(null);
     }
 
+    private void restoreBottomNavColor(){
+        SharedPreferences prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        int selectedColor = prefs.getInt("selected_color", Color.GRAY); // 기본값 회색
+
+        if (prefs.getBoolean("basic_color", true)){
+            selectedColor = ContextCompat.getColor(requireContext(), R.color.textPrimary);
+        }
+
+        int[][] states = new int[][] {
+                new int[] { android.R.attr.state_checked },
+                new int[] { -android.R.attr.state_checked }
+        };
+
+        int[] colors = new int[] {
+                selectedColor,
+                Color.GRAY
+        };
+
+        ColorStateList colorStateList = new ColorStateList(states, colors);
+
+        BottomNavigationView bottomNav = requireActivity().findViewById(R.id.nav_view);
+        bottomNav.setItemIconTintList(colorStateList);
+        bottomNav.setItemTextColor(colorStateList);
+        bottomNav.setBackgroundColor(getResources().getColor(R.color.navBarBasic));
+    }
     private void safeShowDialog(Activity activity, int lastPosition, int detailsVisibleState, List<FavoriteArtist> favoriteArtistList, GradientDrawable lastGradient){
         Handler handler = new Handler(Looper.getMainLooper());
 
@@ -496,7 +515,6 @@ public class MusicInfoFragment extends Fragment {
                             bottomNavView = activity.findViewById(R.id.nav_view);
                         }
                         if (bottomNavView != null) {
-
                             bottomNavView.setBackgroundColor(primaryColor);
                         }
                     }

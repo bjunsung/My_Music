@@ -352,37 +352,48 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         loadAlbums();
 
         addArtistButton.setOnClickListener(v -> {
-            new AlertDialog.Builder(getContext())
-                    .setTitle("관심목록에 추가")
-                    .setMessage(artist.artistName + " 을(를) Favorites List 에 추가할까요?")
-                    .setNegativeButton("취소", null)
-                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                            new Thread(() -> {
-                                try {
-                                    favoriteArtistViewModel.insert(artist, today, result -> {
-                                        if (result > 0){
-                                            requireActivity().runOnUiThread(() -> {
-                                                Toast.makeText(getContext(), artist.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
-                                            });
-                                        }
-                                        else{
-                                            requireActivity().runOnUiThread(() -> {
-                                                Toast.makeText(getContext(), "Artist 추가 실패, 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
-                                            });
-                                        }
-                                    });
-                                } catch (SQLiteConstraintException e) {
-                                    requireActivity().runOnUiThread(() -> {
-                                        Toast.makeText(getContext(), artist.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
-                                    });
-                                }
-                            }).start();
+            Dialog dialog = new Dialog(getContext());
+            dialog.setContentView(R.layout.dialog_custom);
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.setCancelable(true);
 
-                        }
-                    })
-                    .show();
+            TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+            TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+            confirmButton.setText("확인");
+
+            TextView subText = dialog.findViewById(R.id.subtext);
+            TextView title = dialog.findViewById(R.id.title);
+            title.setText("관심목록에 추가");
+            subText.setText(artist.artistName + " 을(를) Favorites List 에 추가할까요?");
+            cancelButton.setOnClickListener(v1 -> dialog.dismiss());
+            confirmButton.setOnClickListener(v1 -> {
+                dialog.dismiss();
+                String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                new Thread(() -> {
+                    try {
+                        favoriteArtistViewModel.insert(artist, today, result -> {
+                            if (result > 0){
+                                requireActivity().runOnUiThread(() -> {
+                                    Toast.makeText(getContext(), artist.artistName + " 이(가) Favorites List에 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                                    addArtistButton.setVisibility(View.GONE);
+                                });
+                            }
+                            else{
+                                requireActivity().runOnUiThread(() -> {
+                                    Toast.makeText(getContext(), "Artist 추가 실패, 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        });
+                    } catch (SQLiteConstraintException e) {
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), artist.artistName + " 이(가) 이미 Favorites List에 있습니다.", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }).start();
+            });
+
+            dialog.show();
+
         });
 
 
@@ -1115,14 +1126,24 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
     private void showTrackDetails(Track track) {
-        new AlertDialog.Builder(getContext())
-                .setTitle("세부사항")
-                .setMessage("제목: " + track.trackName +
-                        "\n아티스트: " + track.artistName +
-                        "\n앨범: " + track.albumName +
-                        "\n발매일: " + track.releaseDate.substring(0, 10))
-                .setPositiveButton("닫기", null)
-                .show();
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom_only_dismiss_button);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+
+
+        TextView dismissButton = dialog.findViewById(R.id.dismiss_button);
+        TextView titleTextView = dialog.findViewById(R.id.title);
+        TextView subTextView = dialog.findViewById(R.id.subtext);
+
+        titleTextView.setText("세부사항");
+        subTextView.setText("제목: " + track.trackName +
+                "\n아티스트: " + track.artistName +
+                "\n앨범: " + track.albumName +
+                "\n발매일: " + track.releaseDate.substring(0, 10));
+
+        dismissButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
 

@@ -192,6 +192,19 @@
                 android:ellipsize="end" />
         </LinearLayout>
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/play_toggle_button"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginBottom="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_play_arrow"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        app:layout_constraintTop_toTopOf="@id/artistTextView" />
     <ImageButton
         android:id="@+id/deleteButton"
         android:layout_width="wrap_content"
@@ -210,6 +223,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_lyrics"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="@id/artistTextView"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        android:layout_marginBottom="4dp"
+        android:padding="8dp" />
+    <ImageButton
+        android:id="@+id/preview_menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/outline_more_horiz"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:layout_gravity="center_vertical"
         app:layout_constraintTop_toTopOf="@id/artistTextView"

@@ -12,7 +12,7 @@
     <LinearLayout
         android:layout_width="@dimen/custom_dialog_width"
         android:layout_height="wrap_content"
-        android:background="@color/background_basic2"
+        android:background="@color/background_basic"
         android:orientation="vertical"
         android:padding="20dp">
 
@@ -50,7 +50,7 @@
             android:layout_marginTop="20dp"
             android:layout_marginEnd="4dp"
             android:clipChildren="false"
-            app:cardBackgroundColor="@color/background_basic2"
+            app:cardBackgroundColor="@color/background_basic"
             app:cardCornerRadius="8dp"
             app:cardElevation="2dp"
             app:strokeColor="#E0E0E0"

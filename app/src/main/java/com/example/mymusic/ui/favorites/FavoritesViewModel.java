@@ -19,6 +19,10 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class FavoritesViewModel extends AndroidViewModel {
+    public interface OnFavoriteViewModelCallback{
+        void onSuccess();
+        void onFailure();
+    }
     private final FavoriteSongRepository repository;
     private final MutableLiveData<Favorite> focusedTrack = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLyricsMode = new MutableLiveData<>(false);
@@ -95,7 +99,19 @@ public class FavoritesViewModel extends AndroidViewModel {
 
     public void updateMetadata(String trackId, TrackMetadata metadata, Consumer<Integer> callback){
         new Thread(() -> {
-            repository.updateFavoriteSong(trackId, metadata, callback::accept);
+            repository.updateFavoriteSongMetadata(trackId, metadata, callback::accept);
+        }).start();
+    }
+
+    public void updateFavoriteSong(Favorite favorite, OnFavoriteViewModelCallback callback) {
+        new Thread(() -> {
+            repository.updateFavoriteSong(favorite, new FavoriteSongRepository.FavoriteDbCallback() {
+                @Override
+                public void onSuccess() { callback.onSuccess(); }
+
+                @Override
+                public void onFailure() { callback.onFailure(); }
+            });
         }).start();
     }
 

@@ -1,5 +1,6 @@
 package com.example.mymusic.model;
 
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -17,6 +18,8 @@ public class Favorite implements Parcelable {
     //for adapter
     public Boolean isSelected = false;
     public String keyword = null;
+    public String audioUri;
+    public int playCount = 0;
 
     public int recyclerViewPosition = -1;
     public Favorite(Track track){
@@ -78,6 +81,20 @@ public class Favorite implements Parcelable {
     }
     public String getArtistName() {
         return track != null ? track.artistName : "";
+    }
+    public String getDurationStr() {
+        if (track == null || track.durationMs == null) return "0초";
+        try {
+            int durationMs = Integer.parseInt(track.durationMs);
+            int totalSeconds = durationMs / 1000;
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+
+            return minutes + "분 " + seconds + "초";
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return "0초";
+        }
     }
 
     @Override

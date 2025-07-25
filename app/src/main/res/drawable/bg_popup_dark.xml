@@ -1,0 +1,5 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#2B2B2B"/> <!-- 다크 그레이 -->
+    <corners android:radius="16dp"/>
+    <padding android:left="4dp" android:right="4dp"/>
+</shape>

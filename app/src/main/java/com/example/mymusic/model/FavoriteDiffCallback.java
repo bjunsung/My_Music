@@ -45,6 +45,7 @@ public class FavoriteDiffCallback extends DiffUtil.Callback {
                 && Objects.equals(oldItem.track, newItem.track)
                 && oldItem.isSelected == newItem.isSelected
                 && oldItem.addedDate.equals(newItem.addedDate)
-                && Objects.equals(oldItem.keyword, keyword);
+                && Objects.equals(oldItem.keyword, keyword)
+                && Objects.equals(oldItem.audioUri, newItem.audioUri);
     }
 }

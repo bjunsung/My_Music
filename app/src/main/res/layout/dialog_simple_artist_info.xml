@@ -15,7 +15,7 @@
 
     <LinearLayout
         android:id="@+id/dialog_root"
-        android:layout_width="360dp"
+        android:layout_width="@dimen/simple_artist_info_frame_width"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:clipChildren="false"
@@ -28,7 +28,7 @@
 
         <FrameLayout
             android:id="@+id/palette_frame"
-            android:layout_width="360dp"
+            android:layout_width="@dimen/simple_artist_info_frame_width"
             android:layout_height="240dp"
             android:background="@color/purple_200"
             android:clipChildren="false"
@@ -46,10 +46,10 @@
             <!-- ✅ 이미지가 절반 아래로 튀어나오게 -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/circle_image_card"
-                android:layout_width="260dp"
-                android:layout_height="260dp"
+                android:layout_width="@dimen/simple_artist_info_artwork_diameter"
+                android:layout_height="@dimen/simple_artist_info_artwork_diameter"
                 android:layout_gravity="center_horizontal|bottom"
-                android:layout_marginBottom="-50dp"
+                android:layout_marginBottom="@dimen/simple_artist_info_artwork_margin_bottom"
                 android:visibility="visible"
                 app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="300dp"

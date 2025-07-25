@@ -3,6 +3,7 @@ package com.example.mymusic.ui.myCalendar
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.recyclerview.widget.RecyclerView
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.model.Favorite
 import com.github.mikephil.charting.data.Entry
@@ -32,6 +33,7 @@ class ReleaseDateViewModel (application: Application): AndroidViewModel(applicat
     var reenterStateFromArtistInfoFragment = false
 
     lateinit var selectedHighlightYear: Highlight
+
 
     fun getFavoriteList() : List<Favorite> {
         return favoriteList

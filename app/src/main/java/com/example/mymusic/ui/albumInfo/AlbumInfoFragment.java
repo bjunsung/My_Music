@@ -349,14 +349,24 @@ public class  AlbumInfoFragment extends Fragment {
     }
 
     private void showTrackDetails(Track track) {
-        new AlertDialog.Builder(getContext())
-                .setTitle("세부사항")
-                .setMessage("제목: " + track.trackName +
-                        "\n아티스트: " + track.artistName +
-                        "\n앨범: " + track.albumName +
-                        "\n발매일: " + track.releaseDate.substring(0, 10))
-                .setPositiveButton("닫기", null)
-                .show();
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_custom_only_dismiss_button);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+
+
+        TextView dismissButton = dialog.findViewById(R.id.dismiss_button);
+        TextView titleTextView = dialog.findViewById(R.id.title);
+        TextView subTextView = dialog.findViewById(R.id.subtext);
+
+        titleTextView.setText("세부사항");
+        subTextView.setText("제목: " + track.trackName +
+                "\n아티스트: " + track.artistName +
+                "\n앨범: " + track.albumName +
+                "\n발매일: " + track.releaseDate.substring(0, 10));
+
+        dismissButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
 

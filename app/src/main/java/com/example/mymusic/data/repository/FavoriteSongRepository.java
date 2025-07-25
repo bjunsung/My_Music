@@ -1,6 +1,7 @@
 package com.example.mymusic.data.repository;
 
 import android.content.Context;
+import android.net.Uri;
 
 
 import androidx.core.util.Consumer;
@@ -17,6 +18,10 @@ import java.util.List;
 
 
 public class FavoriteSongRepository {
+    public interface FavoriteDbCallback{
+        void onSuccess();
+        void onFailure();
+    }
     private final FavoritesDao favoritesDao;
     public FavoriteSongRepository(Context context){
         AppDatabase db = AppDatabase.getInstance(context);
@@ -24,6 +29,8 @@ public class FavoriteSongRepository {
     }
     public void saveFavoritesSong(Track track, String addedDate){
         Favorites song = new Favorites(track, addedDate);
+        song.audioUri = null;
+        song.playCount = 0;
         favoritesDao.saveFavoritesSong(song);
     }
     public Favorite getFavoritesSong(String trackId){
@@ -41,9 +48,15 @@ public class FavoriteSongRepository {
                 song.artworkUrl,
                 song.releaseDate,
                 song.durationMs);
+        track.primaryColor = song.primaryColor;
         TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
-        return new Favorite(track, song.addedDate, metadata);
+        Favorite fav = new Favorite(track, song.addedDate, metadata);
+        fav.audioUri = song.audioUri;
+        fav.playCount = song.playCount;
+        return fav;
     }
+
+
     public int getFavoritesCount(){
         return favoritesDao.getFavoritesCount();
     }
@@ -63,7 +76,11 @@ public class FavoriteSongRepository {
                     song.durationMs
             );
             TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
-            favorites.add(new Favorite(track, song.addedDate, metadata));
+            Favorite fav = new Favorite(track, song.addedDate, metadata);
+            fav.audioUri = song.audioUri;
+
+            fav.playCount = song.playCount;
+            favorites.add(fav);
         }
         return favorites;
     }
@@ -72,7 +89,7 @@ public class FavoriteSongRepository {
         return favoritesDao.getFavoritesByArtistIds(artistIds);
     }
 
-    public void updateFavoriteSong(String trackId, TrackMetadata metadata, Consumer<Integer> callback){
+    public void updateFavoriteSongMetadata(String trackId, TrackMetadata metadata, Consumer<Integer> callback){
         Favorites favorites = favoritesDao.getFavoritesSong(trackId);
         favorites.vibeTrackId = metadata.vibeTrackId;
         favorites.trackNameKr = metadata.title;
@@ -82,6 +99,25 @@ public class FavoriteSongRepository {
         favorites.composers = metadata.composers;
         Integer result = favoritesDao.updateFavoriteSong(favorites);
         callback.accept(result);
+    }
+
+    public void updateFavoriteSong(Favorite favorite, FavoriteDbCallback callback) {
+        TrackMetadata metadata = favorite.metadata;
+        String audioUriStr = null;
+        audioUriStr = favorite.audioUri;
+        Favorites converted = new Favorites(favorite.track,
+                favorite.addedDate,
+                metadata.vibeTrackId,
+                metadata.title,
+                metadata.lyrics,
+                metadata.vocalists,
+                metadata.lyricists,
+                metadata.composers,
+                audioUriStr,
+                favorite.playCount);
+        int result = favoritesDao.updateFavoriteSong(converted);
+        if (result > 0) callback.onSuccess();
+        else callback.onFailure();
     }
 
 

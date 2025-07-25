@@ -39,6 +39,9 @@ import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import java.time.LocalDate
 import kotlin.properties.Delegates
 import androidx.core.graphics.toColorInt
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
@@ -123,7 +126,6 @@ class ReleaseDateChart: Fragment() {
             override fun onArtistNameClick(item: Favorite) {
                 this@ReleaseDateChart.onArtistNameClick(item)
             }
-
         })
 
 
@@ -205,8 +207,12 @@ class ReleaseDateChart: Fragment() {
         preventUnfocus = false
 
         popupWindow.setOnDismissListener {
-            if (!preventUnfocus)
-                Handler(Looper.getMainLooper()).postDelayed({ viewModel.onFocused = false }, 0)
+            if (!preventUnfocus) {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    viewModel.onFocused = false
+                    //viewModel.focusedPage = 0
+            }, 0)
+            }
 
         }
     }
@@ -354,7 +360,7 @@ class ReleaseDateChart: Fragment() {
 
     private fun bind(){
         lineChart = binding.lineChart
-
+        setRecyclerView()
     }
 
 
@@ -364,7 +370,30 @@ class ReleaseDateChart: Fragment() {
     override fun onResume() {
         super.onResume()
         setGradientColor()
+        // 시스템 바 숨기기
+        val insetsController = WindowCompat.getInsetsController(
+            requireActivity().window,
+            requireActivity().window.decorView
+        )
+        insetsController.let {
+            it.hide(WindowInsetsCompat.Type.systemBars())
+            it.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+
     }
+
+    override fun onPause() {
+        super.onPause()
+        // 프래그먼트를 떠날 때 전체 화면 모드 해제
+        val insetsController = WindowCompat.getInsetsController(
+            requireActivity().window,
+            requireActivity().window.decorView
+        )
+        insetsController.show(WindowInsetsCompat.Type.systemBars())
+
+    }
+
 
     private fun setGradientColor() {
         if (DarkModeUtils.isDarkMode(context)){
@@ -456,12 +485,25 @@ class ReleaseDateChart: Fragment() {
         val textColor = ContextCompat.getColor(requireContext(), R.color.textPrimary)
         lineChart.xAxis.textColor = textColor
 
-        lineChart.setExtraOffsets(0f, 0f, 0f, 24f)
+
 
         val legend = lineChart.legend
+
+        val isTablet = isTablet(requireContext())
+
+        if (isTablet)
+            lineChart.setExtraOffsets(30f, 20f, 30f, 24f)
+        else
+            lineChart.setExtraOffsets(5f, 0f, 0f, 5f)
+
         legend.textColor = textColor
-        legend.verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
-        legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
+        legend.verticalAlignment =
+            if (isTablet) Legend.LegendVerticalAlignment.BOTTOM
+            else Legend.LegendVerticalAlignment.CENTER
+        legend.horizontalAlignment =
+            if (isTablet) Legend.LegendHorizontalAlignment.CENTER
+            else Legend.LegendHorizontalAlignment.RIGHT
+
         legend.textSize = if (isTablet(requireContext())) 18f else 12f
         legend.setDrawInside(false)
 
@@ -583,14 +625,10 @@ class ReleaseDateChart: Fragment() {
         }
 
         lineChart.invalidate()
-
-        setRecyclerView()
-
         restoreData()
     }
 
     private fun setRecyclerView() {
-        if (recyclerView != null) return
         recyclerView = binding.favoriteRecyclerView
         recyclerView?.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         recyclerView?.adapter = adapter
@@ -632,7 +670,6 @@ class ReleaseDateChart: Fragment() {
     }
 
     private fun showPopupWindowAgain() {
-        setRecyclerView()
         val viewHolder = recyclerView?.findViewHolderForAdapterPosition(viewModel.focusedPosition)
         if (viewHolder != null) {
             showPopupWindow(
