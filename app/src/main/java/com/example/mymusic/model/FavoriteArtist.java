@@ -5,12 +5,15 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.util.Objects;
+
 public class FavoriteArtist implements Parcelable {
     public Artist artist;
     public String addedDate;
     public ArtistMetadata metadata;
 
     public Boolean isSelected = false;
+    public String keyword = null;
 
     public FavoriteArtist(Artist artist){
         this.artist = artist;
@@ -132,5 +135,7 @@ public class FavoriteArtist implements Parcelable {
         }
         return url;
     }
+
+
 
 }

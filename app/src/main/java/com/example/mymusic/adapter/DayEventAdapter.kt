@@ -73,11 +73,11 @@ class DayEventAdapter(private var events: List<Favorite>, private val date: Loca
             notifyDataSetChanged()
         }
 
-    class EventViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val eventText: TextView = view.findViewById(R.id.calendar_event_text)
-        val eventColor: FrameLayout = view.findViewById(R.id.calendar_event_color_primary)
-        val yearDiff: TextView = view.findViewById(R.id.year_diff)
-    }
+        class EventViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val eventText: TextView = view.findViewById(R.id.calendar_event_text)
+            val eventColor: FrameLayout = view.findViewById(R.id.calendar_event_color_primary)
+            val yearDiff: TextView = view.findViewById(R.id.year_diff)
+        }
 
 
     }

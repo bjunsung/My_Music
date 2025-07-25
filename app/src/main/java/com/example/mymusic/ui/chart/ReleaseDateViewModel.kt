@@ -2,6 +2,7 @@ package com.example.mymusic.ui.myCalendar
 
 import android.app.Application
 import android.util.Log
+import android.view.View
 import androidx.lifecycle.AndroidViewModel
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.model.Favorite
@@ -20,6 +21,11 @@ class ReleaseDateViewModel (application: Application): AndroidViewModel(applicat
     var chartEntries: List<Entry> = emptyList()
     var chartLabels: List<String> = emptyList()
 
+    var seeMoreState: Boolean = false
+    var onFocused = false
+    var shuffledList: List<Favorite> = listOf()
+    var focusedPosition: Int = 0
+    lateinit var focusedTrack: Favorite
 
     fun getFavoriteList() : List<Favorite> {
         return favoriteList

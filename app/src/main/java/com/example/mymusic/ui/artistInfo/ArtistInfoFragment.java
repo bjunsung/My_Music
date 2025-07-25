@@ -94,6 +94,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     private FavoritesViewModel favoritesViewModel;
     private FavoriteArtist favoriteArtist;
 
+    public static final String ARGUMENTS_KEY = "favorite_artist";
     private Artist artist;
     private TextView artistNameTextView, genresTextView, followersTextView;
     private RecyclerView albumRecyclerView, trackRecyclerView;
@@ -564,7 +565,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         imageUrls = new ArrayList<>();
 
         assert getArguments() != null;
-        favoriteArtist = getArguments().getParcelable("favorite_artist");
+        favoriteArtist = getArguments().getParcelable(ARGUMENTS_KEY);
 
 
         if (favoriteArtist == null || favoriteArtist.artist == null){
@@ -744,29 +745,32 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
                                 }
                             }
 
-                            fetchArtistMetadata(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
-                                    setClickableArtists(membersTextView, membersTextView.getText().toString(), artistMetadataMap);
+                            if (favoriteArtist.metadata != null && favoriteArtist.metadata.members != null && !favoriteArtist.metadata.members.isEmpty()) {
 
-                                    List<FavoriteArtist> faList = new ArrayList<>();
+                                fetchArtistMetadata(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
+                                        setClickableArtists(membersTextView, membersTextView.getText().toString(), artistMetadataMap);
+
+                                        List<FavoriteArtist> faList = new ArrayList<>();
 
 
-                                    for (String key : artistMetadataMap.keySet()) {
-                                        ArtistMetadata value = artistMetadataMap.get(key);
+                                        for (String key : artistMetadataMap.keySet()) {
+                                            ArtistMetadata value = artistMetadataMap.get(key);
 
-                                        Artist artist = new Artist(key);
-                                        FavoriteArtist fa = new FavoriteArtist(artist, null, value);
-                                        faList.add(fa);
+                                            Artist artist = new Artist(key);
+                                            FavoriteArtist fa = new FavoriteArtist(artist, null, value);
+                                            faList.add(fa);
+                                        }
+
+                                        viewModel.setFavoriteArtistList(faList);
+                                        viewModel.setMetadataMap(artistMetadataMap);
+
+                                        dialogHelper.updateList(faList);
                                     }
-
-                                    viewModel.setFavoriteArtistList(faList);
-                                    viewModel.setMetadataMap(artistMetadataMap);
-
-                                    dialogHelper.updateList(faList);
-                                }
-                            });
+                                });
+                            }
                         }
                     }
                     else

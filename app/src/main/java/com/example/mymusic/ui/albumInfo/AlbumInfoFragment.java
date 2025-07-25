@@ -57,6 +57,7 @@ import java.util.ArrayList;
 
 public class  AlbumInfoFragment extends Fragment {
     private final String TAG = "AlbumInfoFragment";
+    public static final String ARGUMENTS_KEY = "album";
     private Album album;
 
     private ArtistApiHelper apiHelper;
@@ -200,7 +201,7 @@ public class  AlbumInfoFragment extends Fragment {
         totalTracksTextView = view.findViewById(R.id.total_tracks);
         trackRecyclerView = view.findViewById(R.id.track_result_recycler_view);
         trackRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        album = getArguments().getParcelable("album");
+        album = getArguments().getParcelable(ARGUMENTS_KEY);
         albumImageView = view.findViewById(R.id.artwork_image);
         imageOverlayManager = new ImageOverlayManager(requireActivity(), view);
         enlargeButton = view.findViewById(R.id.enlarge_button);

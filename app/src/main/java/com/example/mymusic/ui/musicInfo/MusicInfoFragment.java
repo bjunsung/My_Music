@@ -88,6 +88,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MusicInfoFragment extends Fragment {
     private final String TAG = "MusicInfoFragment";
+    public static final String ARGUMENTS_KEY = "favorite";
+    public static final String TRANSITION_NAME_KEY = "transitionName";
     private Favorite favorite;
     private Track track;
     FavoritesViewModel favoritesViewModel;
@@ -225,7 +227,7 @@ public class MusicInfoFragment extends Fragment {
         imageOverlayManager.setScale(0);
 
 
-        favorite = getArguments().getParcelable("favorite");
+        favorite = getArguments().getParcelable(ARGUMENTS_KEY);
 
 
         if (favorite == null)
@@ -240,7 +242,7 @@ public class MusicInfoFragment extends Fragment {
 
 
             if (viewModel.getInitialTransitionName() == null){
-                String receivedTransitionName = getArguments().getString("transitionName");
+                String receivedTransitionName = getArguments().getString(TRANSITION_NAME_KEY);
                 viewModel.setInitialTransitionName(receivedTransitionName);
                 ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
                 Log.d(TAG, "onViewCreated 에서 '전달받은' 이름 설정, name=" + receivedTransitionName);
@@ -622,9 +624,6 @@ public class MusicInfoFragment extends Fragment {
             releaseDate.setText(track.releaseDate);
             int durationSec = (int) Double.parseDouble(track.durationMs)/1000;
             durationMs.setText(durationSec/60 + "분 " + durationSec%60 + "초");
-            Log.d("TraceId - artist ID", track.artistId);
-            Log.d("TraceId - album ID", track.albumId);
-            Log.d("TraceId - track ID", track.trackId);
         }
         else {
             Log.e("MusicInfoFragment", "track(Track) is null!");

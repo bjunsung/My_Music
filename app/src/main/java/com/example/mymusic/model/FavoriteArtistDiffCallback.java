@@ -16,12 +16,14 @@ public class FavoriteArtistDiffCallback extends DiffUtil.Callback {
     private final int oldSortOpt;
     private final int newSortOpt;
 
+    private String keyword = "";
 
-    public FavoriteArtistDiffCallback(List<FavoriteArtist> oldList, List<FavoriteArtist> newList, int oldSortOpt, int newSortOpt){
+    public FavoriteArtistDiffCallback(List<FavoriteArtist> oldList, List<FavoriteArtist> newList, int oldSortOpt, int newSortOpt, String keyword){
         this.oldList = oldList;
         this.newList = newList;
         this.oldSortOpt = oldSortOpt;
         this.newSortOpt = newSortOpt;
+        this.keyword = keyword;
     }
 
     @Override
@@ -38,7 +40,6 @@ public class FavoriteArtistDiffCallback extends DiffUtil.Callback {
     public boolean areItemsTheSame(int oldItemPosition, int newItemPosition){
         return oldList.get(oldItemPosition).artist.artistId.equals(
                 newList.get(newItemPosition).artist.artistId);
-
     }
 
     @Override
@@ -50,7 +51,8 @@ public class FavoriteArtistDiffCallback extends DiffUtil.Callback {
                 && Objects.equals(oldItem.addedDate, newItem.addedDate)
                 && Objects.equals(oldItem.metadata, newItem.metadata)
                 && oldSortOpt == newSortOpt
-                && Objects.equals(oldItem.isSelected, newItem.isSelected);
+                && Objects.equals(oldItem.isSelected, newItem.isSelected)
+                && Objects.equals(oldItem.keyword, keyword);
     }
 
 

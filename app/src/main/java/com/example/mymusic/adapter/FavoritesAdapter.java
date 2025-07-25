@@ -307,14 +307,10 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
     public void setKeyword(String keyword){
         this.keyword = keyword;
-<<<<<<< HEAD
-        notifyDataSetChanged();
-=======
         updateData(this.favoritesList);
         for (Favorite item : favoritesList){
             item.keyword = keyword;
         }
->>>>>>> b8bc983 (Preserve RecyclerView animations when highlighting search keywords by using DiffUtil with keyword in Favorite)
     }
     private void highlightText(TextView textView, String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) return;

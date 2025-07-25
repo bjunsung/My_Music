@@ -375,7 +375,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
     public void updateData(List<FavoriteArtist> newList){
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                new FavoriteArtistDiffCallback(this.favoriteArtistList, newList, 0, 0)
+                new FavoriteArtistDiffCallback(this.favoriteArtistList, newList, 0, 0, keyword)
         );
         this.favoriteArtistList = newList;
         diffResult.dispatchUpdatesTo(this);
@@ -384,7 +384,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     public void updateData(List<FavoriteArtist> newList, int oldSortOpt, int newSortOpt){
 
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                new FavoriteArtistDiffCallback(this.favoriteArtistList, newList, oldSortOpt, newSortOpt)
+                new FavoriteArtistDiffCallback(this.favoriteArtistList, newList, oldSortOpt, newSortOpt, keyword)
         );
         this.favoriteArtistList = newList;
         diffResult.dispatchUpdatesTo(this);
@@ -398,13 +398,12 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
     }
 
 
-    public Context getRecyclerViewContext(){
-        return context;
-    }
-
     public void setKeyword(String keyword){
         this.keyword = keyword;
-        notifyDataSetChanged();
+        updateData(this.favoriteArtistList);
+        for (FavoriteArtist item: favoriteArtistList){
+            item.keyword = keyword;
+        }
     }
     private void highlightText(TextView textView, String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) return;

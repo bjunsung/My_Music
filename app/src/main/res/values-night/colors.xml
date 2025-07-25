@@ -8,5 +8,6 @@
     <color name="background_color_secondary">#212121</color>
     <color name="basic_soft">#DBDBDB</color>
     <color name="cancel_text_color">#DBDBDB</color>
+    <color name="background_third">#313131</color>
     <color name="light_gray">#808080</color>
 </resources>
