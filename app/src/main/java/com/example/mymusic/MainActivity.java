@@ -30,6 +30,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.mymusic.cache.ImagePreloader;
+import com.example.mymusic.data.repository.FavoriteSongRepository;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.ui.favorites.FavoritesFragment;
 import com.example.mymusic.ui.setting.SettingFragment;
@@ -38,6 +39,7 @@ import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.Player;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
@@ -84,6 +86,10 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton audioPlayButton;
     private ImageButton audioPauseButton;
 
+    private ImageButton repeatOffButton, repeatOnButton, repeatOneButton, shuffleButton, shuffleOnStateButton;
+
+
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -120,6 +126,23 @@ public class MainActivity extends AppCompatActivity {
 
         audioPlayButton.setOnClickListener(v-> viewModel.togglePlayPause());
 
+        ImageButton audioSkipPreviousButton = binding.skipPrevious;
+        ImageButton audioSkipNextButton = binding.skipNext;
+
+        audioSkipPreviousButton.setOnClickListener(v-> viewModel.playPrevious());
+        audioSkipNextButton.setOnClickListener(v -> viewModel.playNext());
+
+        repeatOffButton = binding.repeatOff;
+        repeatOnButton = binding.repeatOn;
+        repeatOneButton = binding.repeatOne;
+        shuffleButton = binding.shuffle;
+        shuffleOnStateButton = binding.shuffleOnState;
+
+        repeatOffButton.setOnClickListener(v->  viewModel.toggleRepeatMode());
+        repeatOnButton.setOnClickListener(v->  viewModel.toggleRepeatMode());
+        repeatOneButton.setOnClickListener(v->  viewModel.toggleRepeatMode());
+
+        viewModel.getRepeatMode().observe(this, this::setVisibilityByRepeatMode);
 
 
         //media player setting
@@ -181,6 +204,15 @@ public class MainActivity extends AppCompatActivity {
                 ImageColorAnalyzer.analyzePrimaryColor(this, favorite.track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
                     @Override
                     public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                        favorite.track.primaryColor = primaryColor;
+                        new Thread(() -> viewModel.getFavoriteSongRepository().updateFavoriteSong(favorite, new FavoriteSongRepository.FavoriteDbCallback() {
+                            @Override
+                            public void onSuccess() {}
+
+                            @Override
+                            public void onFailure() {}
+                        })).start();
+
                         int darkenColor;
                         if (DarkModeUtils.isDarkMode(MainActivity.this)){
                             darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.55f);
@@ -296,10 +328,38 @@ public class MainActivity extends AppCompatActivity {
         Log.d("SizeDebug", "code_cache: " + getFolderSize(this.getCodeCacheDir()) / (1024 * 1024) + " MB");
 
 
-        //hideSystemBar();
+        shuffleButton.setOnClickListener(v-> {
+            viewModel.shufflePlayList();
+            shuffleOnStateButton.setVisibility(View.VISIBLE);
+            shuffleButton.setVisibility(View.INVISIBLE);
+        });
+        shuffleOnStateButton.setOnClickListener(v->{
+            shuffleOnStateButton.setVisibility(View.INVISIBLE);
+            shuffleButton.setVisibility(View.VISIBLE);
+        });
+        /**
+         * end of onCreate
+         */
     }
 
-
+    private void setVisibilityByRepeatMode(int repeatMode) {
+        if (repeatOffButton == null) return;
+        if (repeatMode == Player.REPEAT_MODE_OFF) {
+            repeatOffButton.setVisibility(View.VISIBLE);
+            repeatOnButton.setVisibility(View.INVISIBLE);
+            repeatOneButton.setVisibility(View.INVISIBLE);
+        }
+        else if (repeatMode == Player.REPEAT_MODE_ALL) {
+            repeatOffButton.setVisibility(View.INVISIBLE);
+            repeatOnButton.setVisibility(View.VISIBLE);
+            repeatOneButton.setVisibility(View.INVISIBLE);
+        }
+        else {
+            repeatOffButton.setVisibility(View.INVISIBLE);
+            repeatOnButton.setVisibility(View.INVISIBLE);
+            repeatOneButton.setVisibility(View.VISIBLE);
+        }
+    }
 
     private void hideSystemBar() {
         // 시스템 바 숨기기

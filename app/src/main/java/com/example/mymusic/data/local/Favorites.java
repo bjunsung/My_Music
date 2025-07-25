@@ -37,9 +37,10 @@ public class Favorites
     public Integer primaryColor;
     public String audioUri;
     public Integer playCount;
+    public List<List<String>> playCountByDay;
 
     public Favorites(){}
-    public Favorites(Track track, String addedDate, String vibeTrackId, String trackNameKr, String lyrics, List<List<String>> vocalists, List<String> lyricists, List<String> composers, String audioUri, int playCount){
+    public Favorites(Track track, String addedDate, String vibeTrackId, String trackNameKr, String lyrics, List<List<String>> vocalists, List<String> lyricists, List<String> composers, String audioUri, int playCount, List<List<String>> playCountByDay){
         this.trackId = track.trackId;
         this.albumId = track.albumId;
         this.artistId = track.artistId;
@@ -59,6 +60,7 @@ public class Favorites
         this.primaryColor = track.primaryColor;
         this.audioUri = audioUri;
         this.playCount = playCount;
+        this.playCountByDay = playCountByDay;
     }
 
     public Favorites(Track track, String addedDate){

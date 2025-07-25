@@ -30,6 +30,7 @@ public class FavoriteSongRepository {
     public void saveFavoritesSong(Track track, String addedDate){
         Favorites song = new Favorites(track, addedDate);
         song.audioUri = null;
+        song.playCountByDay = null;
         song.playCount = 0;
         favoritesDao.saveFavoritesSong(song);
     }
@@ -53,6 +54,7 @@ public class FavoriteSongRepository {
         Favorite fav = new Favorite(track, song.addedDate, metadata);
         fav.audioUri = song.audioUri;
         fav.playCount = song.playCount;
+        fav.playCountByDay = song.playCountByDay;
         return fav;
     }
 
@@ -78,8 +80,8 @@ public class FavoriteSongRepository {
             TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
             Favorite fav = new Favorite(track, song.addedDate, metadata);
             fav.audioUri = song.audioUri;
-
             fav.playCount = song.playCount;
+            fav.playCountByDay = song.playCountByDay;
             favorites.add(fav);
         }
         return favorites;
@@ -103,8 +105,8 @@ public class FavoriteSongRepository {
 
     public void updateFavoriteSong(Favorite favorite, FavoriteDbCallback callback) {
         TrackMetadata metadata = favorite.metadata;
-        String audioUriStr = null;
-        audioUriStr = favorite.audioUri;
+        //String audioUriStr = null;
+        String audioUriStr = favorite.audioUri;
         Favorites converted = new Favorites(favorite.track,
                 favorite.addedDate,
                 metadata.vibeTrackId,
@@ -114,7 +116,8 @@ public class FavoriteSongRepository {
                 metadata.lyricists,
                 metadata.composers,
                 audioUriStr,
-                favorite.playCount);
+                favorite.playCount,
+                favorite.playCountByDay);
         int result = favoritesDao.updateFavoriteSong(converted);
         if (result > 0) callback.onSuccess();
         else callback.onFailure();

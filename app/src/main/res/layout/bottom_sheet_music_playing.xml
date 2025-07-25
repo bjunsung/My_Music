@@ -47,14 +47,18 @@
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/simple_music_info"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_marginLeft="10dp"
                             android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
                             android:layout_marginRight="5dp"
                             android:padding="8dp"
                             app:cardCornerRadius="16dp"
                             app:cardElevation="4dp">
-
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical">
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
@@ -63,12 +67,20 @@
                                 <!-- 앨범 이미지 -->
 
                                 <!-- 텍스트 정보 (제목, 아티스트) -->
-                                <ImageView
-                                    android:id="@+id/focused_image"
-                                    android:layout_width="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
-                                    android:layout_height="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
+                                <com.google.android.material.card.MaterialCardView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
                                     android:layout_marginEnd="12dp"
-                                    android:scaleType="centerCrop" />
+                                    android:layout_marginStart="6dp"
+                                    app:cardCornerRadius="@dimen/artwork_size_on_lyrics_in_favorites_fragment">
+                                    <ImageView
+                                        android:id="@+id/focused_image"
+                                        android:layout_width="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
+                                        android:layout_height="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
+
+                                        android:scaleType="centerCrop" />
+                                </com.google.android.material.card.MaterialCardView>
+
 
                                 <LinearLayout
                                     android:layout_width="0dp"
@@ -225,34 +237,20 @@
                                             android:textColor="#FFFFFF"
                                             android:textSize="14sp" />
                                     </LinearLayout>
-
                                 </LinearLayout>
                             </LinearLayout>
-
-
+                            <com.example.mymusic.customView.WaveformView
+                                android:id="@+id/waveform_view"
+                                android:layout_width="@dimen/artwork_size_on_lyrics_in_favorites_fragment"
+                                android:layout_marginLeft="8dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="left">
+                            </com.example.mymusic.customView.WaveformView>
+                            </LinearLayout>
                         </com.google.android.material.card.MaterialCardView>
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/playlist_frame"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="10dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginRight="5dp"
-                            android:layout_marginBottom="10dp"
-                            android:paddingLeft="2dp"
-                            android:paddingTop="2dp"
-                            android:paddingRight="2dp"
-                            android:paddingBottom="2dp"
-                            app:cardCornerRadius="16dp"
-                            app:cardElevation="4dp">
 
-                            <androidx.recyclerview.widget.RecyclerView
-                                android:id="@+id/playlist_recycler_view"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1" />
-                        </com.google.android.material.card.MaterialCardView>
+
                     </LinearLayout>
 
                     <com.google.android.material.card.MaterialCardView
@@ -263,13 +261,24 @@
                         android:layout_marginBottom="10dp"
                         android:layout_marginLeft="5dp"
                         android:layout_weight="1"
+                        app:cardBackgroundColor="@color/black"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="4dp">
 
                         <FrameLayout
                             android:id="@+id/lyrics_frame"
                             android:layout_width="match_parent"
+                            android:background="@android:color/transparent"
                             android:layout_height="match_parent">
+
+                            <FrameLayout
+                                android:id="@+id/gradient_background"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleX="3.25"
+                                android:scaleY="1.5"
+                                android:background="@android:color/transparent">
+                            </FrameLayout>
 
                             <androidx.core.widget.NestedScrollView
                                 android:id="@+id/scroll_area"
@@ -278,6 +287,7 @@
                                 android:paddingEnd="4dp"
                                 android:layout_height="match_parent"
                                 android:fillViewport="false"
+                                android:background="@android:color/transparent"
                                 android:scrollbars="vertical"
                                 android:focusable="true"
                                 android:clickable="true"
@@ -383,6 +393,34 @@
                 android:layout_height="match_parent">
 
                 <ImageButton
+                    android:id="@+id/shuffle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_shuffle"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#61FFFFFF"
+                    android:layout_marginLeft="50dp"
+                    android:padding="8dp"
+                    android:visibility="visible"/>
+
+                <ImageButton
+                    android:id="@+id/shuffle_on_state"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_shuffle"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#FFFFFF"
+                    android:layout_marginLeft="50dp"
+                    android:padding="8dp"
+                    android:visibility="invisible"/>
+
+                <ImageButton
                     android:id="@+id/skip_previous"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -434,6 +472,49 @@
                     app:tint="@color/white"
                     android:layout_marginLeft="20dp"
                     android:padding="8dp"/>
+
+                <ImageButton
+                    android:id="@+id/repeat_off"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_repeat"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#61FFFFFF"
+                    android:layout_marginRight="50dp"
+                    android:padding="8dp"
+                    android:visibility="visible"/>
+
+                <ImageButton
+                    android:id="@+id/repeat_on"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_repeat"
+                    app:tint="#FFFFFF"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:layout_marginRight="50dp"
+                    android:padding="8dp"
+                    android:visibility="invisible"/>
+
+                <ImageButton
+                    android:id="@+id/repeat_one"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_repeat_one"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:layout_marginRight="50dp"
+                    android:padding="8dp"
+                    android:visibility="invisible"/>
+
+
 
 
             </androidx.constraintlayout.widget.ConstraintLayout>

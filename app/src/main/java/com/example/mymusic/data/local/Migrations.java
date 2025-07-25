@@ -6,6 +6,16 @@ import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 public class Migrations {
+    public static final Migration MIGRATION_8_9 = new Migration(8, 9) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // 1. 기존 테이블에 새 컬럼 추가
+            db.execSQL("ALTER TABLE favorites_table ADD COLUMN playCountByDay TEXT");
+            // 2. 새 컬럼 playCountList를 빈 JSON 배열로 초기화
+            db.execSQL("UPDATE favorites_table SET playCountByDay = '[]'");
+        }
+    };
+
 
     public static final Migration MIGRATION_7_8 = new Migration(7, 8) {
         @Override

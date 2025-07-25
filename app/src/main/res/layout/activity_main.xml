@@ -94,6 +94,34 @@
                         android:text="FIFTY FIFTY" />
                 </LinearLayout>
                 <ImageButton
+                    android:id="@+id/shuffle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_shuffle"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/skip_previous"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#61FFFFFF"
+                    android:layout_marginRight="24dp"
+                    android:padding="8dp"
+                    android:visibility="visible"/>
+
+                <ImageButton
+                    android:id="@+id/shuffle_on_state"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_shuffle"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/skip_previous"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#FFFFFF"
+                    android:layout_marginRight="24dp"
+                    android:padding="8dp"
+                    android:visibility="invisible"/>
+
+                <ImageButton
                     android:id="@+id/skip_previous"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -135,12 +163,53 @@
                     android:layout_height="wrap_content"
                     android:src="@drawable/ic_round_skip_next"
                     android:background="@android:color/transparent"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/repeat_off"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     android:layout_marginEnd="24dp"
                     app:tint="@color/white">
                 </ImageButton>
+
+                <ImageButton
+                    android:id="@+id/repeat_off"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_repeat"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#61FFFFFF"
+                    android:layout_marginRight="20dp"
+                    android:padding="8dp"
+                    android:visibility="visible"/>
+
+                <ImageButton
+                    android:id="@+id/repeat_on"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_repeat"
+                    app:tint="#FFFFFF"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:layout_marginRight="20dp"
+                    android:padding="8dp"
+                    android:visibility="invisible"/>
+
+                <ImageButton
+                    android:id="@+id/repeat_one"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_repeat_one"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:layout_marginRight="20dp"
+                    android:padding="8dp"
+                    android:visibility="invisible"/>
 
 
             </androidx.constraintlayout.widget.ConstraintLayout>
