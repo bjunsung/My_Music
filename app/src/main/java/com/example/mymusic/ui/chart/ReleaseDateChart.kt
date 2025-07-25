@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -43,6 +44,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.activityViewModels
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
@@ -62,6 +64,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.tbuonomo.viewpagerdotsindicator.SpringDotsIndicator
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 
+@UnstableApi
 class ReleaseDateChart: Fragment() {
     private var _binding: FragmentReleaseDateChartBinding? = null
     private val binding: FragmentReleaseDateChartBinding get() = _binding!!
@@ -132,6 +135,7 @@ class ReleaseDateChart: Fragment() {
                 this@ReleaseDateChart.onArtistNameClick(item)
             }
 
+            @OptIn(UnstableApi::class)
             override fun onPlayButtonClick(item: Favorite) {
                 if (item.audioUri == null){
                     Log.d(TAG, "audio not found, skipping play")

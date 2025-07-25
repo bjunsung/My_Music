@@ -6,16 +6,20 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
 import com.example.mymusic.MainActivity
-import com.example.mymusic.R
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 
 @UnstableApi
 class MyMediaService : MediaSessionService() {
@@ -23,13 +27,25 @@ class MyMediaService : MediaSessionService() {
     private var player: Player? = null
     private var mediaSession: MediaSession? = null
 
+    // ✅ ViewModel/Fragment와 주고받을 요청 '암호'와 '키'를 정의합니다.
+    companion object {
+        const val COMMAND_GET_AUDIO_SESSION_ID = "com.example.mymusic.GET_AUDIO_SESSION_ID"
+        const val KEY_AUDIO_SESSION_ID = "audio_session_id"
+    }
+
     override fun onCreate() {
         super.onCreate()
-        ensurePlaybackChannel() // 알림 채널 생성
+        ensurePlaybackChannel()
+
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
 
         val newPlayer = ExoPlayer.Builder(this)
-            .setAudioAttributes(AudioAttributes.DEFAULT, true)
+            .setAudioAttributes(audioAttributes, true)
             .build()
+
 
         val newMediaSession = MediaSession.Builder(this, newPlayer)
             .setSessionActivity(
@@ -50,28 +66,53 @@ class MyMediaService : MediaSessionService() {
         return mediaSession
     }
 
+    // ✅ MediaSession.Callback 구현 부분
     private class SessionCb : MediaSession.Callback {
         @SuppressLint("WrongConstant")
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo
         ): MediaSession.ConnectionResult {
-            val connectionResult = super.onConnect(session, controller)
-            val availableSessionCommands = connectionResult.availableSessionCommands.buildUpon()
-                .add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-                .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+
+            // ✅ "ID를 물어볼 수 있는 명령어"를 허용 목록에 추가합니다.
+            val sessionCommands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                .add(SessionCommand(COMMAND_GET_AUDIO_SESSION_ID, Bundle.EMPTY))
                 .build()
 
-            val customLayout = listOf(
-                CommandButton.Builder().setPlayerCommand(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM).build(),
-                CommandButton.Builder().setPlayerCommand(Player.COMMAND_PLAY_PAUSE).build(),
-                CommandButton.Builder().setPlayerCommand(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM).build()
-            )
+            val availablePlayerCommands = Player.Commands.Builder()
+                .addAll(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
+                .build()
 
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
-                .setAvailableSessionCommands(availableSessionCommands)
-                .setCustomLayout(customLayout)
+                .setAvailableSessionCommands(sessionCommands)
+                .setAvailablePlayerCommands(availablePlayerCommands) // ✅ 수정된 명령어 목록을 전달
                 .build()
+        }
+
+        // ✅ "ID 알려줘" 라는 커스텀 요청을 받았을 때 실행될 코드를 추가합니다.
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle
+        ): ListenableFuture<SessionResult> {
+
+            // 우리가 정의한 요청 '암호'와 일치하는지 확인합니다.
+            if (customCommand.customAction == COMMAND_GET_AUDIO_SESSION_ID) {
+                // 현재 플레이어의 audioSessionId를 가져옵니다.
+                val sessionId = (session.player as ExoPlayer).audioSessionId
+
+                Log.d("MyMediaService", "session id: " + sessionId)
+                // 결과를 담을 '답장'용 Bundle을 만듭니다.
+                val resultBundle = Bundle().apply {
+                    putInt(KEY_AUDIO_SESSION_ID, sessionId)
+                }
+
+                // "성공했고, 답장은 이것이다" 라고 즉시 회신합니다.
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS, resultBundle))
+            }
+            // 모르는 요청이면 기본 처리를 따릅니다.
+            return super.onCustomCommand(session, controller, customCommand, args)
         }
     }
 
@@ -89,10 +130,12 @@ class MyMediaService : MediaSessionService() {
 
     override fun onDestroy() {
         mediaSession?.run {
-            player.release()
+            player?.release() // Nullable player
             release()
             mediaSession = null
         }
         super.onDestroy()
     }
+
+
 }

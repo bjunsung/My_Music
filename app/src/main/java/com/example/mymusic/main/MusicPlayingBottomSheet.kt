@@ -23,10 +23,13 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.annotation.OptIn
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
 import androidx.viewpager2.widget.ViewPager2
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
@@ -46,6 +49,7 @@ import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@UnstableApi
 class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetMusicPlayingBinding? = null
@@ -68,7 +72,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
     private val skipNextButton by lazy { binding.skipNext }
     private var updateSeekBarRunnable: Runnable? = null
     private var handler = Handler(Looper.getMainLooper())
-    private val exoPlayer: ExoPlayer by lazy { mainActivityViewModel.exoPlayer!! }
+    private val mediaController: MediaController by lazy { mainActivityViewModel.mediaController!! }
     private var isUserSeeking = false
 
 
@@ -168,6 +172,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         bind()
     }
 
+    @OptIn(UnstableApi::class)
     private fun bind() {
 
         val tabs = listOf(
@@ -232,8 +237,9 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
         mainActivityViewModel.trackDuration.observe(viewLifecycleOwner) { duration ->
             Log.d(TAG, "Track Duration changed "+ duration )
-            totalTimeTextView.text = formatDuration(duration)
-            seekBar.max = duration
+            val newDuration = mediaController.duration.toInt()
+            totalTimeTextView.text = formatDuration(newDuration)
+            seekBar.max = newDuration
             setViewByTrack()
         }
 
@@ -249,6 +255,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         }
 
  */
+
+
 
 
 
@@ -365,6 +373,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
     }
 
 
+    @OptIn(UnstableApi::class)
     private fun setViewByTrack() {
         favorite = mainActivityViewModel.currentTrack.value ?: favorite
         val track = favorite.track
@@ -413,7 +422,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    exoPlayer.seekTo(progress.toLong())
+                    mediaController.seekTo(progress.toLong())
                     currentTime.text = formatDuration(progress)
                 }
             }
@@ -424,7 +433,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 isUserSeeking = false
-                exoPlayer.seekTo(seekBar?.progress?.toLong() ?: 0L)
+                mediaController.seekTo(seekBar?.progress?.toLong() ?: 0L)
             }
         })
 
@@ -437,8 +446,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
         updateSeekBarRunnable = object : Runnable {
             override fun run() {
-                if (exoPlayer.isPlaying && !isUserSeeking) {
-                    val pos = exoPlayer.currentPosition
+                if (mediaController.isPlaying && !isUserSeeking) {
+                    val pos = mediaController.currentPosition
                     seekBar.progress = pos.toInt()
                     currentTime.text = formatDuration(pos.toInt())
                 }

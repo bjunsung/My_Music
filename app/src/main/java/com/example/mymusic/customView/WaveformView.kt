@@ -13,10 +13,12 @@ import android.view.animation.DecelerateInterpolator
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.media3.common.util.UnstableApi
 import com.example.mymusic.MainActivityViewModel
 import kotlin.math.abs
 import kotlin.random.Random
 
+@UnstableApi
 class WaveformView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : View(context, attrs) {

@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mymusic.MainActivityViewModel
@@ -20,6 +21,7 @@ import com.example.mymusic.util.ImageColorAnalyzer
 import com.example.mymusic.util.MyColorUtils
 import com.example.mymusic.util.VerticalSpaceItemDecoration
 
+@UnstableApi
 class PlaylistRecyclerFragment : Fragment() {
     private var _binding: FragmentPlaylistRecyclerBinding? = null
     private val binding get() = _binding!!
@@ -59,7 +61,7 @@ class PlaylistRecyclerFragment : Fragment() {
                     artistName: String?,
                     position: Int
                 ) {
-                    mainActivityViewModel.exoPlayer?.seekToDefaultPosition(position)
+                    mainActivityViewModel.mediaController?.seekToDefaultPosition(position)
                 }
 
             },

@@ -30,7 +30,6 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.mymusic.data.repository.FavoriteSongRepository;
-import com.example.mymusic.main.MediaSessionHelper;
 import com.example.mymusic.main.MusicPlayingBottomSheet;
 
 import com.example.mymusic.main.NotificationUtils;
@@ -220,33 +219,7 @@ public class MainActivity extends AppCompatActivity {
 // 그 다음에 ViewModel의 플레이어 초기화 로직을 호출하세요.
 // viewModel.initPlayer(); 등...
 
-// 0) 알림 채널: 앱 시작 시 한 번
-        NotificationUtils.createPlaybackChannel(this);
 
-// 1) Player 생성 → final 변수
-        // 1) ExoPlayer 생성 (필요하면 ExternalLoader 붙인 MediaSourceFactory 사용)
-        final ExoPlayer exo = new ExoPlayer.Builder(this)
-                .setAudioAttributes(AudioAttributes.DEFAULT, true)
-                .build();
-
-// 2) 기존 로직
-        viewModel.setExoPlayer(exo);
-        viewModel.initPlayer();
-        PlayerManager.INSTANCE.setExoPlayer(exo);
-
-
-// 3) ★ 핵심: MediaSession 직접 생성해 시스템 미디어 컨트롤 노출
-        PendingIntent sessionActivity = PendingIntent.getActivity(
-                this, 0,
-                new Intent(this, MainActivity.class),
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        final androidx.media3.session.MediaSession mediaSession =
-                new androidx.media3.session.MediaSession.Builder(this, exo)
-                        .setId("main")
-                        .setSessionActivity(sessionActivity)
-                        .build();
 
 
         viewModel.isPlaying().observe(this, aBoolean -> {

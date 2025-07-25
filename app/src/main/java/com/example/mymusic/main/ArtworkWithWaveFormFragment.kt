@@ -24,9 +24,11 @@ import androidx.core.util.Consumer
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -46,6 +48,7 @@ import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@UnstableApi
 class ArtworkWithWaveFormFragment : Fragment() {
 
     private var _binding : FragmentArtworkWithWaveFormBinding? = null
@@ -69,7 +72,8 @@ class ArtworkWithWaveFormFragment : Fragment() {
     private var playerListener: Player.Listener? = null
     private var handler = Handler(Looper.getMainLooper())
 
-    private val exoPlayer: ExoPlayer by lazy { mainActivityViewModel.exoPlayer!! }
+
+    private val mediaController: MediaController by lazy { mainActivityViewModel.mediaController!! }
     private var isUserSeeking = false
     private var seekBar: SeekBar? = null
 
@@ -80,19 +84,37 @@ class ArtworkWithWaveFormFragment : Fragment() {
         return binding.root
     }
 
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         bind()
+        // ✅ ViewModel의 audioSessionId LiveData를 관찰합니다.
+        mainActivityViewModel.audioSessionId.observe(viewLifecycleOwner) { sessionId ->
+            // 새로운 sessionId 값이 들어올 때마다 시각화를 설정합니다.
+            // (단, 유효한 ID일 때만 실행)
+            Log.d(TAG, "session id changed: " + sessionId)
+            if (sessionId != 0 && sessionId != C.AUDIO_SESSION_ID_UNSET) {
+                setupVisualizerWithRetry(sessionId)
+
+            }
+        }
     }
 
     @OptIn(UnstableApi::class)
     override fun onResume() {
         super.onResume()
         // 화면 다시 켜질 때 Visualizer 재연결
+        checkAndRequestAudioPermission()
+        /*
+          // 화면 다시 켜질 때 Visualizer 재연결
         val sessionId = mainActivityViewModel.exoPlayer?.audioSessionId ?: 0
         if (sessionId != 0) {
             setupVisualizerWithRetry(sessionId)
         }
+         */
+
+
     }
 
     override fun onPause() {
@@ -114,18 +136,6 @@ class ArtworkWithWaveFormFragment : Fragment() {
             }
         }
 
-        /*
-        mainActivityViewModel.isPlaying.observe(viewLifecycleOwner) { playing ->
-            if (playing){
-                startArtworkImageRotation()
-            }
-            else {
-                stopArtworkImageRotation()
-            }
-        }
-
-         */
-
 
         artworkImage.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
@@ -135,9 +145,26 @@ class ArtworkWithWaveFormFragment : Fragment() {
         }
 
 
+        // ✅ 1. "재생 상태가 바뀌면 ID를 요청하라"는 명령을 설정합니다.
+        mainActivityViewModel.isPlaying.observe(viewLifecycleOwner) { isPlaying ->
+            if (isPlaying) {
+                // 재생이 시작되면, ViewModel에게 서비스로 ID를 물어보라고 요청합니다.
+                mainActivityViewModel.requestAudioSessionId()
+            } else {
+                // 재생이 멈추면 Visualizer도 해제합니다.
+                releaseVisualizer() // 또는 waveformView.stop()
+            }
+        }
+        mainActivityViewModel.audioSessionId.observe(viewLifecycleOwner) { sessionId ->
+            // ViewModel의 LiveData가 변경될 때마다 이 블록이 실행됩니다.
+            if (sessionId != 0 && sessionId != C.AUDIO_SESSION_ID_UNSET) {
+                Log.d(TAG, "Observer: audioSessionId가 $sessionId 으로 변경됨")
+                setupVisualizerWithRetry(sessionId)
+            }
+        }
 
 
-        // 오디오 세션 변경 리스너
+/*
         playerListener = object : Player.Listener {
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
                 if (audioSessionId != 0) {
@@ -146,7 +173,12 @@ class ArtworkWithWaveFormFragment : Fragment() {
                 }
             }
         }
-        mainActivityViewModel.exoPlayer?.addListener(playerListener!!)
+        mainActivityViewModel.mediaController?.addListener(playerListener!!)
+
+ */
+
+
+
 
         checkAndRequestAudioPermission()
 
@@ -215,36 +247,12 @@ class ArtworkWithWaveFormFragment : Fragment() {
         releaseDateTextView.text = currentFavorite.releaseDate
     }
 
-    /*
-    private fun startArtworkImageRotation() {
-        val clockwise = if (mainActivityViewModel.currentIndex % 2 == 0) 1.0f else -1.0f
-        animator?.cancel()
-        var currentRotation = musicPlayingViewModel.rotationAngle.value ?: 180f
-        animator = ValueAnimator.ofFloat(currentRotation, currentRotation + clockwise * 360f).apply {
-            duration = musicPlayingViewModel.rotationDuration
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = LinearInterpolator()
-            addUpdateListener {
-                val value = (it.animatedValue as Float) % 360
-                currentRotation = value
-                musicPlayingViewModel.setRotationAngle(currentRotation)
-                artworkImage.rotation = currentRotation
-            }
-            start()
-        }
-    }
-     */
-
-    private fun stopArtworkImageRotation() {
-        animator?.cancel()
-    }
-
     // === 권한 ===
     private val requesetPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
                 Log.d(TAG, "RECORD_AUDIO 권한이 허용되었습니다.")
-                val sessionId = mainActivityViewModel.exoPlayer?.audioSessionId ?: 0
+                val sessionId = mainActivityViewModel.audioSessionId.value ?: 0
                 if (sessionId != 0) {
                     setupVisualizerWithRetry(sessionId)
                 }
@@ -261,7 +269,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
                 requireContext(),
                 Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED -> {
-                val sessionId = mainActivityViewModel.exoPlayer?.audioSessionId ?: 0
+                val sessionId = mainActivityViewModel.audioSessionId.value ?: 0
                 if (sessionId != 0) {
                     setupVisualizerWithRetry(sessionId)
                 }
@@ -318,7 +326,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         releaseVisualizer()
-        playerListener?.let { mainActivityViewModel.exoPlayer?.removeListener(it) }
+        //playerListener?.let { mainActivityViewModel.exoPlayer?.removeListener(it) }
     }
 
     companion object {

@@ -55,8 +55,7 @@ class PlayTimeCalendar : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         bind()
 
-        mainActivityViewModel.totalPlayCountInARow.observe(viewLifecycleOwner) { count ->
-            val favorite = mainActivityViewModel.currentTrack.value
+        mainActivityViewModel.currentTrack.observe(viewLifecycleOwner) { favorite ->
             favorite?.let {
                 mainActivityViewModel.viewModelScope.launch(Dispatchers.IO) {
                     val favoriteWithPlayCount =
