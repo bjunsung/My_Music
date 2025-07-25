@@ -217,6 +217,8 @@ public class FavoriteSongRepository {
     public void updateFavoriteSongWithPlayCount(Favorite favorite, FavoriteDbCallback callback) {
         Favorites entity = modelToEntityWithoutPlayCountByDay(favorite);
         entity.playCountByDay = favorite.playCountByDay;
+        entity.lastPlayedDate = favorite.lastPlayedDate;
+        entity.firstCountedDate = favorite.firstCountedDate;
         int result = favoritesDao.updateFavoriteSong(entity);
         if (result > 0) callback.onSuccess();
         else callback.onFailure();

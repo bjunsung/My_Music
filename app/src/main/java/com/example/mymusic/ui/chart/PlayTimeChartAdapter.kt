@@ -24,7 +24,7 @@ import java.time.LocalDate
 import kotlin.contracts.contract
 import kotlin.math.acos
 
-class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private var chartOption: Int, private val listener: OnItemEventListener) : RecyclerView.Adapter<PlayTimeChartAdapter.PlayTimeChartViewHolder>() {
+class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private var chartOption: Int, private var quarterOption: String,private val listener: OnItemEventListener) : RecyclerView.Adapter<PlayTimeChartAdapter.PlayTimeChartViewHolder>() {
 
 
     interface OnItemEventListener {
@@ -104,8 +104,20 @@ class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private 
                         .toString()
             }
             PlayCountChartViewModel.SPECIFIC_YEAR -> {
-                val startDate = LocalDate.of(specificYear, 1 ,1)
-                val endDate = LocalDate.of(specificYear, 12, 31)
+                val startDate = when (quarterOption)  {
+                    PlayCountChartViewModel.FIRST_QUARTER -> LocalDate.of(specificYear, 1, 1)
+                    PlayCountChartViewModel.SECOND_QUARTER -> LocalDate.of(specificYear, 4, 1)
+                    PlayCountChartViewModel.THIRD_QUARTER -> LocalDate.of(specificYear, 7, 1)
+                    PlayCountChartViewModel.FOURTH_QUARTER -> LocalDate.of(specificYear, 10, 1)
+                    else -> LocalDate.of(specificYear, 1, 1)
+                }
+                val endDate = when (quarterOption)  {
+                    PlayCountChartViewModel.FIRST_QUARTER -> LocalDate.of(specificYear, 4, 1).minusDays(1)
+                    PlayCountChartViewModel.SECOND_QUARTER -> LocalDate.of(specificYear, 7, 1).minusDays(1)
+                    PlayCountChartViewModel.THIRD_QUARTER -> LocalDate.of(specificYear, 10, 1).minusDays(1)
+                    PlayCountChartViewModel.FOURTH_QUARTER -> LocalDate.of(specificYear, 12, 31)
+                    else -> LocalDate.of(specificYear, 12, 31)
+                }
                 holder.playCountTextView.text =
                     favorite.playCountByDay
                         .filterKeys { it in  startDate..endDate}
@@ -122,10 +134,11 @@ class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private 
     }
 
 
-    fun updateData(newList: List<Pair<Favorite, Int>>, chartOption: Int) {
+    fun updateData(newList: List<Pair<Favorite, Int>>, chartOption: Int, quarterOption: String) {
         Log.d(TAG, "update data and size is " + newList.size)
         this.list = newList
         this.chartOption = chartOption
+        this.quarterOption = quarterOption
         Log.d(TAG, this.itemCount.toString())
         notifyDataSetChanged()
     }

@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
@@ -21,6 +22,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.createViewModelLazy
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -44,10 +46,15 @@ import com.example.mymusic.network.ArtistApiHelper
 import com.example.mymusic.ui.albumInfo.AlbumInfoFragment
 import com.example.mymusic.ui.artistInfo.ArtistInfoFragment
 import com.example.mymusic.ui.musicInfo.MusicInfoFragment
+import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.google.android.material.card.MaterialCardView
@@ -95,7 +102,7 @@ class PlayTimeChart: Fragment() {
 
 
         playCountViewModel.getOrderedList()?.let {
-            adapter?.updateData(getRank(it), playCountViewModel.chartOption)
+            adapter?.updateData(getRank(it), playCountViewModel.chartOption, playCountViewModel.quarter)
             Log.d(TAG, "size" + it.size)
         }
 
@@ -166,6 +173,7 @@ class PlayTimeChart: Fragment() {
             playCountViewModel.adapter = PlayTimeChartAdapter(
                 emptyList(),
                 PlayCountChartViewModel.LAST_MONTH,
+                PlayCountChartViewModel.NO_QUARTER,
                 object : PlayTimeChartAdapter.OnItemEventListener {
                     override fun onItemClick(
                         holder: PlayTimeChartAdapter.PlayTimeChartViewHolder,
@@ -223,16 +231,35 @@ class PlayTimeChart: Fragment() {
                 minYear = 2000,
                 maxYear = today.year)
             { year ->
-
                 prefs.edit().putInt("specific_year", year).apply()
 
                 adapter?.setSpecificYear(year)
                 playCountViewModel.specificYear = year
                 updateChart(PlayCountChartViewModel.SPECIFIC_YEAR)
-                playCountViewModel.getOrderedList()?.let {
-                    adapter?.updateData(getRank(it), PlayCountChartViewModel.SPECIFIC_YEAR)
-                }
-                binding.chartOption.text = year.toString()
+                adapter?.updateData(
+                    getRank(playCountViewModel.getOrderedList() ?: emptyList()),
+                    PlayCountChartViewModel.SPECIFIC_YEAR,
+                    playCountViewModel.quarter
+                )
+            }
+        }
+
+        binding.quarterCard.visibility = if (playCountViewModel.chartOption == PlayCountChartViewModel.SPECIFIC_YEAR) View.VISIBLE else View.GONE
+        binding.quarterCard.setOnClickListener {
+            playCountViewModel.changeToNextQuarter()
+            updateChart(PlayCountChartViewModel.SPECIFIC_YEAR)
+            adapter?.updateData(
+                getRank(playCountViewModel.getOrderedList() ?: emptyList()),
+                PlayCountChartViewModel.SPECIFIC_YEAR,
+                playCountViewModel.quarter
+            )
+            val year = playCountViewModel.specificYear
+            binding.chartOption.text = when (playCountViewModel.quarter) {
+                PlayCountChartViewModel.FIRST_QUARTER -> "$year - 1st"
+                PlayCountChartViewModel.SECOND_QUARTER -> "$year - 2nd"
+                PlayCountChartViewModel.THIRD_QUARTER -> "$year - 3rd"
+                PlayCountChartViewModel.FOURTH_QUARTER -> "$year - 4th"
+                else -> year.toString()
             }
         }
 
@@ -320,44 +347,56 @@ class PlayTimeChart: Fragment() {
             playCountViewModel.chartOption = PlayCountChartViewModel.LAST_MONTH
             updateChart(PlayCountChartViewModel.LAST_MONTH)
             playCountViewModel.getOrderedList()?.let {
-                adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_MONTH)
+                adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_MONTH, playCountViewModel.quarter)
             }
             binding.chartOption.text = "Last Month"
             popupWindow.dismiss()
             modifySpecificYearButton.visibility = View.GONE
+            binding.quarterCard.visibility = View.GONE
         }
 
         popupViewBinding.last3MonthLayout.setOnClickListener {
             playCountViewModel.chartOption = PlayCountChartViewModel.LAST_3_MONTH
             updateChart(PlayCountChartViewModel.LAST_3_MONTH)
             playCountViewModel.getOrderedList()?.let {
-                adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_3_MONTH)
+                adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_3_MONTH, playCountViewModel.quarter)
             }
             binding.chartOption.text = "Last 3 Month"
             popupWindow.dismiss()
             modifySpecificYearButton.visibility = View.GONE
+            binding.quarterCard.visibility = View.GONE
         }
 
         popupViewBinding.lastYearLayout.setOnClickListener {
             playCountViewModel.chartOption = PlayCountChartViewModel.LAST_YEAR
             updateChart(PlayCountChartViewModel.LAST_YEAR)
             playCountViewModel.getOrderedList()?.let {
-                adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_YEAR)
+                adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_YEAR, playCountViewModel.quarter)
             }
             binding.chartOption.text = "Last Year"
             popupWindow.dismiss()
             modifySpecificYearButton.visibility =  View.GONE
+            binding.quarterCard.visibility = View.GONE
         }
 
         popupViewBinding.specificYearLayout.setOnClickListener {
+            val specificYear = playCountViewModel.specificYear
             playCountViewModel.chartOption = PlayCountChartViewModel.SPECIFIC_YEAR
+            binding.chartOption.text = when (playCountViewModel.quarter) {
+                PlayCountChartViewModel.FIRST_QUARTER -> "$specificYear - 1st"
+                PlayCountChartViewModel.SECOND_QUARTER -> "$specificYear - 2nd"
+                PlayCountChartViewModel.THIRD_QUARTER -> "$specificYear - 3rd"
+                PlayCountChartViewModel.FOURTH_QUARTER -> "$specificYear - 4th"
+                else -> specificYear.toString()
+            }
+
             updateChart(PlayCountChartViewModel.SPECIFIC_YEAR)
-            binding.chartOption.text = playCountViewModel.specificYear.toString()
             playCountViewModel.getOrderedList()?.let {
-                adapter?.updateData(getRank(it), PlayCountChartViewModel.SPECIFIC_YEAR)
+                adapter?.updateData(getRank(it), PlayCountChartViewModel.SPECIFIC_YEAR, playCountViewModel.quarter)
             }
             popupWindow.dismiss()
             modifySpecificYearButton.visibility = View.VISIBLE
+            binding.quarterCard.visibility = View.VISIBLE
         }
 
         popupViewBinding.specificYearText.text = playCountViewModel.specificYear.toString()
@@ -397,7 +436,7 @@ class PlayTimeChart: Fragment() {
                 val lastMonthRanking = filterAndSortByOption(today.minusMonths(1))
                 playCountViewModel.top10LastMonth = lastMonthRanking
                 lastMonthRanking?.let {
-                    adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_MONTH)
+                    adapter?.updateData(getRank(it), PlayCountChartViewModel.LAST_MONTH, playCountViewModel.quarter)
                     updateChart(PlayCountChartViewModel.LAST_MONTH)
                 }
                 val last3monthsRanking = filterAndSortByOption(today.minusMonths(3))
@@ -459,8 +498,16 @@ class PlayTimeChart: Fragment() {
             ?.asSequence()
             // 1) startDate 이전 재생 기록은 제외, total 계산
             ?.mapNotNull { item ->
+                item.let  {
+                    val total = item.playCountByDay
+                        .filterKeys { it >= startDate }
+                        .values
+                        .sum()
+                    item to total
+                }
+                /*
                 item.lastPlayedDate
-                    ?.takeIf { it >= startDate }
+                    ?.takeIf { true/*it >= startDate*/ }
                     ?.let {
                         val total = item.playCountByDay
                             .filterKeys { it >= startDate }
@@ -468,6 +515,7 @@ class PlayTimeChart: Fragment() {
                             .sum()
                         item to total
                     }
+                    */
             }
             // 2) total==0 항목 제외
             ?.filter { it.second > 0 }
@@ -478,11 +526,11 @@ class PlayTimeChart: Fragment() {
             )
             // 4) Favorite 객체만 꺼내고
             ?.map { it.first }
-            // 5) 최대 10개만
-            ?.take(50)
+            // 5) 최대 100개만
+            ?.take(100)
             // 6) 결과물 로깅 & 리스트로
             ?.toList()
-            ?.also { Log.d(TAG, "filtered/sorted(top10) = $it") }
+            ?.also { /*Log.d(TAG, "filtered/sorted(top10) = $it")*/ }
 
 
 
@@ -508,15 +556,28 @@ class PlayTimeChart: Fragment() {
 
         val startDate = when (rangeType) {
             PlayCountChartViewModel.LAST_YEAR -> today.minusYears(1).withDayOfMonth(1)
-            PlayCountChartViewModel.SPECIFIC_YEAR -> LocalDate.of(playCountViewModel.specificYear, 1, 1)
             PlayCountChartViewModel.LAST_3_MONTH -> today.minusMonths(3).with(java.time.DayOfWeek.MONDAY)
+            PlayCountChartViewModel.SPECIFIC_YEAR -> {
+                when (playCountViewModel.quarter) {
+                    PlayCountChartViewModel.FIRST_QUARTER -> LocalDate.of(playCountViewModel.specificYear, 1, 1)
+                    PlayCountChartViewModel.SECOND_QUARTER -> LocalDate.of(playCountViewModel.specificYear, 4, 1)
+                    PlayCountChartViewModel.THIRD_QUARTER -> LocalDate.of(playCountViewModel.specificYear, 7, 1)
+                    PlayCountChartViewModel.FOURTH_QUARTER -> LocalDate.of(playCountViewModel.specificYear, 10, 1)
+                    else -> LocalDate.of(playCountViewModel.specificYear, 1, 1)
+                }
+            }
             else -> today.minusMonths(1)
         }
 
         // ✅ 1. X축 키 생성
         val groupKeys: List<LocalDate> = when (rangeType) {
             PlayCountChartViewModel.LAST_YEAR -> (0..12).map { startDate.plusMonths(it.toLong()) }
-            PlayCountChartViewModel.SPECIFIC_YEAR -> (0..11).map { startDate.plusMonths(it.toLong()) }
+            PlayCountChartViewModel.SPECIFIC_YEAR -> {
+                if (playCountViewModel.quarter == PlayCountChartViewModel.NO_QUARTER)
+                        (0..11).map { startDate.plusMonths(it.toLong()) }
+                else
+                    (0..2).map { startDate.plusMonths(it.toLong()) }
+            }
             PlayCountChartViewModel.LAST_3_MONTH -> {
                 val days = if (startDate.plusWeeks(12)  >= today) 12 else 13
                 (0..days).map { startDate.plusWeeks(it.toLong()) }
@@ -564,10 +625,6 @@ class PlayTimeChart: Fragment() {
             }
 
             dataSet.setCircleColor(dataSet.color)
-
-
-
-
             dataSets.add(dataSet)
         }
 
@@ -839,6 +896,50 @@ class PlayTimeChart: Fragment() {
             popupWindow.dismiss()
         }
     }
+
+    fun buildData(counts: Map<DayOfWeek, Int>): BarData {
+        val entries = (1..7).map { dowValue ->
+            val dow = DayOfWeek.of(dowValue)
+            val y = counts[dow]?.toFloat() ?: 0f
+            BarEntry((dowValue - 1).toFloat(), y)
+        }
+        val set = BarDataSet(entries, "요일별 재생")
+        set.setDrawValues(true)
+        val data = BarData(set)
+        data.barWidth = 0.5f
+        return data
+    }
+    private val xLabelsKorean = listOf("월","화","수","목","금","토","일")
+
+    private fun setupBarChart(chart: BarChart, data: BarData) {
+        chart.data = data
+        chart.description.isEnabled = false
+        chart.legend.isEnabled = false
+        chart.setScaleEnabled(false)          // 줌 비활성 (원하면 true)
+        chart.setFitBars(true)
+        chart.animateY(600)
+
+        // X축: 월~일 라벨
+        chart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+            granularity = 1f
+            setDrawGridLines(false)
+            valueFormatter = IndexAxisValueFormatter(xLabelsKorean)
+            textSize = 12f
+            typeface = Typeface.DEFAULT_BOLD
+        }
+
+        // Y축
+        chart.axisLeft.apply {
+            axisMinimum = 0f
+            granularity = 1f
+            setDrawAxisLine(false)
+        }
+        chart.axisRight.isEnabled = false
+
+        chart.invalidate()
+    }
+
 
     override fun onPause() {
         super.onPause()

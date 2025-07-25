@@ -334,8 +334,33 @@ class HomeFragment : Fragment() {
             val rawList = mainActivityViewModel.favoriteSongRepository.allFavoriteTracksWithPlayCount
             withContext(Dispatchers.Main) {
                 homeViewModel.getRecommendedFavorites(rawList)
+                val pair = homeViewModel.getPlaytimeLastMonth(rawList)
+                binding.totalPlayCount.text = "${pair.first} 회"
+                binding.totalPlayTime.text = getDurationStr(pair.second)
             }
         }
+    }
+
+    fun getDurationStr(totalDurationMs: Long): String {
+        if (totalDurationMs == 0L) return "0분"
+        val totalDurationSec = totalDurationMs / 1000
+        val hours = totalDurationSec / 3600
+        val minutes = (totalDurationSec % 3600) / 60
+        val seconds = totalDurationSec % 60
+
+        return buildString {
+            if (hours > 0) append("${hours}시간")
+            if (minutes > 0) {
+                if (isNotEmpty()) append(" ")
+                append("${minutes}분")
+            }
+            /*
+            if (seconds > 0) {
+                if (isNotEmpty()) append(" ")
+                append("${seconds}초")
+            }
+             */
+        }.trim()
     }
 
     override fun onResume() {

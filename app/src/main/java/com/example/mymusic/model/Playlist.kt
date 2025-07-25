@@ -127,7 +127,7 @@ data class Playlist(
     fun numberOfTracks(): Int = trackIds.size
     fun isEmpty(): Boolean = (trackIds.size == 0)
     fun isNotEmpty(): Boolean = !isEmpty()
-
+    val size get() = trackIds.size
 
 
     // Parcelable 구현

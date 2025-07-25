@@ -3,6 +3,7 @@
 package com.example.mymusic.ui.favorites;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -61,17 +62,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.mymusic.MainActivityViewModel;
 import com.example.mymusic.R;
+import com.example.mymusic.adapter.AddToPlaylistAdapter;
 import com.example.mymusic.adapter.FavoriteArtistAdapter;
 import com.example.mymusic.adapter.FavoritesAdapter;
 import com.example.mymusic.adapter.FavoritesWithCardViewAdapter;
 import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.data.repository.FavoriteSongRepository;
+import com.example.mymusic.data.repository.PlaylistRepository;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.databinding.FragmentFavoritesBinding;
 import com.example.mymusic.model.Artist;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
+import com.example.mymusic.model.Playlist;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistMetadataService;
@@ -100,12 +104,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import android.widget.LinearLayout;
 
 
+import org.jetbrains.annotations.NotNull;
+
 import jp.wasabeef.recyclerview.animators.LandingAnimator;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.Dispatchers;
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
 
@@ -978,10 +989,168 @@ public class FavoritesFragment extends Fragment {
             hideTrack(fav, position);
         });
 
+        TextView addToPlaylistButton = popupView.findViewById(R.id.add_to_playlist);
+        addToPlaylistButton.setOnClickListener(v -> {
+            popupWindow.dismiss();
+            try {
+                addToPlaylist(fav);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        if (fav.audioUri == null || fav.audioUri.isEmpty()) {
+            addToPlaylistButton.setVisibility(View.GONE);
+            popupView.findViewById(R.id.add_to_playlist_separate_line).setVisibility(View.GONE);
+        }
 
     }
     LinearLayout addMp3Button;
     LinearLayout editMp3Button;
+
+    @SuppressLint("SetTextI18n")
+    private void addToPlaylist(Favorite favorite) throws InterruptedException {
+        List<String> selected = new ArrayList<>(favoriteTrackAdapter.getSelectedList())
+                .stream()
+                .filter(fav -> fav.audioUri != null)
+                .map(fav -> fav.track.trackId)
+                .collect(Collectors.toList());
+        if (!selected.contains(favorite.track.trackId))
+            selected.add(favorite.track.trackId);
+
+        Dialog dialog = new Dialog(requireContext());
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.dialog_custom_add_to_playlist);
+        //TextView title = dialog.findViewById(R.id.title);
+        ImageView artworkImage = dialog.findViewById(R.id.artwork_image);
+        TextView dismissButton = dialog.findViewById(R.id.cancel_button);
+        TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+        TextView trackSelected = dialog.findViewById(R.id.track_title);
+
+        Glide.with(artworkImage.getContext())
+                .load(favorite.track.artworkUrl)
+                .error(R.drawable.ic_image_not_found_foreground)
+                .override(160, 160)
+                .centerCrop()
+                .into(artworkImage);
+
+        List<Playlist> playlistsRaw = BuildersKt.runBlocking(Dispatchers.getIO(), (scope, continuation) ->
+                        mainActivityViewModel.getPlaylistRepository().getAll(continuation)
+        );
+        List<Playlist> editablePlaylists = playlistsRaw.stream()
+                .filter(playlist -> !playlist.getPlaylistId().equals(PlaylistRepository.PLAYLIST_ID_RECENTLY_PLAYED))
+                .collect(Collectors.toList());
+
+        Set<String> alreadyExistSet = new HashSet<>();
+        Set<String> copy = new HashSet<>();
+
+        if (selected == null || selected.isEmpty() || (selected.size() == 1 && selected.get(0).equals(favorite.track.trackId))) {
+            trackSelected.setText(favorite.getTitle());
+            for (Playlist item: editablePlaylists) {
+                if (item.getTrackIds().contains(favorite.track.trackId)) {
+                    alreadyExistSet.add(item.getPlaylistId());
+                }
+            }
+            copy = new HashSet<>(alreadyExistSet);
+        }
+        else {
+            trackSelected.setText(favorite.getTitle() + "외 " + (selected.size() - 1) + "곡");
+        }
+
+        RecyclerView playlistRecyclerView = dialog.findViewById(R.id.playlist_recycler_view);
+        playlistRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        Set<String> finalCopy = copy;
+        playlistRecyclerView.setAdapter(new AddToPlaylistAdapter(
+                editablePlaylists,
+                copy,
+                new AddToPlaylistAdapter.OnClickListener() {
+                    @Override
+                    public void onItemClick(@NotNull Playlist playlist) {}
+                    @Override
+                    public void onPlayButtonClick(@NotNull Playlist playlist) {
+                        try {
+                            Playlist playlistWithFavorites = BuildersKt.runBlocking(Dispatchers.getIO(), (scope, continuation) ->
+                                    mainActivityViewModel.getPlaylistRepository().getByIdWithFavorites(playlist.getPlaylistId(), continuation));
+                            mainActivityViewModel.setPlaylistFromPlaylistWithShuffle(playlistWithFavorites);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    @Override
+                    public void onShuffleButtonClick(@NotNull Playlist playlist) {
+                        try {
+                            Playlist playlistWithFavorites = BuildersKt.runBlocking(Dispatchers.getIO(), (scope, continuation) ->
+                                    mainActivityViewModel.getPlaylistRepository().getByIdWithFavorites(playlist.getPlaylistId(), continuation));
+                            Playlist copy = playlistWithFavorites.deepCopy();
+                            Collections.shuffle(copy.getFavorites());
+                            mainActivityViewModel.setPlaylistFromPlaylistWithShuffle(copy);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    @Override
+                    public void onToggleSelection(@NotNull Playlist playlist, boolean checked) {
+                        if (checked)
+                            finalCopy.add(playlist.getPlaylistId());
+                        else
+                            finalCopy.remove(playlist.getPlaylistId());
+                    }
+                }
+        ));
+
+        dismissButton.setOnClickListener(v -> dialog.dismiss());
+
+
+        Set<String> finalCopy1 = copy;
+        Set<String> finalCopy2 = copy;
+        confirmButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            Set<String> toRemove = new HashSet<>();
+            Set<String> toAdd = new HashSet<>();
+            alreadyExistSet.forEach(id -> {
+                if (!finalCopy1.contains(id))
+                    toRemove.add(id);
+            });
+            finalCopy2.forEach(id -> {
+                if (!alreadyExistSet.contains(id))
+                    toAdd.add(id);
+            });
+            Log.d(TAG, "already exist set: " + alreadyExistSet);
+            Log.d(TAG, "copied set: " + alreadyExistSet);
+            Log.d(TAG, "removed set: " + toRemove);
+            Log.d(TAG, "added set: " + toAdd);
+
+            toRemove.forEach(playlistId -> {
+                try {
+                    Playlist playlist = BuildersKt.runBlocking(Dispatchers.getIO(), (scope, continuation) ->
+                            mainActivityViewModel.getPlaylistRepository().getById(playlistId, continuation) );
+                    playlist.removeTracks(new HashSet<>(selected));
+                    BuildersKt.runBlocking(Dispatchers.getIO(), (scope, continuation) ->
+                            mainActivityViewModel.getPlaylistRepository().updatePlaylist(playlist, continuation));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            toAdd.forEach(playlistId -> {
+                try {
+                    Playlist playlist = BuildersKt.runBlocking(Dispatchers.getIO(), (scope, continuation) ->
+                            mainActivityViewModel.getPlaylistRepository().getById(playlistId, continuation) );
+                    playlist.addTracksIgnoreDuplicates(selected);
+                    BuildersKt.runBlocking(Dispatchers.getIO(), (scope, continuation) ->
+                            mainActivityViewModel.getPlaylistRepository().updatePlaylist(playlist, continuation));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+        });
+
+
+        dialog.show();
+    }
 
     private void hideTrack(Favorite fav, int position) {
         Dialog dialog = new Dialog(requireContext());

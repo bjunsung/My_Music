@@ -159,6 +159,7 @@ class PlaylistLibraryFragment : Fragment() {
                         ) {
                             val trimmed = s?.trim().toString().replace("\n", " ")
 
+                            Log.d(TAG, "name set: ${playlistLibraryViewModel.playlistNameSet}")
                             if (s.isNullOrEmpty()) {
                                 nameDuplicationNoticeTextView.visibility = View.INVISIBLE
                                 confirmButton.alpha = 0.5f
@@ -168,7 +169,7 @@ class PlaylistLibraryFragment : Fragment() {
                                 confirmButton.alpha = 0.5f
                                 confirmButton.setOnClickListener(null)
                                 nameDuplicationNoticeTextView.visibility = View.VISIBLE
-                                if (trimmed.equals("최근 재생한 음악"))
+                                if (trimmed == "최근 재생한 음악")
                                     nameDuplicationNoticeTextView.text = "사용할 수 없는 이름입니다"
                                 else if (trimmed.equals(playlist.playlistName))
                                     nameDuplicationNoticeTextView.text = "같은 이름으로 변경할 수 없습니다"

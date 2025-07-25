@@ -20,9 +20,9 @@ class PlaylistLibraryViewModel(application: Application) : AndroidViewModel(appl
     var isDescending = false
 
     private val playlistRepository by lazy { PlaylistRepository(application) }
-    private val favoriteSongRepository by lazy { FavoriteSongRepository(application) }
+    //private val favoriteSongRepository by lazy { FavoriteSongRepository(application) }
 
-    val playlistNameSet = mutableSetOf<String>()
+    var playlistNameSet = mutableSetOf<String>()
 
     var sharedElementTargetPlaylistId: String? = null
 
@@ -40,7 +40,15 @@ class PlaylistLibraryViewModel(application: Application) : AndroidViewModel(appl
         viewModelScope.launch(Dispatchers.IO) {
             val playlists = playlistRepository.getAllWithFavorites()
             rawList = playlists
-            withContext(Dispatchers.Main) { updateListOrder() }
+
+            withContext(Dispatchers.Main) {
+                updateListOrder()
+            }
+
+            playlistNameSet = playlistRepository.getAllPlaylistNameSet().toMutableSet()
+
+
+
         }
     }
 

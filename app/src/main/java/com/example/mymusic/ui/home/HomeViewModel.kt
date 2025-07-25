@@ -31,6 +31,20 @@ class HomeViewModel : ViewModel() {
     var dropWindowPresetWeek: Int = 12
     var maxCountDiff: Int = 0
 
+    fun getPlaytimeLastMonth(rawList: List<Favorite>?): Pair<Int, Long>  {
+        val oneMonthAgo = LocalDate.now().minusMonths(1)
+        if (rawList.isNullOrEmpty()) return Pair(0, 0)
+        var playCount = 0
+        var playTimeMs = 0L
+        rawList.forEach { fav ->
+            val count = fav.playCountByDay.filterKeys { oneMonthAgo < it }
+                .values
+                .sum()
+            playCount += count
+            playTimeMs += count*fav.duration
+        }
+        return Pair(playCount, playTimeMs)
+    }
 
     fun getRecommendedFavorites(rawList: List<Favorite>?) {
         if (rawList.isNullOrEmpty()) return

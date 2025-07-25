@@ -4,18 +4,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <!-- data_info: 왼쪽 영역 -->
+    <!-- fixed top frame: 위쪽 영역 -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/data_info"
-        android:layout_width="220dp"
-        android:layout_height="match_parent"
-        android:background="@android:color/transparent"
+        android:id="@+id/fixed_top_frame"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <!-- 왼쪽 연도/곡수 정보 섹션 -->
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/period_selection_tab"
             android:layout_width="140dp"
@@ -85,6 +81,48 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/quarter_card"
+            android:layout_width="54dp"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            android:orientation="vertical"
+            android:layout_marginTop="9dp"
+            android:layout_marginStart="8dp"
+            app:cardBackgroundColor="#2B2B2B"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/modify_specific_year_card">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="2dp">
+                <TextView
+                    android:id="@+id/quarter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="분기선택"
+                    android:padding="4dp"
+                    android:layout_weight="1"
+                    android:textSize="@dimen/text_size_xxsmall"
+                    android:textColor="@color/text_white">
+                </TextView>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- data_info: 왼쪽 영역 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/data_info"
+        android:layout_width="220dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toBottomOf="@id/fixed_top_frame"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="0dp"
@@ -92,7 +130,7 @@
             android:layout_marginTop="8dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/period_selection_tab"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
         </androidx.recyclerview.widget.RecyclerView>
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -106,7 +144,7 @@
         android:layout_marginEnd="12dp"
         android:layout_marginBottom="14dp"
         android:background="@android:color/transparent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fixed_top_frame"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/data_info"
         app:layout_constraintEnd_toEndOf="parent"/>
