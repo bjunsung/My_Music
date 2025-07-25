@@ -14,7 +14,6 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -313,7 +312,7 @@ public class FavoritesFragment extends Fragment {
                 this::onLyricLongClick,
                 this::onItemLongClick,
                 this::handleItemNavigation,
-                this::setCurrentTrackPlaying
+                this::trackPlay
         );
 
         favoriteArtistAdapter = new FavoriteArtistAdapter(
@@ -867,7 +866,7 @@ public class FavoritesFragment extends Fragment {
 //onViewCreated
     }
 
-    private void showCustomPopup(Favorite fav, View anchorView) {
+    private void showCustomPopup(Favorite fav, View anchorView, int position) {
         View popupView = getLayoutInflater().inflate(R.layout.popup_preview_menu, null);
         int popupWidth = 360;
         final PopupWindow popupWindow = new PopupWindow(
@@ -923,12 +922,12 @@ public class FavoritesFragment extends Fragment {
 
         addMp3Button.setOnClickListener(v -> {
             popupWindow.dismiss();
-            addMp3File(fav);
+            addMp3File(fav, position);
         });
 
         editMp3Button.setOnClickListener(v -> {
             popupWindow.dismiss();
-            addMp3File(fav);
+            addMp3File(fav, position);
         });
 
 
@@ -996,13 +995,14 @@ public class FavoritesFragment extends Fragment {
 
     private static final int REQUEST_CODE_PICK_AUDIO = 1001;
 
-    private void addMp3File(Favorite fav) {
+    private void addMp3File(Favorite fav, int position) {
         selectedFavoriteForMp3 = fav;
+        selectedPositionForMp3 = position;
         pickAudioFile();
     }
 
     private Favorite selectedFavoriteForMp3;
-
+    private int selectedPositionForMp3;
     private void pickAudioFile() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -1023,6 +1023,8 @@ public class FavoritesFragment extends Fragment {
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
             );
 
+
+
             // 복사 없이 원본 URI 그대로 저장
             selectedFavoriteForMp3.audioUri = uri.toString();
 
@@ -1030,7 +1032,10 @@ public class FavoritesFragment extends Fragment {
                 @Override
                 public void onSuccess() {
                     new Handler(Looper.getMainLooper()).post(() ->
-                            FavoritesFragment.this.mainActivityViewModel.getCurrentTrack().setValue(selectedFavoriteForMp3)
+                            {
+                                List<Favorite> list = FavoritesFragment.this.favoritesViewModel.getFavoriteList();
+                                FavoritesFragment.this.mainActivityViewModel.setPlaylist(list, selectedPositionForMp3);
+                            }
                     );
                     loadFavoritesAndUpdateUI();
                 }
@@ -2522,8 +2527,12 @@ public class FavoritesFragment extends Fragment {
         }
     }
 
-    private void setCurrentTrackPlaying(Favorite favorite) {
-        mainActivityViewModel.getCurrentTrack().setValue(favorite);
+    private void trackPlay(Favorite favorite, int position) {
+        List<Favorite> list = FavoritesFragment.this.favoritesViewModel.getFavoriteList();
+        for (Favorite item: list) {
+            Log.d(TAG, "title: " + item.getTitle());
+        }
+        FavoritesFragment.this.mainActivityViewModel.setPlaylist(list, position);
     }
 
 

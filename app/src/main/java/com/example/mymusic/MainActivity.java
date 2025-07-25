@@ -115,10 +115,10 @@ public class MainActivity extends AppCompatActivity {
         audioPauseButton = binding.audioPauseButton;
 
         audioPauseButton.setOnClickListener(v -> {
-            togglePlayPause();
+            viewModel.togglePlayPause();
         });
 
-        audioPlayButton.setOnClickListener(v-> togglePlayPause());
+        audioPlayButton.setOnClickListener(v-> viewModel.togglePlayPause());
 
 
 
@@ -135,15 +135,12 @@ public class MainActivity extends AppCompatActivity {
 
 
         viewModel.isPlaying().observe(this, aBoolean -> {
-            ExoPlayer player = viewModel.getExoPlayer();
-            if (player == null) return;
             if (!aBoolean.booleanValue()) {
-                player.pause();
-                audioPauseButton.setVisibility(View.GONE);
+                audioPauseButton.setVisibility(View.INVISIBLE);
                 audioPlayButton.setVisibility(View.VISIBLE);
-            } else {
-                player.play();
-                audioPlayButton.setVisibility(View.GONE);
+            }
+            else {
+                audioPlayButton.setVisibility(View.INVISIBLE);
                 audioPauseButton.setVisibility(View.VISIBLE);
             }
         });
@@ -153,62 +150,55 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getCurrentTrack().observe(this, favorite -> {
             if (favorite == null) {
                 musicPlayingBar.setVisibility(View.GONE);
+                return;
             }
-            else {
-                if (!Objects.equals(viewModel.getCurrentTrack().getValue(), viewModel.getLastPlayedTrack()) || !viewModel.isPlaying().getValue()) {
-                    Log.d(TAG, "current track: " + viewModel.getCurrentTrack());
-                    playAudio(favorite);
-                }
-                musicPlayingBar.setVisibility(View.VISIBLE);
-                titleTextView.setText(favorite.getTitle());
-                artistNameTextView.setText(favorite.getArtistName());
-                Glide.with(this)
-                        .load(favorite.track.artworkUrl)
-                        .override(60, 60)
-                        .into(artworkImage);
-                if (favorite.track.primaryColor != null) {
-                    int primaryColor = favorite.track.primaryColor;
 
-                    int darkenColor;
-                    if (DarkModeUtils.isDarkMode(this)){
-                        darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.55f);
-                        int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(darkenColor, 0.66f);
-                        musicPlayingBar.setBackgroundColor(adjustedPrimaryColorForDarkMode);
-                        titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
-                        artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
-                    }else{
-                        darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
-                        musicPlayingBar.setBackgroundColor(darkenColor);
-                        titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
-                        artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+            musicPlayingBar.setVisibility(View.VISIBLE);
+            titleTextView.setText(favorite.getTitle());
+            artistNameTextView.setText(favorite.getArtistName());
+            Glide.with(this)
+                    .load(favorite.track.artworkUrl)
+                    .override(60, 60)
+                    .into(artworkImage);
+            if (favorite.track.primaryColor != null) {
+                int primaryColor = favorite.track.primaryColor;
+
+                int darkenColor;
+                if (DarkModeUtils.isDarkMode(this)){
+                    darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.55f);
+                    int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(darkenColor, 0.66f);
+                    musicPlayingBar.setBackgroundColor(adjustedPrimaryColorForDarkMode);
+                    titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                    artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                }else{
+                    darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                    musicPlayingBar.setBackgroundColor(darkenColor);
+                    titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                    artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                }
+
+            } else {
+                ImageColorAnalyzer.analyzePrimaryColor(this, favorite.track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
+                    @Override
+                    public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                        int darkenColor;
+                        if (DarkModeUtils.isDarkMode(MainActivity.this)){
+                            darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.55f);
+                            int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(darkenColor, 0.f);
+                            musicPlayingBar.setBackgroundColor(adjustedPrimaryColorForDarkMode);
+                            titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                            artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
+                        }else{
+                            darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
+                            musicPlayingBar.setBackgroundColor(darkenColor);
+                            titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                            artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
+                        }
                     }
 
-                } else {
-                    ImageColorAnalyzer.analyzePrimaryColor(this, favorite.track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
-                        @Override
-                        public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
-                            int darkenColor;
-                            if (DarkModeUtils.isDarkMode(MainActivity.this)){
-                                darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.55f);
-                                int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(darkenColor, 0.f);
-                                musicPlayingBar.setBackgroundColor(adjustedPrimaryColorForDarkMode);
-                                titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
-                                artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(adjustedPrimaryColorForDarkMode));
-                            }else{
-                                darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
-                                musicPlayingBar.setBackgroundColor(darkenColor);
-                                titleTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
-                                artistNameTextView.setTextColor(MyColorUtils.getSoftWhiteTextColor(darkenColor));
-                            }
-                        }
-
-                        @Override
-                        public void onFailure() {}
-                    });
-                }
-
-
-
+                    @Override
+                    public void onFailure() {}
+                });
             }
         });
 
@@ -407,14 +397,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public long scanEverything(Context context) {
-        long total = 0;
-        File appRoot = new File("/data/data/" + context.getPackageName());
-        total += getFolderSize(appRoot);
-        Log.d("TotalAppStorage", "ALL app storage: " + total / (1024 * 1024) + " MB");
-        return total;
-    }
-
     public long getFolderSize(File dir) {
         long size = 0;
         if (dir != null && dir.exists()) {
@@ -432,41 +414,7 @@ public class MainActivity extends AppCompatActivity {
         return size;
     }
 
-    private void playAudio(Favorite fav) {
-        if (fav.audioUri != null) {
-            if (exoPlayer == null) {
-                exoPlayer = new ExoPlayer.Builder(this).build();
-                viewModel.setExoPlayer(exoPlayer);
-            } else {
-                // 기존 재생 목록 초기화
-                exoPlayer.stop();
-                exoPlayer.clearMediaItems();
-            }
 
-            // 새로운 미디어 아이템 추가
-            MediaItem mediaItem = MediaItem.fromUri(Uri.parse(fav.audioUri));
-            exoPlayer.setMediaItem(mediaItem);
-
-            // 준비 및 재생
-            exoPlayer.prepare();
-            exoPlayer.play();
-
-            viewModel.isPlaying().setValue(true);
-            viewModel.setLastPlayedTrack(fav);
-        }
-
-    }
-
-    private void togglePlayPause() {
-        ExoPlayer player = viewModel.getExoPlayer();
-        if (player != null) {
-            if (player.isPlaying()) {
-                viewModel.isPlaying().setValue(false);
-            } else {
-                viewModel.isPlaying().setValue(true);
-            }
-        }
-    }
 
 
 }

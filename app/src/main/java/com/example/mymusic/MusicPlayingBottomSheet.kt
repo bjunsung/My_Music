@@ -62,6 +62,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
     private val totalTime by lazy { binding.totalTime }
     private val playButton by lazy { binding.audioPlayButton }
     private val pauseButton by lazy { binding.audioPauseButton }
+    private val skipPreviousButton by lazy { binding.skipPrevious }
+    private val skipNextButton by lazy { binding.skipNext }
     private var updateSeekBarRunnable: Runnable? = null
     private var handler = Handler(Looper.getMainLooper())
     private val exoPlayer: ExoPlayer by lazy { mainActivityViewModel.exoPlayer!! }
@@ -138,9 +140,16 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
             v.parent.requestDisallowInterceptTouchEvent(true) // 부모 인터셉트 방지
             false
         }
-
-
         setView()
+
+        mainActivityViewModel.currentTrack.observe(this) { favorite ->
+            if (favorite == null) return@observe
+            this.favorite = favorite
+            setView()
+        }
+
+        skipPreviousButton.setOnClickListener { mainActivityViewModel.playPrevious() }
+        skipNextButton.setOnClickListener { mainActivityViewModel.playNext() }
     }
 
     private fun setView() {
@@ -189,12 +198,12 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         lyricsTextView.text =  "\n\n\n\n\n\n\n" + metadata.lyrics + "\n\n\n\n\n\n\n"
 
         pauseButton.setOnClickListener {
-            mainActivityViewModel.isPlaying.value = false
+            mainActivityViewModel.togglePlayPause()
             pauseButton.visibility = View.INVISIBLE
             playButton.visibility = View.VISIBLE
         }
         playButton.setOnClickListener {
-            mainActivityViewModel.isPlaying.value = true
+            mainActivityViewModel.togglePlayPause()
             playButton.visibility = View.INVISIBLE
             pauseButton.visibility = View.VISIBLE
         }
@@ -224,6 +233,10 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         })
 
         startSeekBarUpdate()
+
+        /**
+         * end of set view
+         */
     }
 
     private fun startSeekBarUpdate() {

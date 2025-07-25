@@ -52,12 +52,12 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     public OnPlayListener playListener;
 
     public interface OnPlayListener{
-        void onItemClick(Favorite favorite);
+        void onItemClick(Favorite favorite, int position);
     }
 
 
     public interface OnPreviewMenuListener {
-        void onItemClick(Favorite favorite, View anchorView);
+        void onItemClick(Favorite favorite, View anchorView, int position);
     }
 
     public interface OnLyricClickListener{
@@ -208,7 +208,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         }
 
         holder.previewMenuButton.setOnClickListener(v -> {
-            previewMenuListener.onItemClick(favorite, holder.itemView);
+            previewMenuListener.onItemClick(favorite, holder.itemView, holder.getBindingAdapterPosition());
         });
 
 
@@ -288,7 +288,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             itemLongClickListener.onItemClick();
         });
 
-        holder.playToggleButton.setOnClickListener(v -> this.playListener.onItemClick(favorite));
+        holder.playToggleButton.setOnClickListener(v -> this.playListener.onItemClick(favorite, holder.getBindingAdapterPosition()));
     }
 
 
