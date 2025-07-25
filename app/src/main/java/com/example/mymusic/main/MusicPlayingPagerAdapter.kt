@@ -5,8 +5,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 
 class MusicPlayingPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
     private val fragments : List<Fragment> = listOf(
+        PlaylistRecyclerFragment(),
         ArtworkWithWaveFormFragment(),
-        PlaylistRecyclerFragment()
+        PlayTimeCalendar()
     )
 
     override fun getItemCount(): Int = fragments.size

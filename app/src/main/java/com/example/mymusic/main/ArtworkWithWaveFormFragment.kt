@@ -70,10 +70,15 @@ class ArtworkWithWaveFormFragment : Fragment() {
         bind()
     }
 
+    override fun onResume() {
+        super.onResume()
+        waveformView.startAnimation()
+    }
+
     private fun bind() {
         favorite = mainActivityViewModel.currentTrack.value
         favorite?.let { updateData(it) }
-        mainActivityViewModel.currentTrack.observe(viewLifecycleOwner) {favoriteSync ->
+        mainActivityViewModel.currentTrack.observe(viewLifecycleOwner) { favoriteSync ->
             favoriteSync?.let {
                 this.favorite = favoriteSync
                 updateData(favoriteSync)
@@ -208,8 +213,6 @@ class ArtworkWithWaveFormFragment : Fragment() {
                     ) {
                         // <<< [디버깅 로그 추가]
                         if (waveform != null) {
-                            // 배열의 첫 10개 값만 출력해서 데이터가 변하는지 확인
-                            val sampleData = waveform.take(10).joinToString { it.toString() }
                             waveformView.updateWaveform(waveform)
                         } else {
                             Log.d(TAG, "Waveform data is null.")

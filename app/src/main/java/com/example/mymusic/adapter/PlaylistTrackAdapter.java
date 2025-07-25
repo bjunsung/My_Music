@@ -1,11 +1,15 @@
 package com.example.mymusic.adapter;
 
 
+import android.animation.ValueAnimator;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -28,7 +32,7 @@ import com.google.android.material.card.MaterialCardView;
 
 import java.util.List;
 
-public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<FavoritesWithCardViewAdapter.FavoritesWithCardViewHolder> {
+public class PlaylistTrackAdapter extends RecyclerView.Adapter<PlaylistTrackAdapter.FavoritesWithCardViewHolder> {
     private final String TAG = "FavoritesWithCardViewAdapter";
     List<Favorite> favoritesList;
     private final int invalidColor = -2;
@@ -37,10 +41,13 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
     private Context context;
     private OnItemClickListener itemClickListener;
     private boolean favoritesColorUnification = false;
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     public void setTextColor(int textColor) {
         this.textColor = textColor;
     }
+
+    private int playingPosition = 0;
 
 
     public interface OnItemClickListener{
@@ -53,11 +60,11 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
 
 
 
-    public FavoritesWithCardViewAdapter(Context context,
+    public PlaylistTrackAdapter(Context context,
                                         List<Favorite> favoritesList,
                                         OnItemClickListener itemClickListener,
                                         boolean favoritesColorUnification
-                                        ){
+    ){
         this.favoritesList = favoritesList;
         this.context = context;
         this.itemClickListener = itemClickListener;
@@ -111,6 +118,8 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
 
         Favorite favorite = favoritesList.get(position);
         favorite.recyclerViewPosition = holder.getAdapterPosition();
+        favorite.playingPosition = playingPosition;
+
         Track track = favorite.track;
         if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
             String transitionName = "Transition_favorite_adapter_to_music_"  + track.artworkUrl + "_" + track.trackId + "_" + track.durationMs + "_" + track.releaseDate + "_" + position;
@@ -122,7 +131,7 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
 
         if (context != null) {
             if (favoritesColorUnification){
-               // holder.containerCardView.setCardBackgroundColor(backgroundColor);
+                //holder.containerCardView.setCardBackgroundColor(backgroundColor);
                 setBackgroundColor(holder, backgroundColor);
                 favorite.backgroundColor = backgroundColor;
             }else if (track.primaryColor != null) {
@@ -147,6 +156,8 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
                 .load(track.artworkUrl)
                 .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                 .into(holder.image);
+
+
 
 
         holder.title.setText(track.trackName);
@@ -194,10 +205,41 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
             holder.textDash.setTextColor(textColor);
         }
 
+        int currentPosition = holder.getBindingAdapterPosition();
+        boolean isPlaying = (currentPosition == playingPosition);
+
+        if (!isPlaying) {
+            updateAlpha(holder, 0.8f, 0.4f, 350);
+        }
+        else {
+            updateAlpha(holder, 0.2f, 1f, 700);
+        }
+
 
         holder.itemView.setOnClickListener(v -> {
             itemClickListener.onItemClick(track.trackId, track.trackName, track.albumName, track.artistName, holder.getAdapterPosition());
         });
+    }
+
+    private void animateAlpha(View view, float from, float to, long duration) {
+        ValueAnimator animator = ValueAnimator.ofFloat(from, to);
+        animator.setDuration(duration);
+        animator.setInterpolator(new DecelerateInterpolator());
+        animator.addUpdateListener(animation ->{
+            float value = (float) animation.getAnimatedValue();
+            view.setAlpha(value);
+        });
+        animator.start();
+    }
+
+    private void updateAlpha(FavoritesWithCardViewHolder holder, float from, float to, long duration) {
+        animateAlpha(holder.titleKr, from, to, duration);
+        animateAlpha(holder.artist, from, to, duration);
+        animateAlpha(holder.album, from, to, duration);
+        animateAlpha(holder.duration, from, to, duration);
+        animateAlpha(holder.releasedDate, from, to, duration);
+        animateAlpha(holder.textDuration, from, to, duration);
+        animateAlpha(holder.textReleaseDate, from, to, duration);
     }
     public void updateColors(){
         notifyItemRangeChanged(0, getItemCount());
@@ -209,13 +251,15 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
         return favoritesList.size();
     }
 
-    public void updateData(List<Favorite> newList) {
+    public void updateData(List<Favorite> newList, int playingPosition) {
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                new PlaylistItemDiffCallback(this.favoritesList, newList, backgroundColor, 0)
+                new PlaylistItemDiffCallback(this.favoritesList, newList, backgroundColor, playingPosition)
         );
+        this.playingPosition = playingPosition;
         this.favoritesList = newList;
         diffResult.dispatchUpdatesTo(this);
     }
+
 
 
 

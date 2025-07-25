@@ -2530,10 +2530,17 @@ public class FavoritesFragment extends Fragment {
         List<Favorite> list = FavoritesFragment.this.favoritesViewModel.getFavoriteList();
         List<Favorite> adjusted = new ArrayList<>();
         for (int i = position; i < list.size(); ++i){
-            adjusted.add(list.get(i));
+            Favorite track = list.get(i);
+            if (track.audioUri != null) {
+                adjusted.add(list.get(i));
+            }
         }
-        for (int i = 0 ; i < position; ++i)
-            adjusted.add(list.get(i));
+        for (int i = 0 ; i < position; ++i) {
+            Favorite track = list.get(i);
+            if (track.audioUri != null) {
+                adjusted.add(list.get(i));
+            }
+        }
 
         for (Favorite item: adjusted) {
             Log.d(TAG, "title: " + item.getTitle());

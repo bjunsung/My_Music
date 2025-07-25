@@ -1,0 +1,19 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="18dp"
+    android:layout_height="18dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="2dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/dayBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:cardElevation="2dp"
+        app:cardCornerRadius="3dp">
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"/>
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

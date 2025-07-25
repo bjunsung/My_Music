@@ -3,21 +3,25 @@ package com.example.mymusic.main
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.animation.core.animateDpAsState
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.adapter.FavoritesWithCardViewAdapter
+import com.example.mymusic.adapter.PlaylistTrackAdapter
 import com.example.mymusic.databinding.FragmentPlaylistRecyclerBinding
+
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.util.ImageColorAnalyzer
 import com.example.mymusic.util.MyColorUtils
+import com.example.mymusic.util.VerticalSpaceItemDecoration
 
 class PlaylistRecyclerFragment : Fragment() {
     private var _binding: FragmentPlaylistRecyclerBinding? = null
@@ -29,11 +33,11 @@ class PlaylistRecyclerFragment : Fragment() {
     private val playlistRecyclerView: RecyclerView by lazy { binding.playlistRecyclerView }
     private var playlist: List<Favorite>? = null
 
-    private var playlistAdapter: FavoritesWithCardViewAdapter? = null
+    private var playlistAdapter: PlaylistTrackAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentPlaylistRecyclerBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -47,10 +51,10 @@ class PlaylistRecyclerFragment : Fragment() {
     private fun bind() {
         val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
         val favoriteTrackColorUnificationState: Boolean = prefs.getBoolean("favorites_track_color_unification_state", false)
-        playlistAdapter = FavoritesWithCardViewAdapter(
+        playlistAdapter = PlaylistTrackAdapter(
             requireContext(),
             emptyList(),
-            object: FavoritesWithCardViewAdapter.OnItemClickListener {
+            object: PlaylistTrackAdapter.OnItemClickListener {
                 override fun onItemClick(
                     trackId: String?,
                     trackName: String?,
@@ -58,18 +62,30 @@ class PlaylistRecyclerFragment : Fragment() {
                     artistName: String?,
                     position: Int
                 ) {
-                    //TODO("Not yet implemented")
+                    mainActivityViewModel.playAt(position)
                 }
 
             },
             favoriteTrackColorUnificationState
         )
 
+        // dp 값을 px로 변환
+        val spacingDp = -11
+        val spacingPx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            spacingDp.toFloat(),
+            playlistRecyclerView.getResources().getDisplayMetrics()
+        ).toInt()
+
+
+        // 데코레이션 추가
+        playlistRecyclerView.addItemDecoration(VerticalSpaceItemDecoration(spacingPx))
+
         playlistRecyclerView.adapter = playlistAdapter
         playlistRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         playlist = mainActivityViewModel.playlist.value
-        playlistAdapter!!.updateData(playlist)
+        playlistAdapter!!.updateData(playlist, mainActivityViewModel.currentIndex)
 
         mainActivityViewModel.playlist.observe(viewLifecycleOwner) { playlistSync ->
             playlist = playlistSync
@@ -77,18 +93,62 @@ class PlaylistRecyclerFragment : Fragment() {
         }
 
         mainActivityViewModel.currentTrack.observe(viewLifecycleOwner){favoriteSync ->
-            playlistRecyclerView.scrollToPosition(mainActivityViewModel.currentIndex)
+            loadPrimaryColorAndUpdateUnificationColor()
+            playlistAdapter!!.updateColors()
+        }
+
+        musicPlayingViewModel.currentPage.observe(viewLifecycleOwner) { page ->
+            if (page == 0) {
+                playlistRecyclerView.smoothScrollToPosition(mainActivityViewModel.currentIndex)
+            }
         }
     }
 
     private fun updateRecyclerView(playlist: List<Favorite>) {
-        playlistAdapter!!.updateData(playlist)
-        val primaryColor = mainActivityViewModel.currentTrack.value?.track?.primaryColor ?: Color.DKGRAY
-        playlistAdapter!!.setPrimaryBackgroundColor(primaryColor)
-        val textColor = MyColorUtils.getSoftWhiteTextColor(primaryColor)
-        playlistAdapter!!.setTextColor(textColor)
-        playlistRecyclerView.scrollToPosition(mainActivityViewModel.currentIndex)
+        playlistAdapter!!.updateData(playlist, mainActivityViewModel.currentIndex)
+        loadPrimaryColorAndUpdateUnificationColor()
     }
+
+    private fun loadPrimaryColorAndUpdateUnificationColor() {
+        val currentTrack = mainActivityViewModel.currentTrack.value!!
+        val primaryColor = currentTrack.track.primaryColor
+        if (primaryColor != null) {
+            updateUnificationColor(primaryColor)
+        }
+        else {
+            ImageColorAnalyzer.analyzePrimaryColor(
+                requireContext(),
+                currentTrack.track.artworkUrl,
+                object : ImageColorAnalyzer.OnPrimaryColorAnalyzedListener {
+                    override fun onSuccess(
+                        dominantColor: Int,
+                        primaryColor: Int,
+                        selectedColor: Int,
+                        unselectedColor: Int
+                    ) {
+                        updateUnificationColor(primaryColor)
+                    }
+
+                    override fun onFailure() {
+                        updateUnificationColor(Color.DKGRAY)
+                    }
+                })
+        }
+
+    }
+
+    private fun updateUnificationColor(primaryColor: Int) {
+        val darkenColor = MyColorUtils.darkenHslColor(primaryColor, 0.7f)
+        playlistAdapter!!.setPrimaryBackgroundColor(darkenColor)
+        val textColor = MyColorUtils.getSoftWhiteTextColor(darkenColor)
+        playlistAdapter!!.setTextColor(textColor)
+
+        playlistAdapter?.updateData(mainActivityViewModel.playlist.value, mainActivityViewModel.currentIndex)
+
+        playlistRecyclerView.smoothScrollToPosition(mainActivityViewModel.currentIndex)
+
+    }
+
 
 }
 

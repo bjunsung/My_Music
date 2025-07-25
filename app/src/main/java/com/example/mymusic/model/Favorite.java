@@ -25,6 +25,10 @@ public class Favorite implements Parcelable {
     public List<List<String>> playCountByDay = new ArrayList<>();
 
     public int recyclerViewPosition = -1;
+
+    public Integer backgroundColor = null;
+    public Integer playingPosition = 0;
+
     public Favorite(Track track){
         this.track = track;
     }

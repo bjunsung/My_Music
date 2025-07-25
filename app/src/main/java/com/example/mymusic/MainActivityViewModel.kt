@@ -28,7 +28,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     val isPlaying: LiveData<Boolean> get() = _isPlaying
 
     var exoPlayer: ExoPlayer? = ExoPlayer.Builder(application).build()
-    var lastPlayedTrack: Favorite? = null
+    var lastPlayedTrackIndex: Int = 0
+
 
     private var _playlist = MutableLiveData<List<Favorite>>(emptyList())
 
@@ -46,6 +47,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     private var listenedTimeMs = 0L
     private var currentTrackDurationMs = 0L // 카운트할 트랙의 전체 길이
 
+    private val _totalPlayCountInARow = MutableLiveData<Int>(0)
+    val totalPlayCountInARow : LiveData<Int> get() = _totalPlayCountInARow!!
+
     val favoriteSongRepository: FavoriteSongRepository by lazy { FavoriteSongRepository(application)}
 
 
@@ -58,6 +62,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         if (exoPlayer == null) return
         shuffledMode = false
 
+        _totalPlayCountInARow.value = 0
+
         _playlist.value = playlist
         currentIndex = startPosition.coerceIn(0, playlist.lastIndex)
         _currentTrack.value = playlist.get(startPosition)
@@ -65,14 +71,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         exoPlayer!!.clearMediaItems()
 
         val mediaItems = playlist.map {MediaItem.fromUri(it.audioUri)}
-        exoPlayer!!.setMediaItems(mediaItems, startPosition, 0)
+        Log.d(TAG, "exoplayer: " + exoPlayer)
+        exoPlayer!!.setMediaItems(mediaItems)
         exoPlayer!!.prepare()
-
+        Log.d(TAG, "play at from first play of playlist")
         playAt(startPosition)
-        /*
-        exoPlayer!!.playWhenReady = true
-        _isPlaying.value = true
-        */
+
         Log.d(TAG, "isplaying " + isPlaying.value)
 
     }
@@ -89,10 +93,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         // 곡 끝나면 다음 곡 자동 재생
         exoPlayer!!.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+
                 super.onMediaItemTransition(mediaItem, reason)
                 val newIndex = exoPlayer?.currentMediaItemIndex ?: 0
+                if (currentIndex == newIndex) return //유저 개입으로 playat 이 이미 호출된 경우 무시 (자연스럽게 넘어가는 경우에만 playAt  으로 ui 업데이트 가능하게)
+                Log.d(TAG, "play at from onMediaItemTransition Listener")
                 playAt(newIndex)  // 트랙이 바뀔 때 항상 playAt() 호출
             }
+
+
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _isPlaying.value = isPlaying
                 // <<< [수정] isPlaying 상태에 따라 시간 측정 핸들러를 시작/중지
@@ -153,9 +162,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             resetListeningTime() // 시간 초기화
             return
         }
-
+        val lastPlayedTrack = playlist.value?.get(lastPlayedTrackIndex)
         if (listenedTimeMs >= currentTrackDurationMs * 2 / 3) {
             val today:String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
             Log.d(TAG, "✅ COUNT! Date: $today, Listened: $listenedTimeMs, Total: $currentTrackDurationMs, track name: ${lastPlayedTrack?.title ?: "name not found"}")
             updatePlayCount()
         } else {
@@ -168,19 +178,22 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     private fun updatePlayCount() {
         val today:String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        lastPlayedTrack?.let { fav ->
+        val lastPlayed = playlist.value?.get(lastPlayedTrackIndex)
+        lastPlayed?.let {
+            lastPlayed.addPlayCount(today)
             viewModelScope.launch(Dispatchers.IO) {
-                val trackSync = favoriteSongRepository.getFavoritesSong(fav.track.trackId)
-                trackSync.addPlayCount(today)
-                //lastPlayedTrack = trackSync
-                favoriteSongRepository.updateFavoriteSong(trackSync, object : FavoriteSongRepository.FavoriteDbCallback {
-                    override fun onSuccess() {
-                        Log.d(TAG, "count updated, current count: ${trackSync.playCount}")
-                    }
-                    override fun onFailure() {
-                        Log.d(TAG, "count update failed for ${trackSync.track.trackName}")
-                    }
-                })
+                favoriteSongRepository.updateFavoriteSong(
+                    lastPlayed,
+                    object : FavoriteSongRepository.FavoriteDbCallback {
+                        override fun onSuccess() {
+                            Log.d(TAG, "count updated, current count: ${lastPlayed.playCount}")
+                        }
+
+                        override fun onFailure() {
+                            Log.d(TAG, "count update failed for ${lastPlayed.track.trackName}")
+                        }
+
+                    })
             }
         }
     }
@@ -222,10 +235,13 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         checkPlayCount()
         currentIndex = index.coerceIn(0, playlist.value!!.lastIndex)
         _currentTrack.value = playlist.value!![currentIndex]
+        Log.d(TAG, "current track: " + currentTrack.value?.title + " play count: " + currentTrack.value?.playCount)
         exoPlayer?.seekTo(currentIndex, 0)
         exoPlayer?.playWhenReady = true
         _isPlaying.value = true
-        lastPlayedTrack = playlist.value!![currentIndex]
+        lastPlayedTrackIndex = currentIndex
+
+        _totalPlayCountInARow.value = _totalPlayCountInARow.value?.plus(1)
     }
 
     /** 다음 곡 */
@@ -236,15 +252,19 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             Player.REPEAT_MODE_OFF -> {
                 // 마지막 곡이면 그냥 멈춤
                 if (currentIndex < playlist.value!!.lastIndex) {
+                    Log.d(TAG, "play at from playNext")
                     playAt(currentIndex + 1)
                 }
             }
             Player.REPEAT_MODE_ALL -> {
                 // 마지막 곡이면 첫 곡으로
+                Log.d(TAG, "play at from playNext")
                 playAt((currentIndex + 1) % playlist.value!!.size)
+
             }
             Player.REPEAT_MODE_ONE -> {
                 // 같은 곡 반복
+                Log.d(TAG, "play at from playNext")
                 playAt(currentIndex)
             }
         }
@@ -259,13 +279,16 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         when (repeatMode.value) {
             Player.REPEAT_MODE_OFF -> {
                 if (currentIndex > 0) {
+                    Log.d(TAG, "play at from playPrevious")
                     playAt(currentIndex - 1)
                 }
             }
             Player.REPEAT_MODE_ALL -> {
+                Log.d(TAG, "play at from playPrevious")
                 playAt((currentIndex + playlist.value!!.size - 1) % playlist.value!!.size)
             }
             Player.REPEAT_MODE_ONE -> {
+                Log.d(TAG, "play at from playPrevious")
                 playAt(currentIndex)
             }
         }
@@ -279,7 +302,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 _isPlaying.value = false
             } else {
                 val isAtEnd = it.currentPosition >= (it.duration - 500)
-                if (repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == playlist.value!!.lastIndex && isAtEnd) playAt(currentIndex)
+                if (repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == playlist.value!!.lastIndex && isAtEnd) {
+                    Log.d(TAG, "play at from toggle play/pause button click (lastIndex)")
+                    playAt(currentIndex)
+                }
                 it.play()
                 _isPlaying.value = true
             }

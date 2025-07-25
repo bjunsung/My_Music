@@ -10,7 +10,9 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Converters {
 
@@ -50,6 +52,19 @@ public class Converters {
             return fallback;
         }
     }
+
+    @TypeConverter
+    public static String fromMap(Map<String, Integer> map) {
+        return map == null ? null : gson.toJson(map);
+    }
+
+    @TypeConverter
+    public static Map<String, Integer> toMap(String data) {
+        if (data == null || data.trim().isEmpty()) return new HashMap<>();
+        Type type = new TypeToken<Map<String, Integer>>() {}.getType();
+        return gson.fromJson(data, type);
+    }
+
 
 
 }

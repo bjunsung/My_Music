@@ -14,6 +14,7 @@ import android.graphics.PixelFormat
 import android.graphics.Shader
 import android.graphics.drawable.Drawable
 import android.media.audiofx.Visualizer
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,16 +22,20 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.snap
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.viewModelScope
+import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -56,12 +61,6 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetMusicPlayingBinding? = null
     private val binding get() = _binding!!
-    //private val artworkImage: ImageView by lazy { binding.focusedImage }
-    //private val titleTextView: TextView by lazy { binding.focusedTitle }
-    //private val albumTitleTextView: TextView by lazy { binding.focusedAlbumTitle }
-    //private val artistNameTextView: TextView by lazy { binding.focusedArtist }
-    //private val durationTextView: TextView by lazy { binding.focusedDuration }
-    //private val releaseDateTextView: TextView by lazy { binding.focusedReleaseDate }
     private val mainActivityViewModel: MainActivityViewModel by activityViewModels()
     private val musicPlayingViewModel: MusicPlayingViewModel by activityViewModels()
     private val lyricsTextView: TextView by lazy { binding.lyrics }
@@ -156,8 +155,36 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
     private fun bind() {
 
+        val tabs = listOf(
+            0 to binding.playlistPage,
+            1 to binding.musicInfoPage,
+            2 to binding.playtimeCalendarPage
+        )
+
+        fun updateAlpha(selectedIndex: Int) {
+            tabs.forEachIndexed { index, pair ->
+                pair.second.alpha = if (index == selectedIndex) 0.95f else 0.35f
+            }
+        }
+
+        tabs.forEach { (index, textView) ->
+            textView.setOnClickListener {
+                musicInfoViewPager.setCurrentItem(index, true)
+                updateAlpha(index)
+                musicPlayingViewModel.saveCurrentPageValue(index)
+            }
+        }
+
+
+
+
         pagerAdapter = MusicPlayingPagerAdapter(this)
         musicInfoViewPager.adapter = pagerAdapter
+
+        musicInfoViewPager.isUserInputEnabled = false
+
+        musicInfoViewPager.setCurrentItem(1, false)
+        updateAlpha(1)
 
         binding.scrollArea.setOnTouchListener { v, _ ->
             v.parent.requestDisallowInterceptTouchEvent(true)
@@ -415,6 +442,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                     0.7f
                 )
             rootFrame.setCardBackgroundColor(adjustedPrimaryColorForDarkMode)
+            //binding.indicatorTextBar.setCardBackgroundColor(adjustedPrimaryColorForDarkMode)
         } else {
             darkenColor =
                 MyColorUtils.darkenHslColor(
@@ -422,6 +450,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                     0.9f
                 )
             rootFrame.setCardBackgroundColor(primaryColor)
+            //binding.indicatorTextBar.setCardBackgroundColor(darkenColor)
         }
 
         val colorPair = MyColorUtils.generateBoundedContrastColors(
@@ -433,6 +462,9 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
         val adjustedForWhiteText = MyColorUtils.adjustForWhiteText(darkenColor)
         simpleMusicInfoFrame.setCardBackgroundColor(adjustedForWhiteText)
+
+        binding.indicatorTextBar.setCardBackgroundColor(MyColorUtils.darkenHslColor(adjustedForWhiteText, 0.7f))
+
         musicPlayingBarFrame.setBackgroundColor(adjustedForWhiteText)
         binding.seekFrame.setBackgroundColor(adjustedForWhiteText)
 
@@ -483,6 +515,9 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         animator?.cancel()
         currentRotation = gradientBackground.rotation % 360
     }
+
+
+
 
     companion object {
         const val TAG = "MusicPlayingBottomSheet"
