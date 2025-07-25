@@ -34,6 +34,7 @@ public class FavoriteSongRepository {
         song.playCountByDay = new HashMap<>();
         song.playCount = 0;
         favoritesDao.saveFavoritesSong(song);
+        song.lastPlayedDate = null;
     }
     public Favorite getFavoritesSong(String trackId){
         Favorites song = favoritesDao.getFavoritesSong(trackId);
@@ -57,6 +58,7 @@ public class FavoriteSongRepository {
         fav.playCount = song.playCount;
         //fav.playCountByDay = song.playCountByDay;
         fav.firstCountedDate = song.firstCountedDate;
+        fav.lastPlayedDate = song.lastPlayedDate;
         return fav;
     }
 
@@ -82,13 +84,43 @@ public class FavoriteSongRepository {
         fav.playCount = song.playCount;
         fav.playCountByDay = song.playCountByDay;
         fav.firstCountedDate = song.firstCountedDate;
+        fav.lastPlayedDate = song.lastPlayedDate;
         return fav;
+    }
+
+    public List<Favorite> getAllFavoriteTracksWithPlayCount() {
+        List<Favorites> songs = favoritesDao.getAllFavorites();
+        List<Favorite> favorites = new ArrayList<>();
+        for (Favorites song : songs) {
+            Track track = new Track(
+                    song.trackId,
+                    song.albumId,
+                    song.artistId,
+                    song.trackName,
+                    song.albumName,
+                    song.artistName,
+                    song.artworkUrl,
+                    song.releaseDate,
+                    song.durationMs
+            );
+            TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
+            Favorite fav = new Favorite(track, song.addedDate, metadata);
+            fav.audioUri = song.audioUri;
+            fav.playCount = song.playCount;
+            fav.playCountByDay = song.playCountByDay;
+            fav.firstCountedDate = song.firstCountedDate;
+            fav.lastPlayedDate = song.lastPlayedDate;
+            favorites.add(fav);
+        }
+        return favorites;
     }
 
 
     public int getFavoritesCount(){
         return favoritesDao.getFavoritesCount();
     }
+
+
     public List<Favorite> getAllFavoriteTracks() {
         List<Favorites> songs = favoritesDao.getAllFavorites();
         List<Favorite> favorites = new ArrayList<>();
@@ -163,7 +195,8 @@ public class FavoriteSongRepository {
                 audioUriStr,
                 favorite.playCount,
                 favorite.playCountByDay,
-                favorite.firstCountedDate);
+                favorite.firstCountedDate,
+                favorite.lastPlayedDate);
         int result = favoritesDao.updateFavoriteSong(converted);
         if (result > 0) callback.onSuccess();
         else callback.onFailure();

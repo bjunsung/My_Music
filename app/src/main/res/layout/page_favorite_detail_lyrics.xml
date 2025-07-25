@@ -27,6 +27,8 @@
             android:textSize="14sp"
             android:lineSpacingExtra="4dp"
             android:layout_width="match_parent"
+            android:gravity="center"
+            android:text="\n\n\n\n\n\n가사 정보가 없습니다"
             android:textColor="@color/text_white"
             android:textIsSelectable="true"
             android:layout_height="wrap_content"/>

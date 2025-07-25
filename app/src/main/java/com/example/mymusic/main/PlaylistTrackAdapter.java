@@ -1,4 +1,4 @@
-package com.example.mymusic.adapter;
+package com.example.mymusic.main;
 
 
 import android.animation.ValueAnimator;
@@ -233,6 +233,9 @@ public class PlaylistTrackAdapter extends RecyclerView.Adapter<PlaylistTrackAdap
     }
 
     private void updateAlpha(FavoritesWithCardViewHolder holder, float from, float to, long duration) {
+
+        //animateAlpha(holder.containerCardView, from, to, duration);
+
         animateAlpha(holder.titleKr, from, to, duration);
         animateAlpha(holder.artist, from, to, duration);
         animateAlpha(holder.album, from, to, duration);
@@ -240,6 +243,9 @@ public class PlaylistTrackAdapter extends RecyclerView.Adapter<PlaylistTrackAdap
         animateAlpha(holder.releasedDate, from, to, duration);
         animateAlpha(holder.textDuration, from, to, duration);
         animateAlpha(holder.textReleaseDate, from, to, duration);
+        animateAlpha(holder.textDash, from, to, duration);
+        animateAlpha(holder.image, from, to, duration);
+
     }
     public void updateColors(){
         notifyItemRangeChanged(0, getItemCount());

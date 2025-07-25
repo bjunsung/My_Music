@@ -32,6 +32,7 @@ public class Favorite implements Parcelable {
     public Integer backgroundColor = null;
     public Integer playingPosition = 0;
     public LocalDate firstCountedDate = null;
+    public LocalDate lastPlayedDate = null;
 
     public Favorite(Track track){
         this.track = track;
@@ -49,6 +50,7 @@ public class Favorite implements Parcelable {
 
     public void addPlayCount(LocalDate date) {
         playCount++;
+        lastPlayedDate = date;
 
         // Map이 비어있으면 초기화
         if (playCountByDay == null) {
@@ -146,6 +148,14 @@ public class Favorite implements Parcelable {
                 && Objects.equals(isSelected, other.isSelected);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        if (getTitle() != null ) result.append(getTitle()).append("_");
+        if (playCountByDay != null && !playCountByDay.isEmpty()) result.append(playCountByDay.toString()).append("___");
+        if (lastPlayedDate != null) result.append(lastPlayedDate.toString());
+        return result.toString();
+    }
 
 
 }

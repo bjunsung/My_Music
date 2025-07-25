@@ -37,5 +37,6 @@ class PlaylistItemDiffCallback(
 
         return oldItem.backgroundColor == backgroundColor
                 && oldItem.playingPosition == playingPosition
+
     }
 }

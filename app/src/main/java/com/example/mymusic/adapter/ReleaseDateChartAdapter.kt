@@ -82,6 +82,8 @@ class ReleaseDateChartAdapter (private var list: List<Favorite>, private val lis
         notifyDataSetChanged()
     }
 
+    fun getFavoriteList(): List<Favorite> = list
+
     override fun getItemCount(): Int {
         return minOf(list.size, visibleCount)
     }

@@ -16,6 +16,7 @@ benchmark = "1.2.4"
 runner = "1.5.2"
 benchmarkJunit4 = "1.2.4"
 palette = "1.0.0"
+media3Session = "1.8.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -32,6 +33,7 @@ room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.r
 runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
 benchmark-junit4 = { group = "androidx.benchmark", name = "benchmark-junit4", version.ref = "benchmarkJunit4" }
 palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
+media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3Session" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -138,12 +138,17 @@ class PlayTimeCalendar : Fragment() {
         recyclerView.itemAnimator = null
 
         adapter.setOnItemClickListener(object : CalendarAdapter.OnItemClickListener {
-            override fun onItemClick(date: LocalDate, playCount: Int, position: Int) {
-                selectedDateTextView.text = date.toString()
-                playCountForDateTextView.text = playCount.toString()
-                selectedDate = date
+            override fun onItemClick(day: ContributionDay, position: Int) {
+                val newList = musicPlayingViewModel.lastData.value!!.map { it.copy(isFocused = it.date == day.date) }
+                adapter.updateData(newList)
+
+                selectedDateTextView.text = day.date.toString()
+                playCountForDateTextView.text = day.count.toString()
+                selectedDate = day.date
                 selectedDateTextView.alpha = 1f
                 playCountForDateTextView.alpha = 1f
+
+
             }
 
         })
@@ -156,9 +161,7 @@ class PlayTimeCalendar : Fragment() {
 
     private fun updateUi(favorite: Favorite){
         val data = generateDataFromFavorite(favorite)
-
-
-
+        musicPlayingViewModel._lastData.value = data
 
         adapter.updateData(data)
 
@@ -202,7 +205,7 @@ class PlayTimeCalendar : Fragment() {
         for (i in 0 until daySize) {
             val date = startDate.plusDays(i.toLong())
             val count = contributions[date] ?: 0
-            list.add(ContributionDay(date, count))
+            list.add(ContributionDay(date, count, false))
         }
         return list
     }
@@ -215,7 +218,8 @@ class PlayTimeCalendar : Fragment() {
 
 data class ContributionDay(
     val date: LocalDate,
-    val count: Int
+    val count: Int,
+    var isFocused: Boolean
 )
 
 

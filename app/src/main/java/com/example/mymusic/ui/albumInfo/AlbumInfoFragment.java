@@ -197,7 +197,7 @@ public class  AlbumInfoFragment extends Fragment {
 
 
         // 3. 트랙 목록을 비동기로 가져옵니다.
-        apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+        apiHelper = new ArtistApiHelper(getContext());
         apiHelper.searchTrackByAlbum(null, album,  trackList -> {
             // 4. 데이터를 받으면 어댑터를 설정합니다.
             trackAdapter = new TrackAdapter(
@@ -225,7 +225,7 @@ public class  AlbumInfoFragment extends Fragment {
                 navController.navigate(R.id.action_albumInfoFragment_to_artist_infoFragment, bundle);
             }
             else{
-                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext());
                 apiHelper.getArtist(null, artistId, artist -> {
                     FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
                     bundle.putParcelable("favorite_artist", favoriteArtist);

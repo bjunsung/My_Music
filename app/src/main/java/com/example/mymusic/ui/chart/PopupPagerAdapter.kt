@@ -4,9 +4,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.model.Favorite
 import com.example.mymusic.util.DateUtils
@@ -18,6 +20,7 @@ class PopupPagerAdapter (val item: Favorite, val listener: OnClickEventListener)
         fun onTitleClick(item: Favorite)
         fun onAlbumNameClick(item: Favorite)
         fun onArtistNameClick(item: Favorite)
+        fun onPlayButtonClick(item: Favorite)
     }
 
     override  fun getItemCount(): Int = 2
@@ -66,6 +69,7 @@ class PopupPagerAdapter (val item: Favorite, val listener: OnClickEventListener)
                 val vocalistsLayout = view.findViewById<LinearLayout>(R.id.vocalists_layout)
                 val lyricistsLayout = view.findViewById<LinearLayout>(R.id.lyricists_layout)
                 val composersLayout = view.findViewById<LinearLayout>(R.id.composers_layout)
+                val musicPlayLayout = view.findViewById<LinearLayout>(R.id.music_play_layout)
 
                 val vocalistsTextView = view.findViewById<TextView>(R.id.vocalists)
                 val lyricistsTextView = view.findViewById<TextView>(R.id.lyricists)
@@ -73,6 +77,12 @@ class PopupPagerAdapter (val item: Favorite, val listener: OnClickEventListener)
 
                 val addedDateTextView = view.findViewById<TextView>(R.id.added_date)
                 addedDateTextView.text = item.addedDate
+
+
+
+                musicPlayLayout.visibility = if (item.audioUri != null) View.VISIBLE else View.GONE
+                val musicPlayButton = view.findViewById<ImageButton>(R.id.music_play_button)
+
 
                 if (item.metadata != null) {
                     val metadata = item.metadata
@@ -93,11 +103,12 @@ class PopupPagerAdapter (val item: Favorite, val listener: OnClickEventListener)
                 titleView.setOnClickListener { listener.onTitleClick(item) }
                 albumNameTextView.setOnClickListener { listener.onAlbumNameClick(item) }
                 artistNameTextView.setOnClickListener { listener.onArtistNameClick(item) }
+                musicPlayButton.setOnClickListener { listener.onPlayButtonClick(item) }
             }
             1 -> { // 가사 페이지
                 val view = holder.itemView
                 view.findViewById<TextView>(R.id.lyrics).text =
-                    item.metadata?.lyrics ?: "가사 정보가 없습니다."
+                    item.metadata?.lyrics ?: "\n\n\n\n\n\n가사 정보가 없습니다"
             }
         }
     }

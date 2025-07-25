@@ -53,6 +53,11 @@ class MyCalendar : Fragment() {
         return binding.root
     }
 
+    override fun onResume() {
+        super.onResume()
+        isExpanded = false
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -97,6 +102,8 @@ class MyCalendar : Fragment() {
         navToReleaseDateChartButton.setOnClickListener { findNavController().navigate(R.id.action_myCalendarFragment_to_releaseDateChart) }
         val moveTodayTextView = binding.moveTodayText
         moveTodayTextView.setOnClickListener{ calendarView.scrollToMonth(LocalDate.now().yearMonth) }
+        val navToPlayCountChartButton = binding.playCountChartText
+        navToPlayCountChartButton.setOnClickListener { findNavController().navigate(R.id.action_myCalendarFragment_to_playCountChart) }
 
     }
 

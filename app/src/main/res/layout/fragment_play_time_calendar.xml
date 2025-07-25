@@ -79,7 +79,7 @@
             android:id="@+id/text_label_1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="최근 1년간 재생횟수:"
+            android:text="최근 1년간 재생횟수"
             android:textColor="@color/white"
             android:paddingEnd="12dp" />
 

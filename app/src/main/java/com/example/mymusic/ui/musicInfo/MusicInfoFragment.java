@@ -620,7 +620,7 @@ public class MusicInfoFragment extends Fragment {
 
                     }
                     else{
-                        ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+                        ArtistApiHelper apiHelper = new ArtistApiHelper(getContext());
                         apiHelper.getArtist(null, track.artistId,  artist -> {
                             FavoriteArtist favoriteArtist = new FavoriteArtist(artist);
                             bundle.putParcelable("favorite_artist", favoriteArtist);
@@ -642,7 +642,7 @@ public class MusicInfoFragment extends Fragment {
 
             //music_info fragment to album_info fragment : shared element transition
             albumName.setOnClickListener(v -> {
-                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext(), requireActivity());
+                ArtistApiHelper apiHelper = new ArtistApiHelper(getContext());
                 apiHelper.getAlbum(null, track.albumId, album -> {
                     if (album != null) {
                         Bundle bundle = new Bundle();

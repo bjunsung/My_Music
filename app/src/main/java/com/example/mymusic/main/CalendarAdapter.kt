@@ -27,7 +27,7 @@ class CalendarAdapter(private var days: List<ContributionDay>) :
     private var itemClickListener: OnItemClickListener? = null
 
     interface OnItemClickListener {
-        fun onItemClick(date: LocalDate, playCount: Int, position: Int)
+        fun onItemClick(day: ContributionDay, position: Int)
     }
 
     fun setOnItemClickListener(itemClickListener: OnItemClickListener) {
@@ -50,8 +50,11 @@ class CalendarAdapter(private var days: List<ContributionDay>) :
         holder.background.setCardBackgroundColor(colors[colorIndex])
         holder.background.alpha = if (colorIndex == 0) 0.35f else 1f
 
+        holder.background.strokeColor = Color.parseColor("#ECECEC")
+        holder.background.strokeWidth = if (day.isFocused) 3 else 0
+
         holder.itemView.setOnClickListener {
-            itemClickListener?.onItemClick(day.date, day.count, holder.bindingAdapterPosition)
+            itemClickListener?.onItemClick(day, holder.bindingAdapterPosition)
         }
     }
 
@@ -67,9 +70,11 @@ class CalendarAdapter(private var days: List<ContributionDay>) :
             override fun getNewListSize() = newDays.size
             override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                 return days[oldItemPosition].date == newDays[newItemPosition].date
+                        && days[oldItemPosition].isFocused == newDays[newItemPosition].isFocused
             }
             override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
                 return days[oldItemPosition].count == newDays[newItemPosition].count
+                        && days[oldItemPosition].isFocused == newDays[newItemPosition].isFocused
             }
         })
         days = newDays.toList() // 새 리스트

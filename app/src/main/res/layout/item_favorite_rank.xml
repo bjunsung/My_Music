@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+
+    <TextView
+        android:id="@+id/ranking"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:visibility="visible"
+        android:text="2"
+        android:textSize="@dimen/text_size_xsmall"
+        android:textColor="@color/text_secondary"
+         android:textStyle="bold"/>
+
+    <!-- 앨범 이미지 -->
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp"
+        app:cardPreventCornerOverlap="false"
+        app:cardUseCompatPadding="false">
+
+        <ImageView
+            android:id="@+id/artwork_image"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:scaleType="centerCrop" />
+    </com.google.android.material.card.MaterialCardView>
+
+
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Missing You"
+        android:textSize="@dimen/text_size_xsmall"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:layout_marginEnd="4dp"
+        android:singleLine="true"
+        />
+
+    <TextView
+        android:id="@+id/play_count"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:layout_gravity="center"
+        android:gravity="center|end"
+        android:visibility="visible"
+        android:text="120"
+        android:textSize="@dimen/text_size_xsmall"
+        android:textColor="@color/text_secondary"
+        android:textStyle="italic"/>
+
+
+    <ImageButton
+        android:id="@+id/music_play_button"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginBottom="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_play_arrow"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        app:layout_constraintTop_toTopOf="@id/artistTextView"
+        android:visibility="gone"/>
+
+    <ImageButton
+        android:id="@+id/preview_menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/outline_more_horiz"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="@id/artistTextView"
+        app:layout_constraintBottom_toBottomOf="@id/artistTextView"
+        app:layout_constraintEnd_toEndOf="@id/parent"
+        android:layout_marginBottom="4dp"
+        android:padding="8dp"
+        android:visibility="gone"/>
+
+
+</LinearLayout>

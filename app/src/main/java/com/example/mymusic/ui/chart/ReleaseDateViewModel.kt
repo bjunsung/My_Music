@@ -32,6 +32,8 @@ class ReleaseDateViewModel (application: Application): AndroidViewModel(applicat
     var reenterStateFromAlbumInfoFragment = false
     var reenterStateFromArtistInfoFragment = false
 
+    var currentPosition: Int = 0
+
     lateinit var selectedHighlightYear: Highlight
 
 

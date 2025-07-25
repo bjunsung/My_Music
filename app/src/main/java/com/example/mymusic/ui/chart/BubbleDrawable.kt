@@ -16,7 +16,7 @@ class BubbleDrawable(
     private val dx: Float
 ) : Drawable() {
 
-    enum class TailPosition { LEFT, CENTER, RIGHT }
+    enum class TailPosition { LEFT, CENTER, RIGHT, LEFT_TOP }
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -35,22 +35,44 @@ class BubbleDrawable(
         val height = bounds.height().toFloat()
 
         // 본체 영역 (꼬리 높이만큼 위로)
-        val body = RectF(0f, tailHeight, width, height)
+        val offsetX = if (tailPosition == TailPosition.LEFT_TOP) tailHeight else 0f
+        val body = RectF(offsetX, tailHeight, width, height)
         canvas.drawRoundRect(body, cornerRadius, cornerRadius, paint)
 
-        // 꼬리 Path
-        val path = Path()
-        val tailY = 0f
-        val centerX = when (tailPosition) {
-            TailPosition.LEFT ->  dx
-            TailPosition.CENTER -> width / 2
-            TailPosition.RIGHT -> width - dx
-        }
+        //val body = RectF(0f, tailHeight, width, height)
+        //canvas.drawRoundRect(body, cornerRadius, cornerRadius, paint)
 
-        path.moveTo(centerX - tailWidth / 2, tailHeight)
-        path.lineTo(centerX + tailWidth / 2, tailHeight)
-        path.lineTo(centerX, tailY)
-        path.close()
+        // 꼬리 Path
+// 꼬리 Path
+
+        val path = Path()
+        when (tailPosition) {
+            TailPosition.LEFT, TailPosition.CENTER, TailPosition.RIGHT -> {
+                val tailY = 0f
+                val centerX = when (tailPosition) {
+                    TailPosition.LEFT -> dx
+                    TailPosition.CENTER -> width / 2
+                    TailPosition.RIGHT -> width - dx
+                    else -> width / 2
+                }
+
+                path.moveTo(centerX - tailWidth / 2, tailHeight)
+                path.lineTo(centerX + tailWidth / 2, tailHeight)
+                path.lineTo(centerX, tailY)
+                path.close()
+            }
+
+            TailPosition.LEFT_TOP -> {
+                // 꼬리를 왼쪽 위로 향하게
+                val tailX = 0f
+                val centerY = dx  // ← 이건 상단으로부터 얼마나 떨어져 있는지
+
+                path.moveTo(tailX + tailHeight, centerY - tailWidth / 2)
+                path.lineTo(tailX + tailHeight, centerY + tailWidth / 2)
+                path.lineTo(tailX, centerY)
+                path.close()
+            }
+        }
 
         canvas.drawPath(path, paint)
     }

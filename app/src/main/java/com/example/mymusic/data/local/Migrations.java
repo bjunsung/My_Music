@@ -21,6 +21,12 @@ import java.util.Map;
 
 public class Migrations {
 
+    static final Migration  MIGRATION_10_11 = new Migration(10, 11) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE favorites_table ADD COLUMN lastPlayedDate TEXT");
+        }
+    };
     static final Migration MIGRATION_9_10 = new Migration(9, 10) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase db) {

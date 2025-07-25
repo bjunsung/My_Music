@@ -15,11 +15,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
 import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
+import androidx.core.util.Consumer
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.viewModelScope
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -27,10 +34,17 @@ import com.bumptech.glide.request.transition.Transition
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.customView.WaveformView
+import com.example.mymusic.dataLoader.FavoriteArtistLoader
 import com.example.mymusic.databinding.FragmentArtworkWithWaveFormBinding
+import com.example.mymusic.model.Artist
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.model.FavoriteArtist
+import com.example.mymusic.network.ArtistApiHelper
+import com.example.mymusic.ui.artistInfo.ArtistInfoFragment
 import com.example.mymusic.ui.musicInfo.MusicInfoFragment
-import com.google.android.exoplayer2.Player
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ArtworkWithWaveFormFragment : Fragment() {
 
@@ -55,6 +69,10 @@ class ArtworkWithWaveFormFragment : Fragment() {
     private var playerListener: Player.Listener? = null
     private var handler = Handler(Looper.getMainLooper())
 
+    private val exoPlayer: ExoPlayer by lazy { mainActivityViewModel.exoPlayer!! }
+    private var isUserSeeking = false
+    private var seekBar: SeekBar? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ) : View {
@@ -67,6 +85,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
         bind()
     }
 
+    @OptIn(UnstableApi::class)
     override fun onResume() {
         super.onResume()
         // 화면 다시 켜질 때 Visualizer 재연결
@@ -82,7 +101,10 @@ class ArtworkWithWaveFormFragment : Fragment() {
         releaseVisualizer()
     }
 
+    @OptIn(UnstableApi::class)
     private fun bind() {
+        musicPlayingViewModel.artworkImage = this.artworkImage
+
         favorite = mainActivityViewModel.currentTrack.value
         favorite?.let { updateData(it) }
         mainActivityViewModel.currentTrack.observe(viewLifecycleOwner) { favoriteSync ->
@@ -92,6 +114,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
             }
         }
 
+        /*
         mainActivityViewModel.isPlaying.observe(viewLifecycleOwner) { playing ->
             if (playing){
                 startArtworkImageRotation()
@@ -100,6 +123,19 @@ class ArtworkWithWaveFormFragment : Fragment() {
                 stopArtworkImageRotation()
             }
         }
+
+         */
+
+
+        artworkImage.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
+        musicPlayingViewModel.rotationAngle.observe(viewLifecycleOwner) {
+            val currentRotation = musicPlayingViewModel.rotationAngle.value ?: 0f
+            binding.focusedImageFrame.rotation = currentRotation
+        }
+
+
+
 
         // 오디오 세션 변경 리스너
         playerListener = object : Player.Listener {
@@ -122,7 +158,40 @@ class ArtworkWithWaveFormFragment : Fragment() {
             }
             musicPlayingViewModel.requestDismiss(true)
             navController.navigate(R.id.musicInfoFragment, args)
+        }
 
+        artistNameTextView.setOnClickListener {
+            favorite?.let {
+                val navController = findNavController()
+                val args = Bundle()
+                FavoriteArtistLoader.loadFavoriteArtistById(
+                    requireContext(),
+                    it.track.artistId,
+                    object : FavoriteArtistLoader.Companion.OnLoadListener {
+                        override fun onLoadSuccess(fav: FavoriteArtist) {
+                            args.putParcelable(ArtistInfoFragment.ARGUMENTS_KEY, fav)
+                            musicPlayingViewModel.requestDismiss(true)
+                            navController.navigate(R.id.artist_info, args)
+                        }
+                        override fun onLoadFailed() {
+                            mainActivityViewModel.viewModelScope.launch(Dispatchers.IO) {
+                                val artistApiHelper = ArtistApiHelper(requireContext())
+                                artistApiHelper.getArtist(null, it.track.artistId, object : Consumer<Artist> {
+                                    override fun accept(value: Artist) {
+                                        mainActivityViewModel.viewModelScope.launch(Dispatchers.Main) {
+                                            val searched = FavoriteArtist(value)
+                                            args.putParcelable(ArtistInfoFragment.ARGUMENTS_KEY, searched)
+                                            musicPlayingViewModel.requestDismiss(true)
+                                            navController.navigate(R.id.artist_info, args)
+                                        }
+                                    }
+
+                                })
+                            }
+                        }
+
+                    })
+            }
         }
     }
 
@@ -146,6 +215,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
         releaseDateTextView.text = currentFavorite.releaseDate
     }
 
+    /*
     private fun startArtworkImageRotation() {
         val clockwise = if (mainActivityViewModel.currentIndex % 2 == 0) 1.0f else -1.0f
         animator?.cancel()
@@ -163,6 +233,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
             start()
         }
     }
+     */
 
     private fun stopArtworkImageRotation() {
         animator?.cancel()
@@ -183,6 +254,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
             }
         }
 
+    @OptIn(UnstableApi::class)
     private fun checkAndRequestAudioPermission() {
         when {
             ContextCompat.checkSelfPermission(

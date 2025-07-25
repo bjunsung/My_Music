@@ -170,6 +170,9 @@
         <action
             android:id="@+id/action_myCalendarFragment_to_releaseDateChart"
             app:destination="@id/fragment_release_date_chart" />
+        <action
+            android:id="@+id/action_myCalendarFragment_to_playCountChart"
+            app:destination="@id/fragment_play_count_chart" />
     </fragment>
 
 
@@ -203,6 +206,17 @@
         <action
             android:id="@+id/action_artworkWaveFormFragment_to_albumInfoFragment"
             app:destination="@id/album_info" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/fragment_play_count_chart"
+        android:name="com.example.mymusic.ui.chart.PlayTimeChart"
+        android:label="playtime"
+        tools:layout="@layout/fragment_play_count_chart" >
+        <action
+            android:id="@+id/action_playCountChart_to_musicInfoFragment"
+            app:destination="@id/musicInfoFragment" />
     </fragment>
 
 </navigation>

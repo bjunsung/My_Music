@@ -25,17 +25,20 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.viewpager2.widget.ViewPager2
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.databinding.BottomSheetMusicPlayingBinding
+import com.example.mymusic.model.ArtistMetadata
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.model.TrackMetadata
 import com.example.mymusic.util.DarkModeUtils
 import com.example.mymusic.util.ImageColorAnalyzer
 import com.example.mymusic.util.MyColorUtils
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.Player
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -224,7 +227,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
             v.parent.requestDisallowInterceptTouchEvent(true)
             false
         }
-        setViewByTrack()
+        //setViewByTrack()
+
 
         mainActivityViewModel.trackDuration.observe(viewLifecycleOwner) { duration ->
             totalTimeTextView.text = formatDuration(duration)
@@ -232,19 +236,33 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
             setViewByTrack()
         }
 
+
+/*
+        mainActivityViewModel.totalPlayCountInARow.observe(viewLifecycleOwner) {
+            val duration = mainActivityViewModel.trackDuration.value ?: 0
+            totalTimeTextView.text = formatDuration(duration)
+            seekBar.max = duration
+            updateSeekBarRunnable?.let { handler.removeCallbacks(it) }
+            setViewByTrack()
+        }
+
+ */
+
+
+
         skipPreviousButton.setOnClickListener { mainActivityViewModel.playPrevious() }
         skipNextButton.setOnClickListener { mainActivityViewModel.playNext() }
 
         // 플레이 상태에 따라 회전 애니메이션 시작/정지
         mainActivityViewModel.isPlaying.observe(viewLifecycleOwner) { playing ->
             if (playing) {
-                startGradientRotation()
+                //startGradientRotation()
                 //binding.waveformView.startAnimation() // <<< 추가
                 pauseButton.visibility = View.VISIBLE
                 playButton.visibility = View.INVISIBLE
             }
             else {
-                stopGradientRotation()
+                //stopGradientRotation()
                 //binding.waveformView.stopAnimation() // <<< 추가
                 pauseButton.visibility = View.INVISIBLE
                 playButton.visibility = View.VISIBLE
@@ -348,8 +366,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
     private fun setViewByTrack() {
         favorite = mainActivityViewModel.currentTrack.value ?: favorite
         val track = favorite.track
-        val metadata = favorite.metadata
-        val primaryColor: Int? = favorite.track.primaryColor
+        val metadata: TrackMetadata? = favorite.metadata
+        val primaryColor: Int? = track.primaryColor
         if (primaryColor != null) {
             setBackgroundColor(primaryColor)
         } else {
@@ -364,7 +382,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                     ) {
                         setBackgroundColor(primaryColor)
                         val favoriteSongRepository = FavoriteSongRepository(requireContext())
-                        favorite.track.primaryColor = primaryColor
+                        track.primaryColor = primaryColor
                         mainActivityViewModel.viewModelScope.launch(Dispatchers.IO) {
                             favoriteSongRepository.updateFavoriteSongExceptPlayCount(
                                 favorite,
@@ -380,7 +398,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                 })
         }
 
-        lyricsTextView.text = "\n\n\n\n\n\n\n" + metadata.lyrics + "\n\n\n\n\n\n\n"
+        lyricsTextView.text = "\n\n\n\n\n\n\n" + (metadata?.lyrics ?: "제목없음")  + "\n\n\n\n\n\n\n"
 
         pauseButton.setOnClickListener {
             mainActivityViewModel.togglePlayPause()
@@ -407,9 +425,10 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                 exoPlayer.seekTo(seekBar?.progress?.toLong() ?: 0L)
             }
         })
+
         startSeekBarUpdate()
     }
-
+/*
     private fun startSeekBarUpdate() {
         updateSeekBarRunnable = object : Runnable {
             override fun run() {
@@ -424,7 +443,41 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         handler.post(updateSeekBarRunnable!!)
     }
 
+ */
+
+    private fun startSeekBarUpdate() {
+        updateSeekBarRunnable?.let { handler.removeCallbacks(it) }
+        Log.d(TAG, "startSeekBarUpdate called")
+
+        updateSeekBarRunnable = object : Runnable {
+            override fun run() {
+                if (exoPlayer.isPlaying && !isUserSeeking) {
+                    val pos = exoPlayer.currentPosition
+                    seekBar.progress = pos.toInt()
+                    currentTime.text = formatDuration(pos.toInt())
+                }
+                // **추가: SeekBar 진행 상태를 회전각으로 변환 (0~360도)**
+                val max = seekBar.max.takeIf { it > 0 } ?: 1
+                currentRotation = ((seekBar.progress.toFloat() / max) * 360f * 1f) % 360
+                //Log.d(TAG, "current rotation: " + currentRotation)
+                gradientBackground.rotation = currentRotation
+                musicPlayingViewModel.setRotationAngle(currentRotation)
+                handler.postDelayed(this, 30)
+            }
+        }
+        handler.post(updateSeekBarRunnable!!)
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        startSeekBarUpdate()
+    }
+
     override fun onStop() {
+        Log.d(TAG, "onStop called, removing callbacks")
+
+
         super.onStop()
         updateSeekBarRunnable?.let { handler.removeCallbacks(it) }
     }
@@ -502,7 +555,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         gradientBackground.invalidate()
     }
 
-
+/*
     private fun startGradientRotation() {
         val clockwise = if (mainActivityViewModel.currentIndex % 2 == 0) 1.0f else -1.0f
         animator?.cancel()
@@ -521,11 +574,15 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+
+
     private fun stopGradientRotation() {
         animator?.cancel()
         currentRotation = gradientBackground.rotation % 360
     }
 
+
+ */
 
 
 

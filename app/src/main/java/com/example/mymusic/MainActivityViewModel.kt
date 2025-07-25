@@ -1,25 +1,35 @@
 package com.example.mymusic
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.icu.text.SimpleDateFormat
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.model.Favorite
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
+import androidx.core.net.toUri
+import com.bumptech.glide.Glide
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -29,7 +39,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     private val _isPlaying = MutableLiveData(false)
     val isPlaying: LiveData<Boolean> get() = _isPlaying
 
-    var exoPlayer: ExoPlayer? = ExoPlayer.Builder(application).build()
+    //var exoPlayer: ExoPlayer? = ExoPlayer.Builder(application).build()
+    var exoPlayer: ExoPlayer? = null
     var lastPlayedTrackIndex: Int = 0
 
 
@@ -83,7 +94,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
         exoPlayer!!.clearMediaItems()
 
-        val mediaItems = playlist.map {MediaItem.fromUri(it.audioUri)}
+       // val mediaItems = playlist.map {MediaItem.fromUri(it.audioUri)}
+
+        //uri null 방지
+        val mediaItems = playlist.mapNotNull { item ->
+            item.audioUri?.let { uri ->
+                MediaItem.fromUri(uri)
+            }
+        }
+
         Log.d(TAG, "exoplayer: " + exoPlayer)
         exoPlayer!!.setMediaItems(mediaItems)
         exoPlayer!!.prepare()
@@ -95,10 +114,57 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /** 플레이어 초기화 */
-    private fun initPlayer() {
+    @OptIn(UnstableApi::class)
+    fun initPlayer() {
         if (exoPlayer == null) return
         exoPlayer!!.clearMediaItems()
-        val mediaItems = playlist.value!!.map { MediaItem.fromUri(it.audioUri) } // track.url은 Favorite 모델에서 곡 URL
+        //val mediaItems = playlist.value!!.map { MediaItem.fromUri(it.audioUri) } // track.url은 Favorite 모델에서 곡 URL
+        //uri null 방지
+        /*
+        val mediaItems = playlist.value!!.mapNotNull { item ->
+            item.audioUri?.let { uri ->
+                MediaItem.fromUri(uri)
+            }
+        }
+
+         */
+        // uri null 방지
+        val mediaItems = playlist.value!!.mapNotNull { item ->
+            item.audioUri?.let { uri ->
+
+                // 1. String 형태의 이미지 주소를 Uri 객체로 변환합니다.
+                // item.albumArtUrl이 String 타입이라고 가정합니다.
+                val imageUri: android.net.Uri? = if (item.track.artworkUrl.isNullOrEmpty()) {
+                    null // 주소가 없거나 비어있으면 null 처리
+                } else {
+                    android.net.Uri.parse(item.track.artworkUrl) // ✨ 바로 이 부분입니다!
+                }
+
+                // 2. MediaMetadata를 생성합니다.
+                val metadata = MediaMetadata.Builder()
+                    .setTitle(item.title)
+                    .setArtist(item.artistName)
+                    .setArtworkUri(imageUri) // 변환된 Uri 객체를 여기에 설정합니다.
+                    .build()
+
+                // 3. MediaItem을 생성합니다.
+                MediaItem.Builder()
+                    .setUri(uri)
+                    .setMediaMetadata(metadata)
+                    .build()
+            }
+        }
+        /*
+        exoPlayer!!.setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .build(),
+            true
+        )
+
+         */
+
         exoPlayer!!.setMediaItems(mediaItems)
         exoPlayer!!.prepare()
 
@@ -109,7 +175,16 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                 super.onMediaItemTransition(mediaItem, reason)
                 val newIndex = exoPlayer?.currentMediaItemIndex ?: 0
-                if (currentIndex == newIndex) return //유저 개입으로 playat 이 이미 호출된 경우 무시 (자연스럽게 넘어가는 경우에만 playAt  으로 ui 업데이트 가능하게)
+                Log.d(TAG, "play at from onMediaItemTransition Listener before")
+                if (currentIndex == newIndex){ //유저 개입으로 playat 이 이미 호출된 경우 무시 (자연스럽게 넘어가는 경우에만 playAt 으로 ui 업데이트 가능하게)
+                    if (repeatMode.value == ExoPlayer.REPEAT_MODE_ONE) {
+                        checkPlayCount(currentTrack.value)
+                        return
+                    }
+                    else {
+                        return
+                    }
+                }
                 Log.d(TAG, "play at from onMediaItemTransition Listener")
                 playAt(newIndex)  // 트랙이 바뀔 때 항상 playAt() 호출
             }
@@ -258,6 +333,46 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         lastPlayedTrackIndex = currentIndex
 
         _totalPlayCountInARow.value = _totalPlayCountInARow.value?.plus(1)
+
+        viewModelScope.launch(Dispatchers.Main) {
+            val coverUri = currentTrack.value?.track?.artworkUrl?.toUri()
+
+// ① Glide·Coil로 Bitmap → ByteArray (PNG/JPEG)
+            val artBytes: ByteArray? = withContext(Dispatchers.IO) {
+                Glide.with(getApplication<Application>())
+                    .asBitmap()
+                    .load(coverUri)
+                    .submit()
+                    .get()
+                    .let { bmp ->
+                        ByteArrayOutputStream().apply {
+                            bmp.compress(Bitmap.CompressFormat.JPEG, 100, this)
+                        }.toByteArray()
+                    }
+            }
+
+// ② 메타데이터
+            val newMeta = exoPlayer!!.mediaMetadata.buildUpon()
+                .setTitle(currentTrack.value?.title ?: "제목없음")
+                .setArtist(currentTrack.value?.artistName ?: "이름없음")
+                .setArtworkUri(coverUri)                               // 작은 썸네일
+                .apply {
+                    artBytes?.let { bytes ->
+                        setArtworkData(bytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                    }
+                }
+                .build()
+
+// ③ MediaItem 교체
+            val newItem = exoPlayer!!.currentMediaItem!!
+                .buildUpon()
+                .setMediaMetadata(newMeta)
+                .build()
+
+            exoPlayer!!.replaceMediaItem(exoPlayer!!.currentMediaItemIndex, newItem)
+
+
+        }
     }
 
     /** 다음 곡 */
@@ -334,8 +449,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         exoPlayer?.release()
         exoPlayer = null
     }
-    
-    
+
+
     companion object {
         const val TAG = "MainActivityViewModel"
     }

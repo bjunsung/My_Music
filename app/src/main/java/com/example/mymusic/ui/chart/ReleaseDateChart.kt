@@ -42,10 +42,12 @@ import androidx.core.graphics.toColorInt
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
+import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.data.repository.FavoriteArtistRepository
 import com.example.mymusic.dataLoader.FavoriteArtistLoader
 import com.example.mymusic.model.FavoriteArtist
@@ -78,6 +80,8 @@ class ReleaseDateChart: Fragment() {
     private lateinit var popupWindow: PopupWindow
     private var preventUnfocus = false
     private lateinit var anchorView: View
+    private val mainActivityViewModel: MainActivityViewModel by activityViewModels()
+
 
 
     private val adapter: ReleaseDateChartAdapter = ReleaseDateChartAdapter(listOf(), object: ReleaseDateChartAdapter.OnItemEventListener {
@@ -90,6 +94,7 @@ class ReleaseDateChart: Fragment() {
             else {
                 viewModel.itemClickRepeated = 1
             }
+            viewModel.currentPosition = position
             showPopupWindow(view, item, position)
         }
 
@@ -125,6 +130,21 @@ class ReleaseDateChart: Fragment() {
 
             override fun onArtistNameClick(item: Favorite) {
                 this@ReleaseDateChart.onArtistNameClick(item)
+            }
+
+            override fun onPlayButtonClick(item: Favorite) {
+                if (item.audioUri == null){
+                    Log.d(TAG, "audio not found, skipping play")
+                    return
+                }
+                val playlist = viewModel.shuffledList.filter { !it.audioUri.isNullOrEmpty() }
+                val currentPosition = viewModel.currentPosition
+
+                val ordered = (playlist.subList(currentPosition, playlist.size) +
+                        playlist.subList(0, currentPosition)).toMutableList()
+
+                mainActivityViewModel.setPlaylist(ordered, 0)
+
             }
         })
 
@@ -259,7 +279,7 @@ class ReleaseDateChart: Fragment() {
         popupWindow.dismiss()
 
         val track = item.track
-        val apiHelper = ArtistApiHelper(requireContext(), requireActivity())
+        val apiHelper = ArtistApiHelper(requireContext())
         apiHelper.getAlbum(null, track.albumId) { album ->
             if (album != null) {
                 val args = Bundle().apply {
@@ -302,7 +322,7 @@ class ReleaseDateChart: Fragment() {
 
             override fun onLoadFailed() {
                 Log.d(TAG, "favorite artist load failed")
-                val apiHelper = ArtistApiHelper(requireContext(), requireActivity())
+                val apiHelper = ArtistApiHelper(requireContext())
                 apiHelper.getArtist(null, item.track.artistId) { artist ->
                     val artist = FavoriteArtist(artist)
                     args.putParcelable(ArtistInfoFragment.ARGUMENTS_KEY, artist)

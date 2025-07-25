@@ -2,12 +2,20 @@ package com.example.mymusic;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.media.AudioAttributes;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -23,16 +31,21 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.mymusic.data.repository.FavoriteSongRepository;
+import com.example.mymusic.main.MediaSessionHelper;
 import com.example.mymusic.main.MusicPlayingBottomSheet;
+
+import com.example.mymusic.main.NotificationUtils;
+import com.example.mymusic.main.PlayerManager;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.ui.favorites.FavoritesFragment;
 import com.example.mymusic.ui.setting.SettingFragment;
 import com.example.mymusic.util.DarkModeUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.MyColorUtils;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.Player;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
@@ -41,6 +54,12 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.media3.common.C;
+import androidx.media3.common.Player;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.SimpleExoPlayer;
+import androidx.media3.session.MediaSession;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -50,6 +69,11 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.mymusic.databinding.ActivityMainBinding;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
@@ -80,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         SettingFragment.applyDarkModeSensitiveCustomStyling(this);
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,6 +114,43 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+
+        /**
+         * db update
+         */
+
+        /*
+        FavoriteSongRepository favoriteSongRepository = new FavoriteSongRepository(this);
+
+
+        new Thread(()->{
+            long startMs = System.currentTimeMillis();
+            List<Favorite> favs =  favoriteSongRepository.getAllFavoriteTracksWithPlayCount();
+            long fetchedMs = System.currentTimeMillis();
+            Log.d(TAG, "favorites songs with play count by day fetched time: " + (fetchedMs - startMs) + " ms");
+            for (Favorite item: favs) {
+                Map<LocalDate, Integer> map = item.playCountByDay;
+                if (map.isEmpty()) continue;
+                LocalDate ld = null;
+                for (Map.Entry<LocalDate, Integer> entry:  map.entrySet()){
+                    LocalDate key = entry.getKey();
+                    if (ld == null) ld = key;
+                    else if (key.isAfter(ld)) ld = key;
+                }
+                item.lastPlayedDate = ld;
+                //Log.d(TAG, item.toString());
+                favoriteSongRepository.updateFavoriteSongWithPlayCount(item, new FavoriteSongRepository.FavoriteDbCallback() {
+                    @Override
+                    public void onSuccess() {}
+
+                    @Override
+                    public void onFailure() {}
+                });
+            }
+        }).start();
+        */
+
 
 
         FrameLayout musicPlayingBar = binding.musicPlayingBar;
@@ -139,18 +201,33 @@ public class MainActivity extends AppCompatActivity {
 
         viewModel.getRepeatMode().observe(this, this::setVisibilityByRepeatMode);
 
+        // Activity 또는 Fragment 내부
 
-        //media player setting
-        if (viewModel.getExoPlayer() == null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                exoPlayer = new ExoPlayer.Builder(this).build();
-                viewModel.setExoPlayer(exoPlayer);
-            }
-        }
-        else{
-            exoPlayer = viewModel.getExoPlayer();
-        }
 
+// 그 다음에 ViewModel의 플레이어 초기화 로직을 호출하세요.
+// viewModel.initPlayer(); 등...
+
+// 0) 알림 채널: 앱 시작 시 한 번
+        NotificationUtils.createPlaybackChannel(this);
+
+// 1) Player 생성 → final 변수
+        final ExoPlayer exo = new ExoPlayer.Builder(this)
+                .setAudioAttributes(
+                        new androidx.media3.common.AudioAttributes.Builder()
+                                .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                                .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+                                .build(),
+                        /* handleAudioFocus = */ true
+                )
+                .build();
+
+// 2) 기존 로직
+        viewModel.setExoPlayer(exo);
+        viewModel.initPlayer();
+        PlayerManager.INSTANCE.setExoPlayer(exo);
+
+// 3) 시스템 미디어 UI 붙이기
+        MediaSessionHelper.attach(exo, this);
 
         viewModel.isPlaying().observe(this, aBoolean -> {
             if (!aBoolean.booleanValue()) {
@@ -315,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
                 musicPlayingBar.setVisibility(View.GONE);
             }
             // 다른 주요 프래그먼트들로 돌아올 때는 다시 보이게 함
-            else if (destination.getId() == R.id.fragment_release_date_chart) {
+            else if (destination.getId() == R.id.fragment_release_date_chart || destination.getId() == R.id.fragment_play_count_chart) {
                 navView.setVisibility(View.GONE);
                 if (viewModel.getCurrentTrack().getValue() != null) {
                     musicPlayingBar.setVisibility(View.VISIBLE);
@@ -355,6 +432,10 @@ public class MainActivity extends AppCompatActivity {
             shuffleOnStateButton.setVisibility(View.INVISIBLE);
             shuffleButton.setVisibility(View.VISIBLE);
         });
+
+
+        viewModel.getTotalPlayCountInARow().observe(this, integer -> Log.d("MainActivityViewModel", "play times changed: " + integer));
+
         /**
          * end of onCreate
          */
@@ -492,7 +573,6 @@ public class MainActivity extends AppCompatActivity {
         return size;
     }
 
-
-
-
 }
+
+

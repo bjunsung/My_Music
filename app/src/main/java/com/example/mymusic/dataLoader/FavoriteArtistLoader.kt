@@ -12,11 +12,11 @@ import com.example.mymusic.model.FavoriteArtist
 
 class FavoriteArtistLoader {
     companion object {
-        public interface OnLoadListener {
+        interface OnLoadListener {
             fun onLoadSuccess (fav: FavoriteArtist)
             fun onLoadFailed ()
         }
-        public fun loadFavoriteArtistById(context: Context, id: String, listener: OnLoadListener) {
+        fun loadFavoriteArtistById(context: Context, id: String, listener: OnLoadListener) {
             val favArtistRepository = FavoriteArtistRepository(context)
             val artistMetadataRepository = ArtistMetadataRepository(context)
             Thread {

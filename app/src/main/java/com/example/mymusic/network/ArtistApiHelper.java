@@ -26,14 +26,20 @@ public class ArtistApiHelper {
     private final String TAG = "ArtistApiHelper";
 
     private Context context;
-    private Activity activity; //Ui 작업 actvity.runOnUiThread()
     private TokenRepository tokenRepository;
-    public ArtistApiHelper(Context context, Activity activity){
+    public ArtistApiHelper(Context context){
         this.context = context;
-        this.activity = activity;
         tokenRepository = new TokenRepository(context);
     }
 
+    private OnLoadListener listener;
+    public interface OnLoadListener {
+        void onFailure(String reason, String subReason);
+    }
+
+    public void setListener(OnLoadListener listener) {
+        this.listener = listener;
+    }
     private void getAccessToken(Consumer<String> onSuccess, Consumer<String> onFailure){
         new Thread(() -> {
             Token token = tokenRepository.getAccessTokenSync();
@@ -70,13 +76,9 @@ public class ArtistApiHelper {
         String[] parts = errorMessage.split(",", 2);
         String titleMessage = parts[0];
         String message = parts[1];
-        activity.runOnUiThread(() -> {
-            new AlertDialog.Builder(context)
-                    .setTitle(titleMessage)
-                    .setMessage(message)
-                    .setPositiveButton("확인", null)
-                    .show();
-        });
+        if (listener != null) {
+            listener.onFailure(titleMessage, message);
+        }
     }
 
     public interface ApiExecutor<T> {

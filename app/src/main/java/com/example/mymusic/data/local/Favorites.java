@@ -45,6 +45,7 @@ public class Favorites
     // **변경: Map<LocalDate, Integer> 로 교체**
     public Map<LocalDate, Integer> playCountByDay;
     public LocalDate firstCountedDate; // 최솟값 날짜 캐싱
+    public LocalDate lastPlayedDate;  //마지막 플레이 날짜
 
     public Favorites(){}
     public Favorites(Track track,
@@ -58,7 +59,8 @@ public class Favorites
                      String audioUri,
                      int playCount,
                      Map<LocalDate, Integer> playCountByDay,
-                     LocalDate firstCountedDate){
+                     LocalDate firstCountedDate,
+                     LocalDate lastPlayedDate){
         this.trackId = track.trackId;
         this.albumId = track.albumId;
         this.artistId = track.artistId;
@@ -80,6 +82,7 @@ public class Favorites
         this.playCount = playCount;
         this.playCountByDay = playCountByDay;
         this.firstCountedDate = firstCountedDate;
+        this.lastPlayedDate = lastPlayedDate;
     }
 
     public Favorites(Track track, String addedDate){

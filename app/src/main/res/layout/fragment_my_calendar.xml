@@ -41,7 +41,8 @@
                     android:layout_marginTop="4dp"
                     android:layout_marginLeft="8dp"
                     android:src="@drawable/round_menu_24"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:focusable="false"/>
 
                 <TextView
                     android:layout_width="match_parent"
@@ -362,6 +363,18 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="차트보기"
+                        android:padding="4dp"
+                        android:layout_marginTop="6dp"
+                        android:textSize="@dimen/text_size_small"
+                        android:textColor="@color/basic_soft"
+                        android:visibility="visible"
+                        android:layout_marginStart="8dp"/>
+
+                    <TextView
+                        android:id="@+id/play_count_chart_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="playtime"
                         android:padding="4dp"
                         android:layout_marginTop="6dp"
                         android:textSize="@dimen/text_size_small"

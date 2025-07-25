@@ -10,13 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mymusic.MainActivityViewModel
-import com.example.mymusic.adapter.FavoritesWithCardViewAdapter
-import com.example.mymusic.adapter.PlaylistTrackAdapter
 import com.example.mymusic.databinding.FragmentPlaylistRecyclerBinding
 
 import com.example.mymusic.model.Favorite
@@ -54,7 +50,8 @@ class PlaylistRecyclerFragment : Fragment() {
         playlistAdapter = PlaylistTrackAdapter(
             requireContext(),
             emptyList(),
-            object: PlaylistTrackAdapter.OnItemClickListener {
+            object :
+                PlaylistTrackAdapter.OnItemClickListener {
                 override fun onItemClick(
                     trackId: String?,
                     trackName: String?,

@@ -558,7 +558,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
 
     private void loadAlbums() {
-        ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext(), requireActivity());
+        ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext());
         apiHelper.searchAlbumsByArtist(null, artist.artistId, albumList -> {
             albumAdapter.updateData(albumList);
             binding.albumResultRecyclerView.post(() -> {
@@ -570,7 +570,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
     private void loadTopTracks() {
-        ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext(), requireActivity());
+        ArtistApiHelper apiHelper = new ArtistApiHelper(this.getContext());
         apiHelper.searchTrackByArtist(null, artist.artistId, tracks -> {
             trackAdapter.updateData(tracks);
             binding.trackResultRecyclerView.post(() -> {
