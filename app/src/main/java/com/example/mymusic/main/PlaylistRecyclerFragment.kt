@@ -146,9 +146,13 @@ class PlaylistRecyclerFragment : Fragment() {
         playlistAdapter?.updateData(mainActivityViewModel.playlist.value, mainActivityViewModel.currentIndex)
 
         playlistRecyclerView.smoothScrollToPosition(mainActivityViewModel.currentIndex)
+        Log.d(TAG, "smooth scroll to position: " + mainActivityViewModel.currentIndex)
 
     }
 
+    companion object {
+        const val TAG = "PlaylistRecyclerFragment"
+    }
 
 }
 

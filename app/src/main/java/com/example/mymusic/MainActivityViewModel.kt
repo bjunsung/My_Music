@@ -16,6 +16,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
 
@@ -32,8 +33,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
 
     private var _playlist = MutableLiveData<List<Favorite>>(emptyList())
-
     val playlist : LiveData<List<Favorite>> get() = _playlist
+
 
     var currentIndex = 0
     private val _repeatMode = MutableLiveData(Player.REPEAT_MODE_OFF)
@@ -66,7 +67,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
         _playlist.value = playlist
         currentIndex = startPosition.coerceIn(0, playlist.lastIndex)
-        _currentTrack.value = playlist.get(startPosition)
+        //_currentTrack.value = playlist.get(startPosition)
 
         exoPlayer!!.clearMediaItems()
 
@@ -155,19 +156,19 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     // <<< [수정] 재생 카운트 체크 및 초기화 로직
-    private fun checkPlayCount() {
+    private fun checkPlayCount(lastPlayedTrack: Favorite?) {
         // 유효한 트랙 길이를 가지고 있을 때만 체크
         if (currentTrackDurationMs <= 0) {
             Log.d(TAG, "Check skipped: Invalid duration ($currentTrackDurationMs)")
             resetListeningTime() // 시간 초기화
             return
         }
-        val lastPlayedTrack = playlist.value?.get(lastPlayedTrackIndex)
+
         if (listenedTimeMs >= currentTrackDurationMs * 2 / 3) {
             val today:String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
             Log.d(TAG, "✅ COUNT! Date: $today, Listened: $listenedTimeMs, Total: $currentTrackDurationMs, track name: ${lastPlayedTrack?.title ?: "name not found"}")
-            updatePlayCount()
+            updatePlayCount(lastPlayedTrack)
         } else {
             Log.d(TAG, "❌ NOT COUNTED. Listened: $listenedTimeMs, Total: $currentTrackDurationMs, track name: ${lastPlayedTrack?.title ?: "name not found"}")
         }
@@ -176,25 +177,21 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         resetListeningTime()
     }
 
-    private fun updatePlayCount() {
-        val today:String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val lastPlayed = playlist.value?.get(lastPlayedTrackIndex)
-        lastPlayed?.let {
-            lastPlayed.addPlayCount(today)
-            viewModelScope.launch(Dispatchers.IO) {
-                favoriteSongRepository.updateFavoriteSong(
-                    lastPlayed,
-                    object : FavoriteSongRepository.FavoriteDbCallback {
-                        override fun onSuccess() {
-                            Log.d(TAG, "count updated, current count: ${lastPlayed.playCount}")
-                        }
+    private fun updatePlayCount(lastPlayedTrack: Favorite?) {
+        val today = LocalDate.now()
+        viewModelScope.launch(Dispatchers.IO) {
+            val lastPlayedSync =  favoriteSongRepository.getFavoriteSongWithPlayCount(lastPlayedTrack!!.track.trackId)
+            lastPlayedSync.addPlayCount(today)
+            favoriteSongRepository.updateFavoriteSongWithPlayCount(lastPlayedSync, object : FavoriteSongRepository.FavoriteDbCallback {
+                override fun onSuccess() {
+                    Log.d(TAG, "count updated, current count: ${lastPlayedSync.playCount}")
+                }
 
-                        override fun onFailure() {
-                            Log.d(TAG, "count update failed for ${lastPlayed.track.trackName}")
-                        }
+                override fun onFailure() {
+                    Log.d(TAG, "count update failed for ${lastPlayedSync.track.trackName}")
+                }
 
-                    })
-            }
+            })
         }
     }
 
@@ -232,7 +229,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     fun playAt(index: Int) {
         if (playlist.value!!.isEmpty()) return
         // <<< [추가] 트랙 넘기기 전에 현재 곡 카운트 체크
-        checkPlayCount()
+        Log.d(TAG, "current track!!!!!!!!!" + currentTrack.value?.title)
+        checkPlayCount(currentTrack.value)
         currentIndex = index.coerceIn(0, playlist.value!!.lastIndex)
         _currentTrack.value = playlist.value!![currentIndex]
         Log.d(TAG, "current track: " + currentTrack.value?.title + " play count: " + currentTrack.value?.playCount)
@@ -314,9 +312,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     override fun onCleared() {
         super.onCleared()
-        // <<< [추가] ViewModel 소멸 시 마지막 곡 카운트 체크
-        checkPlayCount()
-
+        checkPlayCount(currentTrack.value)
         exoPlayer?.release()
         exoPlayer = null
     }

@@ -8,7 +8,9 @@ import androidx.room.TypeConverter;
 
 import com.example.mymusic.model.Track;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 
 @Entity(tableName = "favorites_table")
@@ -37,10 +39,26 @@ public class Favorites
     public Integer primaryColor;
     public String audioUri;
     public Integer playCount;
-    public List<List<String>> playCountByDay;
+
+    // 변경된 부분
+
+    // **변경: Map<LocalDate, Integer> 로 교체**
+    public Map<LocalDate, Integer> playCountByDay;
+    public LocalDate firstCountedDate; // 최솟값 날짜 캐싱
 
     public Favorites(){}
-    public Favorites(Track track, String addedDate, String vibeTrackId, String trackNameKr, String lyrics, List<List<String>> vocalists, List<String> lyricists, List<String> composers, String audioUri, int playCount, List<List<String>> playCountByDay){
+    public Favorites(Track track,
+                     String addedDate,
+                     String vibeTrackId,
+                     String trackNameKr,
+                     String lyrics,
+                     List<List<String>> vocalists,
+                     List<String> lyricists,
+                     List<String> composers,
+                     String audioUri,
+                     int playCount,
+                     Map<LocalDate, Integer> playCountByDay,
+                     LocalDate firstCountedDate){
         this.trackId = track.trackId;
         this.albumId = track.albumId;
         this.artistId = track.artistId;
@@ -61,6 +79,7 @@ public class Favorites
         this.audioUri = audioUri;
         this.playCount = playCount;
         this.playCountByDay = playCountByDay;
+        this.firstCountedDate = firstCountedDate;
     }
 
     public Favorites(Track track, String addedDate){

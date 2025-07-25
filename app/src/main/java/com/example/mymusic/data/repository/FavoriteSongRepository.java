@@ -1,7 +1,6 @@
 package com.example.mymusic.data.repository;
 
 import android.content.Context;
-import android.net.Uri;
 
 
 import androidx.core.util.Consumer;
@@ -14,6 +13,7 @@ import com.example.mymusic.model.Track;
 import com.example.mymusic.model.TrackMetadata;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -30,7 +30,8 @@ public class FavoriteSongRepository {
     public void saveFavoritesSong(Track track, String addedDate){
         Favorites song = new Favorites(track, addedDate);
         song.audioUri = null;
-        song.playCountByDay = null;
+        song.firstCountedDate = null;
+        song.playCountByDay = new HashMap<>();
         song.playCount = 0;
         favoritesDao.saveFavoritesSong(song);
     }
@@ -54,7 +55,33 @@ public class FavoriteSongRepository {
         Favorite fav = new Favorite(track, song.addedDate, metadata);
         fav.audioUri = song.audioUri;
         fav.playCount = song.playCount;
+        //fav.playCountByDay = song.playCountByDay;
+        fav.firstCountedDate = song.firstCountedDate;
+        return fav;
+    }
+
+    public Favorite getFavoriteSongWithPlayCount(String trackId) {
+        Favorites song = favoritesDao.getFavoritesSong(trackId);
+        if(song == null) {
+            return null;
+        }
+        Track track = new Track(
+                song.trackId,
+                song.albumId,
+                song.artistId,
+                song.trackName,
+                song.albumName,
+                song.artistName,
+                song.artworkUrl,
+                song.releaseDate,
+                song.durationMs);
+        track.primaryColor = song.primaryColor;
+        TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
+        Favorite fav = new Favorite(track, song.addedDate, metadata);
+        fav.audioUri = song.audioUri;
+        fav.playCount = song.playCount;
         fav.playCountByDay = song.playCountByDay;
+        fav.firstCountedDate = song.firstCountedDate;
         return fav;
     }
 
@@ -81,7 +108,8 @@ public class FavoriteSongRepository {
             Favorite fav = new Favorite(track, song.addedDate, metadata);
             fav.audioUri = song.audioUri;
             fav.playCount = song.playCount;
-            fav.playCountByDay = song.playCountByDay;
+            //fav.playCountByDay = song.playCountByDay;
+            fav.firstCountedDate = song.firstCountedDate;
             favorites.add(fav);
         }
         return favorites;
@@ -103,9 +131,26 @@ public class FavoriteSongRepository {
         callback.accept(result);
     }
 
-    public void updateFavoriteSong(Favorite favorite, FavoriteDbCallback callback) {
+    public void updateFavoriteSongExceptPlayCount(Favorite favorite, FavoriteDbCallback callback) {
+        Favorites existing = favoritesDao.getFavoritesSong(favorite.track.trackId);
         TrackMetadata metadata = favorite.metadata;
-        //String audioUriStr = null;
+        existing.addedDate = favorite.addedDate;
+        existing.vibeTrackId = metadata.vibeTrackId;
+        existing.trackNameKr = metadata.title;
+        existing.lyrics = metadata.lyrics;
+        existing.vocalists = metadata.vocalists;
+        existing.lyricists = metadata.lyricists;
+        existing.composers = metadata.composers;
+        existing.audioUri = favorite.audioUri;
+
+
+        int result = favoritesDao.updateFavoriteSong(existing);
+        if (result > 0) callback.onSuccess();
+        else callback.onFailure();
+    }
+
+    public void updateFavoriteSongWithPlayCount(Favorite favorite, FavoriteDbCallback callback) {
+        TrackMetadata metadata = favorite.metadata;
         String audioUriStr = favorite.audioUri;
         Favorites converted = new Favorites(favorite.track,
                 favorite.addedDate,
@@ -117,7 +162,8 @@ public class FavoriteSongRepository {
                 metadata.composers,
                 audioUriStr,
                 favorite.playCount,
-                favorite.playCountByDay);
+                favorite.playCountByDay,
+                favorite.firstCountedDate);
         int result = favoritesDao.updateFavoriteSong(converted);
         if (result > 0) callback.onSuccess();
         else callback.onFailure();

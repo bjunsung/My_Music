@@ -519,6 +519,21 @@ public class FavoritesFragment extends Fragment {
                 if (selectedList.isEmpty()) return;
                 StringBuilder selected = new StringBuilder();
                 for (Favorite item : selectedList) {
+                    if (mainActivityViewModel.getCurrentTrack().getValue() != null && mainActivityViewModel.getCurrentTrack().getValue().track.trackId.equals(item.track.trackId)) {
+                        Dialog dialog = new Dialog(getContext());
+                        dialog.setContentView(R.layout.dialog_custom_only_dismiss_button);
+                        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                        dialog.setCancelable(true);
+                        TextView dismissButton = dialog.findViewById(R.id.dismiss_button);
+                        TextView titleTextView = dialog.findViewById(R.id.title);
+                        TextView subTextView = dialog.findViewById(R.id.subtext);
+                        titleTextView.setText("Error");
+                        subTextView.setText("재생중인 노래(" + item.getTitle() + ") 를 삭제할 수 없습니다.");
+                        dismissButton.setOnClickListener(v2 -> dialog.dismiss());
+                        dialog.show();
+                        return;
+                    }
+
                     if (item.metadata != null && item.metadata.title != null && !item.metadata.title.isEmpty()) {
                         selected.append(item.metadata.title + " - " + item.track.artistName + "\n");
                     } else {
@@ -936,73 +951,14 @@ public class FavoritesFragment extends Fragment {
     LinearLayout editMp3Button;
 
 
-    /*
-    private void deleteAudioFile(Favorite fav) {
-        if (fav.audioUri == null) return;
-
-        try {
-            Uri uri = Uri.parse(fav.audioUri);
-            boolean deleted = false;
-
-            if ("content".equals(uri.getScheme())) {
-                // SAF나 MediaStore
-                int rows = requireContext().getContentResolver().delete(uri, null, null);
-                deleted = rows > 0;
-            } else if ("file".equals(uri.getScheme())) {
-                // 내부 저장소 파일
-                File file = new File(uri.getPath());
-                if (file.exists()) {
-                    deleted = file.delete();
-                }
-            }
-
-            if (deleted) {
-                Log.d(TAG, "file deleted");
-
-                // UI 갱신
-                deleteMp3Button.setVisibility(View.GONE);
-                addMp3Button.setVisibility(View.VISIBLE);
-                editMp3Button.setVisibility(View.GONE);
-
-                // DB에 audioUri null로 업데이트
-                fav.audioUri = null;
-                favoritesViewModel.updateFavoriteSong(fav, new FavoritesViewModel.OnFavoriteViewModelCallback() {
-                    @Override
-                    public void onSuccess() {
-                        Log.d(TAG, "DB updated: audioUri cleared");
-                    }
-
-                    @Override
-                    public void onFailure() {
-                        Log.e(TAG, "DB update failed");
-                    }
-                });
-
-                // 어댑터 갱신
-                favoriteTrackAdapter.updateData(favoritesViewModel.getFavoriteList());
-
-            } else {
-                Log.d(TAG, "file not found or no permission");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d(TAG, "delete failed: " + e.getMessage());
-        }
-    }
-
-
-     */
-
     private static final int REQUEST_CODE_PICK_AUDIO = 1001;
 
     private void addMp3File(Favorite fav, int position) {
-        selectedFavoriteForMp3 = fav;
-        selectedPositionForMp3 = position;
+        favoritesViewModel.selectedFavoriteForMp3 = fav;
         pickAudioFile();
     }
 
-    private Favorite selectedFavoriteForMp3;
-    private int selectedPositionForMp3;
+
     private void pickAudioFile() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -1026,15 +982,16 @@ public class FavoritesFragment extends Fragment {
 
 
             // 복사 없이 원본 URI 그대로 저장
-            selectedFavoriteForMp3.audioUri = uri.toString();
+            favoritesViewModel.selectedFavoriteForMp3.audioUri = uri.toString();
 
-            favoritesViewModel.updateFavoriteSong(selectedFavoriteForMp3, new FavoritesViewModel.OnFavoriteViewModelCallback() {
+            favoritesViewModel.updateFavoriteSong(favoritesViewModel.selectedFavoriteForMp3, new FavoritesViewModel.OnFavoriteViewModelCallback() {
                 @Override
                 public void onSuccess() {
                     new Handler(Looper.getMainLooper()).post(() ->
                             {
-                                List<Favorite> list = FavoritesFragment.this.favoritesViewModel.getFavoriteList();
-                                FavoritesFragment.this.mainActivityViewModel.setPlaylist(list, selectedPositionForMp3);
+                                List<Favorite> list = new ArrayList<>();
+                                list.add(favoritesViewModel.selectedFavoriteForMp3);
+                                FavoritesFragment.this.mainActivityViewModel.setPlaylist(list, 0);
                             }
                     );
                     loadFavoritesAndUpdateUI();
@@ -1410,6 +1367,22 @@ public class FavoritesFragment extends Fragment {
 
 
     void deleteFavoriteSong(Favorite favorite){
+
+        if (mainActivityViewModel.getCurrentTrack().getValue() != null && mainActivityViewModel.getCurrentTrack().getValue().track.trackId.equals(favorite.track.trackId)) {
+            Dialog dialog = new Dialog(getContext());
+            dialog.setContentView(R.layout.dialog_custom_only_dismiss_button);
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.setCancelable(true);
+            TextView dismissButton = dialog.findViewById(R.id.dismiss_button);
+            TextView titleTextView = dialog.findViewById(R.id.title);
+            TextView subTextView = dialog.findViewById(R.id.subtext);
+            titleTextView.setText("Error");
+            subTextView.setText("재생중인 노래를 삭제할 수 없습니다.");
+            dismissButton.setOnClickListener(v -> dialog.dismiss());
+            dialog.show();
+            return;
+        }
+
         Track track = favorite.track;
         String trackName = track.trackName;
         if (favorite.metadata != null && favorite.metadata.title != null){

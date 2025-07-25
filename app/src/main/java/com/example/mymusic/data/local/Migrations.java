@@ -1,11 +1,156 @@
 package com.example.mymusic.data.local;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Migrations {
+
+    static final Migration MIGRATION_9_10 = new Migration(9, 10) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.beginTransaction();
+            try {
+                // 1) 새 테이블 생성
+                db.execSQL(
+                        "CREATE TABLE favorites_table_new (" +
+                                "trackId TEXT NOT NULL PRIMARY KEY, " +
+                                "albumId TEXT, artistId TEXT, trackName TEXT, albumName TEXT, artistName TEXT, " +
+                                "artworkUrl TEXT, releaseDate TEXT, durationMs TEXT, addedDate TEXT, " +
+                                "vibeTrackId TEXT, trackNameKr TEXT, lyrics TEXT, " +
+                                "vocalists TEXT, lyricists TEXT, composers TEXT, primaryColor INTEGER, " +
+                                "audioUri TEXT, playCount INTEGER, " +
+                                "playCountByDay TEXT, firstCountedDate TEXT)"
+                );
+
+                // 2) 기존 데이터 읽기
+                Cursor cursor = db.query("SELECT * FROM favorites_table");
+                Gson gson = new Gson();
+                Type listType = new TypeToken<List<List<String>>>() {}.getType();
+
+                int resetCount = 0; // 초기화된 데이터 수
+                if (cursor.moveToFirst()) {
+                    do {
+                        // 매 레코드마다 새 객체 생성
+                        ContentValues values = new ContentValues();
+                        String newJson = "{}";
+                        String firstDate = null;
+
+                        int trackIdIdx = cursor.getColumnIndex("trackId");
+                        String trackId = (trackIdIdx != -1) ? cursor.getString(trackIdIdx) : null;
+
+                        try {
+                            // 2-1) 기존 컬럼 복사
+                            String[] columns = cursor.getColumnNames();
+                            for (String column : columns) {
+                                if (column.equals("playCountByDay") || column.equals("firstCountedDate")) continue;
+                                int idx = cursor.getColumnIndex(column);
+                                if (idx == -1) {
+                                    values.putNull(column);
+                                    continue;
+                                }
+                                switch (cursor.getType(idx)) {
+                                    case Cursor.FIELD_TYPE_STRING:
+                                        values.put(column, cursor.getString(idx));
+                                        break;
+                                    case Cursor.FIELD_TYPE_INTEGER:
+                                        values.put(column, cursor.getInt(idx));
+                                        break;
+                                    default:
+                                        values.putNull(column);
+                                }
+                            }
+
+                            // 2-2) playCountByDay 변환
+                            int playIdx = cursor.getColumnIndex("playCountByDay");
+                            String oldJson = (playIdx != -1) ? cursor.getString(playIdx) : null;
+
+                            int playCountIdx = cursor.getColumnIndex("playCount");
+                            int originalPlayCount = (playCountIdx != -1) ? cursor.getInt(playCountIdx) : 0;
+
+                            if (oldJson != null && !oldJson.equals("[]")) {
+                                List<List<String>> oldList = gson.fromJson(oldJson, listType);
+                                if (oldList != null && !oldList.isEmpty()) {
+                                    Map<String, Integer> newMap = new LinkedHashMap<>();
+                                    for (List<String> pair : oldList) {
+                                        if (pair.size() == 2) {
+                                            try {
+                                                newMap.put(pair.get(0), Integer.parseInt(pair.get(1)));
+                                            } catch (NumberFormatException e) {
+                                                android.util.Log.w("Migration9_10", "Invalid count for trackId=" + trackId + " pair=" + pair);
+                                            }
+                                        }
+                                    }
+                                    int sum = newMap.values().stream().mapToInt(Integer::intValue).sum();
+                                    if (sum == originalPlayCount) {
+                                        // 합계 일치 → 정상 변환
+                                        newJson = gson.toJson(newMap);
+                                        firstDate = newMap.isEmpty() ? null : Collections.min(newMap.keySet());
+                                        values.put("playCount", originalPlayCount);
+                                    } else {
+                                        // 합계 불일치 → 초기화
+                                        values.put("playCount", 0);
+                                        newJson = "{}";
+                                        firstDate = null;
+                                        resetCount++;
+                                        android.util.Log.w("Migration9_10", "Resetting trackId=" + trackId + " (sum=" + sum + ", playCount=" + originalPlayCount + ")");
+                                    }
+                                } else {
+                                    // 빈 리스트 → 0으로 초기화
+                                    values.put("playCount", 0);
+                                }
+                            } else {
+                                // 원래 빈 리스트 → 0으로 초기화
+                                values.put("playCount", 0);
+                            }
+
+                            values.put("playCountByDay", newJson);
+                            values.put("firstCountedDate", firstDate);
+
+                        } catch (Exception e) {
+                            // 파싱 실패 → 초기화
+                            android.util.Log.e("Migration9_10", "Migration failed for trackId " + trackId + ", resetting", e);
+                            values.put("playCountByDay", "{}");
+                            values.put("playCount", 0);
+                            values.putNull("firstCountedDate");
+                            resetCount++;
+                        }
+
+                        db.insert("favorites_table_new", SQLiteDatabase.CONFLICT_REPLACE, values);
+                    } while (cursor.moveToNext());
+                }
+                cursor.close();
+
+                // 3) 기존 테이블 교체
+                db.execSQL("DROP TABLE favorites_table");
+                db.execSQL("ALTER TABLE favorites_table_new RENAME TO favorites_table");
+
+                // 요약 로그
+                android.util.Log.i("Migration9_10", "Migration completed. Reset entries: " + resetCount);
+
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
+        }
+    };
+
+
     public static final Migration MIGRATION_8_9 = new Migration(8, 9) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase db) {

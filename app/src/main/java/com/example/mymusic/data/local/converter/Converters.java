@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,18 +54,38 @@ public class Converters {
         }
     }
 
+    // Map<LocalDate, Integer> 변환
     @TypeConverter
-    public static String fromMap(Map<String, Integer> map) {
-        return map == null ? null : gson.toJson(map);
+    public static String fromMap(Map<LocalDate, Integer> map) {
+        if (map == null) return null;
+        Map<String, Integer> stringKeyMap = new HashMap<>();
+        for (Map.Entry<LocalDate, Integer> entry : map.entrySet()) {
+            stringKeyMap.put(entry.getKey().toString(), entry.getValue());
+        }
+        return gson.toJson(stringKeyMap);
     }
 
     @TypeConverter
-    public static Map<String, Integer> toMap(String data) {
+    public static Map<LocalDate, Integer> toMap(String data) {
         if (data == null || data.trim().isEmpty()) return new HashMap<>();
         Type type = new TypeToken<Map<String, Integer>>() {}.getType();
-        return gson.fromJson(data, type);
+        Map<String, Integer> stringKeyMap = gson.fromJson(data, type);
+        Map<LocalDate, Integer> result = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : stringKeyMap.entrySet()) {
+            result.put(LocalDate.parse(entry.getKey()), entry.getValue());
+        }
+        return result;
     }
 
+    // LocalDate 변환
+    @TypeConverter
+    public static String fromLocalDate(LocalDate date) {
+        return date != null ? date.toString() : null;
+    }
 
+    @TypeConverter
+    public static LocalDate toLocalDate(String value) {
+        return value != null ? LocalDate.parse(value) : null;
+    }
 
 }

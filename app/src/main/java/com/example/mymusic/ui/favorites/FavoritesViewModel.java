@@ -65,7 +65,7 @@ public class FavoritesViewModel extends AndroidViewModel {
         return focusedTrack;
     }
     private int screenOrientation = -1;
-
+    public Favorite selectedFavoriteForMp3;
 
     public FavoritesViewModel(@NonNull Application application) {
         super(application);
@@ -105,7 +105,7 @@ public class FavoritesViewModel extends AndroidViewModel {
 
     public void updateFavoriteSong(Favorite favorite, OnFavoriteViewModelCallback callback) {
         new Thread(() -> {
-            repository.updateFavoriteSong(favorite, new FavoriteSongRepository.FavoriteDbCallback() {
+            repository.updateFavoriteSongExceptPlayCount(favorite, new FavoriteSongRepository.FavoriteDbCallback() {
                 @Override
                 public void onSuccess() { callback.onSuccess(); }
 

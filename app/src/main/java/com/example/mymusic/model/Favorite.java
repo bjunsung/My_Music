@@ -6,8 +6,11 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 
@@ -22,12 +25,13 @@ public class Favorite implements Parcelable {
     public String keyword = null;
     public String audioUri;
     public int playCount = 0;
-    public List<List<String>> playCountByDay = new ArrayList<>();
+    public Map<LocalDate, Integer> playCountByDay = new HashMap<>();
 
     public int recyclerViewPosition = -1;
 
     public Integer backgroundColor = null;
     public Integer playingPosition = 0;
+    public LocalDate firstCountedDate = null;
 
     public Favorite(Track track){
         this.track = track;
@@ -43,32 +47,30 @@ public class Favorite implements Parcelable {
         addedDate = in.readString();
     }
 
-    public void addPlayCount(String date) {
+    public void addPlayCount(LocalDate date) {
         playCount++;
 
-        int index = -1;
-        int countBeforeAdd = 0;
-
-        for (int i = 0; i < playCountByDay.size(); ++i) {
-            List<String> pair = playCountByDay.get(i);
-            if (pair.get(0).equals(date)) {
-                countBeforeAdd = Integer.parseInt(pair.get(1));
-                index = i;
-                break;
-            }
+        // Map이 비어있으면 초기화
+        if (playCountByDay == null) {
+            playCountByDay = new HashMap<>();
         }
 
-        int newCount = countBeforeAdd + 1;
-        List<String> pair = new ArrayList<>();
-        pair.add(date);
-        pair.add(String.valueOf(newCount));
-
-        if (index == -1) { // 새로운 날짜면 추가
-            playCountByDay.add(pair);
-        } else {           // 기존 날짜면 업데이트
-            playCountByDay.set(index, pair);
+        // 처음 추가되는 경우에만 firstCountedDate 설정 (put 전에)
+        if (playCountByDay.isEmpty()) {
+            firstCountedDate = date;
         }
+
+        // 현재 날짜 카운트 (null-safe)
+        Integer currentCountObj = playCountByDay.get(date);
+        int currentCount = (currentCountObj != null) ? currentCountObj : 0;
+
+        // +1 후 저장
+        playCountByDay.put(date, currentCount + 1);
     }
+
+
+
+
 
 
     public static final Creator<Favorite> CREATOR = new Creator<Favorite>() {

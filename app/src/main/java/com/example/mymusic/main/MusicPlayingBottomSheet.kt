@@ -1,8 +1,6 @@
 package com.example.mymusic.main
 
-import android.Manifest
 import android.animation.ValueAnimator
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
@@ -13,29 +11,19 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Shader
 import android.graphics.drawable.Drawable
-import android.media.audiofx.Visualizer
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.snap
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -336,7 +324,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                         val favoriteSongRepository = FavoriteSongRepository(requireContext())
                         favorite.track.primaryColor = primaryColor
                         mainActivityViewModel.viewModelScope.launch(Dispatchers.IO) {
-                            favoriteSongRepository.updateFavoriteSong(
+                            favoriteSongRepository.updateFavoriteSongExceptPlayCount(
                                 favorite,
                                 object : FavoriteSongRepository.FavoriteDbCallback {
                                     override fun onSuccess() {}

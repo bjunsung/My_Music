@@ -33,7 +33,6 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Player;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
@@ -188,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
                         favorite.track.primaryColor = primaryColor;
-                        new Thread(() -> viewModel.getFavoriteSongRepository().updateFavoriteSong(favorite, new FavoriteSongRepository.FavoriteDbCallback() {
+                        new Thread(() -> viewModel.getFavoriteSongRepository().updateFavoriteSongExceptPlayCount(favorite, new FavoriteSongRepository.FavoriteDbCallback() {
                             @Override
                             public void onSuccess() {}
 
