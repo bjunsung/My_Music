@@ -231,10 +231,12 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
 
         mainActivityViewModel.trackDuration.observe(viewLifecycleOwner) { duration ->
+            Log.d(TAG, "Track Duration changed "+ duration )
             totalTimeTextView.text = formatDuration(duration)
             seekBar.max = duration
             setViewByTrack()
         }
+
 
 
 /*
@@ -428,22 +430,6 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
         startSeekBarUpdate()
     }
-/*
-    private fun startSeekBarUpdate() {
-        updateSeekBarRunnable = object : Runnable {
-            override fun run() {
-                if (exoPlayer.isPlaying && !isUserSeeking) {
-                    val pos = exoPlayer.currentPosition
-                    seekBar.progress = pos.toInt()
-                    currentTime.text = formatDuration(pos.toInt())
-                }
-                handler.postDelayed(this, 100)
-            }
-        }
-        handler.post(updateSeekBarRunnable!!)
-    }
-
- */
 
     private fun startSeekBarUpdate() {
         updateSeekBarRunnable?.let { handler.removeCallbacks(it) }

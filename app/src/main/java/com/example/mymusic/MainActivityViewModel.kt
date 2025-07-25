@@ -1,18 +1,20 @@
 package com.example.mymusic
 
 import android.app.Application
+import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -20,16 +22,28 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.model.Favorite
-
+import com.bumptech.glide.Priority   //
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
 import androidx.core.net.toUri
+import androidx.media3.common.C
+import androidx.media3.common.MimeTypes
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.ExternalLoader
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
+import com.example.mymusic.main.MyMediaService
 import kotlinx.coroutines.withContext
+import okhttp3.internal.notifyAll
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -81,63 +95,36 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         initPlayer()
     }
 
+
+
     /** 플레이리스트와 시작 인덱스를 설정하고 재생 시작 */
+    @OptIn(UnstableApi::class)
     fun setPlaylist(playlist: List<Favorite>, startPosition: Int) {
         if (exoPlayer == null) return
         shuffledMode = false
 
-        _totalPlayCountInARow.value = 0
+        // 재생 버튼 누를 때 등, 플레이 시작 직전에:
+        ContextCompat.startForegroundService(
+            getApplication(), Intent(getApplication(), MyMediaService::class.java)
+        )
+// 이후에 controller나 바인딩으로 MyMediaService의 player에 미디어 세팅 & play
 
+
+        _totalPlayCountInARow.value = 0
         _playlist.value = playlist
         currentIndex = startPosition.coerceIn(0, playlist.lastIndex)
-        //_currentTrack.value = playlist.get(startPosition)
 
         exoPlayer!!.clearMediaItems()
 
-       // val mediaItems = playlist.map {MediaItem.fromUri(it.audioUri)}
-
-        //uri null 방지
         val mediaItems = playlist.mapNotNull { item ->
-            item.audioUri?.let { uri ->
-                MediaItem.fromUri(uri)
-            }
-        }
-
-        Log.d(TAG, "exoplayer: " + exoPlayer)
-        exoPlayer!!.setMediaItems(mediaItems)
-        exoPlayer!!.prepare()
-        Log.d(TAG, "play at from first play of playlist")
-        playAt(startPosition)
-
-        Log.d(TAG, "isplaying " + isPlaying.value)
-
-    }
-
-    /** 플레이어 초기화 */
-    @OptIn(UnstableApi::class)
-    fun initPlayer() {
-        if (exoPlayer == null) return
-        exoPlayer!!.clearMediaItems()
-        //val mediaItems = playlist.value!!.map { MediaItem.fromUri(it.audioUri) } // track.url은 Favorite 모델에서 곡 URL
-        //uri null 방지
-        /*
-        val mediaItems = playlist.value!!.mapNotNull { item ->
-            item.audioUri?.let { uri ->
-                MediaItem.fromUri(uri)
-            }
-        }
-
-         */
-        // uri null 방지
-        val mediaItems = playlist.value!!.mapNotNull { item ->
             item.audioUri?.let { uri ->
 
                 // 1. String 형태의 이미지 주소를 Uri 객체로 변환합니다.
                 // item.albumArtUrl이 String 타입이라고 가정합니다.
-                val imageUri: android.net.Uri? = if (item.track.artworkUrl.isNullOrEmpty()) {
+                val imageUri: Uri? = if (item.track.artworkUrl.isNullOrEmpty()) {
                     null // 주소가 없거나 비어있으면 null 처리
                 } else {
-                    android.net.Uri.parse(item.track.artworkUrl) // ✨ 바로 이 부분입니다!
+                    item.track.artworkUrl.toUri() // ✨ 바로 이 부분입니다!
                 }
 
                 // 2. MediaMetadata를 생성합니다.
@@ -149,44 +136,104 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                 // 3. MediaItem을 생성합니다.
                 MediaItem.Builder()
+                    .setMediaId(item.track.trackId)
                     .setUri(uri)
                     .setMediaMetadata(metadata)
                     .build()
             }
         }
-        /*
-        exoPlayer!!.setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                .build(),
-            true
-        )
-
-         */
 
         exoPlayer!!.setMediaItems(mediaItems)
-        exoPlayer!!.prepare()
 
+        exoPlayer!!.prepare()
+        Log.d(TAG, "play at from first play of playlist")
+        exoPlayer!!.seekToDefaultPosition(startPosition)
+        exoPlayer!!.playWhenReady = true
+    }
+    @OptIn(UnstableApi::class)
+    fun initPlayer() {
+        if (exoPlayer == null) {
+            // 1) Glide 기반 ExternalLoader
+            val glidePreloader = ExternalLoader { req: ExternalLoader.LoadRequest ->
+                // ListenableFuture<File> 생성
+                val future = com.google.common.util.concurrent.SettableFuture.create<File>()
+                val target = object : CustomTarget<File>() {
+                    override fun onResourceReady(resource: File, transition: Transition<in File>?) {
+                        future.set(resource)
+                    }
+                    override fun onLoadFailed(errorDrawable: Drawable?) {
+                        future.setException(IllegalStateException("Artwork preload failed: ${req.uri}"))
+                    }
+                    override fun onLoadCleared(placeholder: Drawable?) {}
+                }
+
+
+                Glide.with(getApplication<Application>())
+                    .asFile()
+                    .apply(
+                        RequestOptions
+                            .diskCacheStrategyOf(DiskCacheStrategy.DATA)
+                            .priority(Priority.HIGH)              // ✅ 여기!
+                            .skipMemoryCache(true)
+                    )
+                    .load(req.uri)
+                    .into(target)
+
+                future
+
+
+            }
+
+            val msFactory = DefaultMediaSourceFactory(getApplication<Application>())
+                .setExternalImageLoader(glidePreloader)
+
+            // 3) ExoPlayer 생성
+            exoPlayer = ExoPlayer.Builder(getApplication())
+                .setMediaSourceFactory(msFactory)
+                .build().apply {
+                    setAudioAttributes(
+                        androidx.media3.common.AudioAttributes.Builder()
+                            .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                            .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+                            .build(),
+                        /* handleAudioFocus = */ true
+                    )
+                }
+        }
+
+        // 이하 네 리스너/로직은 기존 코드 유지 (onMediaItemTransition 등)
+        // ...
+        exoPlayer!!.prepare()
 
         // 곡 끝나면 다음 곡 자동 재생
         exoPlayer!!.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-
                 super.onMediaItemTransition(mediaItem, reason)
-                val newIndex = exoPlayer?.currentMediaItemIndex ?: 0
+
+                exoPlayer!!.pause()
+                exoPlayer!!.play()
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val newDuration = exoPlayer?.duration?.toInt() ?: 0
+                    _trackDuration.postValue(newDuration) // ViewModel에서 새로운 LiveData로 전달
+                    // <<< [추가] 새 트랙의 전체 길이를 변수에 저장
+                    currentTrackDurationMs = newDuration.toLong()
+                }, 200)
+
+
+                // <<< [추가] 트랙 넘기기 전에 현재 곡 카운트 체크
+                Log.d(TAG, "current track!!!!!!!!!" + currentTrack.value?.title)
+                checkPlayCount(currentTrack.value)
+
+                lastPlayedTrackIndex = currentIndex
+                currentIndex = exoPlayer?.currentMediaItemIndex?.coerceIn(0, playlist.value!!.lastIndex) ?: 0
+                _currentTrack.value = playlist.value!![currentIndex]
+                Log.d(TAG, "current track: " + currentTrack.value?.title + " play count: " + currentTrack.value?.playCount)
+
+                _totalPlayCountInARow.value = _totalPlayCountInARow.value?.plus(1)
+
                 Log.d(TAG, "play at from onMediaItemTransition Listener before")
-                if (currentIndex == newIndex){ //유저 개입으로 playat 이 이미 호출된 경우 무시 (자연스럽게 넘어가는 경우에만 playAt 으로 ui 업데이트 가능하게)
-                    if (repeatMode.value == ExoPlayer.REPEAT_MODE_ONE) {
-                        checkPlayCount(currentTrack.value)
-                        return
-                    }
-                    else {
-                        return
-                    }
-                }
-                Log.d(TAG, "play at from onMediaItemTransition Listener")
-                playAt(newIndex)  // 트랙이 바뀔 때 항상 playAt() 호출
+
             }
 
 
@@ -207,23 +254,14 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                         _isPlaying.value = false
                     }
                 }
-                if (playbackState == Player.STATE_READY) {
-                    val newDuration = exoPlayer?.duration?.toInt() ?: 0
-                    _trackDuration.postValue(newDuration) // ViewModel에서 새로운 LiveData로 전달
-                    // <<< [추가] 새 트랙의 전체 길이를 변수에 저장
-                    currentTrackDurationMs = newDuration.toLong()
-                }
             }
 
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
-                if (audioSessionId != C.AUDIO_SESSION_ID_UNSET) {
+                if (audioSessionId != androidx.media3.common.C.AUDIO_SESSION_ID_UNSET) {
                     _audioSessionId.postValue(audioSessionId)
                 }
             }
         })
-
-
-
     }
 
     // <<< [수정] 시간 측정 시작 로직
@@ -257,6 +295,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             return
         }
 
+        if (listenedTimeMs == 0L) return
         if (listenedTimeMs >= currentTrackDurationMs * 2 / 3) {
             val today:String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
@@ -314,71 +353,21 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             else -> Player.REPEAT_MODE_OFF
         }
         _repeatMode.value = nextMode
-        Log.d(TAG, "repeat mode: " + repeatMode.value)
+        Log.d(TAG, "repeat mode: " + nextMode)
         exoPlayer?.repeatMode = nextMode
     }
 
-    /** 특정 인덱스 재생 */
-    fun playAt(index: Int) {
-        if (playlist.value!!.isEmpty()) return
-        // <<< [추가] 트랙 넘기기 전에 현재 곡 카운트 체크
-        Log.d(TAG, "current track!!!!!!!!!" + currentTrack.value?.title)
-        checkPlayCount(currentTrack.value)
-        currentIndex = index.coerceIn(0, playlist.value!!.lastIndex)
-        _currentTrack.value = playlist.value!![currentIndex]
-        Log.d(TAG, "current track: " + currentTrack.value?.title + " play count: " + currentTrack.value?.playCount)
-        exoPlayer?.seekTo(currentIndex, 0)
-        exoPlayer?.playWhenReady = true
-        _isPlaying.value = true
-        lastPlayedTrackIndex = currentIndex
 
-        _totalPlayCountInARow.value = _totalPlayCountInARow.value?.plus(1)
-
-        viewModelScope.launch(Dispatchers.Main) {
-            val coverUri = currentTrack.value?.track?.artworkUrl?.toUri()
-
-// ① Glide·Coil로 Bitmap → ByteArray (PNG/JPEG)
-            val artBytes: ByteArray? = withContext(Dispatchers.IO) {
-                Glide.with(getApplication<Application>())
-                    .asBitmap()
-                    .load(coverUri)
-                    .submit()
-                    .get()
-                    .let { bmp ->
-                        ByteArrayOutputStream().apply {
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 100, this)
-                        }.toByteArray()
-                    }
-            }
-
-// ② 메타데이터
-            val newMeta = exoPlayer!!.mediaMetadata.buildUpon()
-                .setTitle(currentTrack.value?.title ?: "제목없음")
-                .setArtist(currentTrack.value?.artistName ?: "이름없음")
-                .setArtworkUri(coverUri)                               // 작은 썸네일
-                .apply {
-                    artBytes?.let { bytes ->
-                        setArtworkData(bytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
-                    }
-                }
-                .build()
-
-// ③ MediaItem 교체
-            val newItem = exoPlayer!!.currentMediaItem!!
-                .buildUpon()
-                .setMediaMetadata(newMeta)
-                .build()
-
-            exoPlayer!!.replaceMediaItem(exoPlayer!!.currentMediaItemIndex, newItem)
-
-
-        }
-    }
 
     /** 다음 곡 */
     fun playNext() {
         if (playlist.value!!.isEmpty() || exoPlayer == null) return
+        if (repeatMode.value == Player.REPEAT_MODE_ONE)
+            exoPlayer?.seekToDefaultPosition(currentIndex)
+        else
+            exoPlayer?.seekToNextMediaItem()
 
+        /*
         when (repeatMode.value) {
             Player.REPEAT_MODE_OFF -> {
                 // 마지막 곡이면 그냥 멈춤
@@ -399,6 +388,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 playAt(currentIndex)
             }
         }
+
+         */
     }
 
 
@@ -406,7 +397,11 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     /** 이전 곡 */
     fun playPrevious() {
         if (playlist.value!!.isEmpty() || exoPlayer == null) return
-
+        if (repeatMode.value == Player.REPEAT_MODE_ONE)
+            exoPlayer?.seekToDefaultPosition(currentIndex)
+        else
+            exoPlayer?.seekToPreviousMediaItem()
+        /*
         when (repeatMode.value) {
             Player.REPEAT_MODE_OFF -> {
                 if (currentIndex > 0) {
@@ -423,6 +418,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 playAt(currentIndex)
             }
         }
+
+         */
     }
 
     /** 일시정지/재생 토글 */
@@ -430,15 +427,17 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         exoPlayer?.let {
             if (it.isPlaying) {
                 it.pause()
-                _isPlaying.value = false
+                //_isPlaying.value = false
             } else {
                 val isAtEnd = it.currentPosition >= (it.duration - 500)
                 if (repeatMode.value == Player.REPEAT_MODE_OFF && currentIndex == playlist.value!!.lastIndex && isAtEnd) {
                     Log.d(TAG, "play at from toggle play/pause button click (lastIndex)")
-                    playAt(currentIndex)
+                    //playAt(currentIndex)
+                    _repeatMode.value = Player.REPEAT_MODE_ONE
+                    exoPlayer?.repeatMode = Player.REPEAT_MODE_ONE
                 }
                 it.play()
-                _isPlaying.value = true
+                //_isPlaying.value = true
             }
         }
     }

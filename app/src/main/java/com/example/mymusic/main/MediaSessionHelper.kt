@@ -29,101 +29,138 @@ object MediaSessionHelper {
     private const val ACTION_SHUFFLE = "ACTION_SHUFFLE"
     private const val ACTION_LIKE = "ACTION_LIKE"
     // 캐시 비트맵 변수 (Helper 파일 최상단에 추가)
+    // ✅ 캐시와 타깃을 항목 키(mediaId 또는 artworkUrl) 기준으로 관리
+    private var cachedArtworkKey: String? = null
     private var cachedLarge: Bitmap? = null
+    private var currentArtTarget: CustomTarget<Bitmap>? = null
 
     @JvmStatic
     fun attach(player: Player, context: Context) {
-        /* ── 1) MediaSession ───────────────────── */
         if (mediaSession == null) {
             mediaSession = MediaSession.Builder(context, player).build()
         }
 
-        /* ── 2) PlayerNotificationManager ──────── */
         if (pnManager == null) {
-            // ─────────── MediaSessionHelper.kt 내부 ───────────
             pnManager = PlayerNotificationManager.Builder(
-                context,
-                NOTI_ID,
-                NotificationUtils.CHANNEL_ID
+                context, NOTI_ID, NotificationUtils.CHANNEL_ID
             )
                 .setSmallIconResourceId(R.drawable.ic_play_arrow)
-                // ↓↓↓ 이 블록만 통째로 복사해 넣으세요
-                .setMediaDescriptionAdapter(object :
-                    PlayerNotificationManager.MediaDescriptionAdapter {
+                .setMediaDescriptionAdapter(object : PlayerNotificationManager.MediaDescriptionAdapter {
 
                     override fun getCurrentContentTitle(player: Player): CharSequence =
-                        player.mediaMetadata.title ?: "(제목 없음)"
+                        player.currentMediaItem?.mediaMetadata?.title ?: "(제목 없음)"
 
                     override fun getCurrentContentText(player: Player): CharSequence? =
-                        player.mediaMetadata.artist
+                        player.currentMediaItem?.mediaMetadata?.artist
 
                     override fun createCurrentContentIntent(player: Player): PendingIntent? = null
 
-                    /** Galaxy 퀵패널·잠금화면이 쓰는 LargeIcon */
                     override fun getCurrentLargeIcon(
                         player: Player,
                         callback: PlayerNotificationManager.BitmapCallback
                     ): Bitmap? {
+                        val item = player.currentMediaItem ?: return null
+                        val mm = item.mediaMetadata
 
-                        val artUri = player.mediaMetadata.artworkUri ?: return null
+                        // ✅ 1) artworkUri는 currentMediaItem에서 가져오기
+                        val artUri = mm.artworkUri
+                        // (보조) 내장 바이너리 아트가 있으면 이것도 시도 가능
+                        val artworkData = mm.artworkData
 
-                        // 캐시가 있으면 즉시 반환 → 큰 카드 조건 통과
-                        cachedLarge?.let { return it }
+                        // 키: mediaId가 있으면 그걸, 없으면 URL
+                        val key = item.mediaId.takeIf { it.isNotEmpty() }
+                            ?: artUri?.toString()
+                            ?: artworkData?.hashCode()?.toString()
+                            ?: return null
 
-                        // 비동기 다운로드 (Main 스레드 안전)
-                        Glide.with(context)
-                            .asBitmap()
-                            .load(artUri)
-                            .centerCrop()
-                            .into(object : CustomTarget<Bitmap>() {
+                        // 캐시 히트면 즉시 반환
+                        if (cachedArtworkKey == key && cachedLarge != null) return cachedLarge
+
+                        // 이전 타깃 클리어(중복 로드 방지)
+                        currentArtTarget?.let { Glide.with(context).clear(it) }
+                        currentArtTarget = null
+
+                        // ✅ 2) 비동기 로드 (타깃을 필드에 저장해 수명 보장)
+                        if (artUri != null) {
+                            currentArtTarget = object : CustomTarget<Bitmap>() {
                                 override fun onResourceReady(
                                     resource: Bitmap,
                                     transition: Transition<in Bitmap>?
                                 ) {
-                                    // 400px 미만이면 업스케일
-                                    val large = if (resource.width < 400 || resource.height < 400) {
-                                        Bitmap.createScaledBitmap(resource, 600, 600, true)
-                                    } else resource
-
-                                    cachedLarge = large          // 다음 호출엔 즉시 반환
-                                    callback.onBitmap(large)     // 알림 LargeIcon 갱신
+                                    val bmp = ensureMinSize(resource, 600)
+                                    cachedArtworkKey = key
+                                    cachedLarge = bmp
+                                    callback.onBitmap(bmp)
                                 }
-
-
-
                                 override fun onLoadCleared(placeholder: Drawable?) {}
-                            })
+                            }
 
-                        // placeholder (400px↑ 검정 비트맵) 반환 → 첫 호출도 큰 카드 사용
-                        return Bitmap.createBitmap(600, 600, Bitmap.Config.ARGB_8888)
+                            Glide.with(context)
+                                .asBitmap()
+                                .load(artUri)
+                                .centerCrop()
+                                .signature(com.bumptech.glide.signature.ObjectKey(key))
+                                .into(currentArtTarget!!)
+                        } else if (artworkData != null) {
+                            // artworkData 사용 경로 (URI가 없을 때)
+                            val bmp = decodeBitmap(artworkData)
+                            if (bmp != null) {
+                                val ready = ensureMinSize(bmp, 600)
+                                cachedArtworkKey = key
+                                cachedLarge = ready
+                                callback.onBitmap(ready)
+                            }
+                        }
+
+                        // 첫 호출에 굳이 플레이스홀더를 넣고 싶지 않다면 null 반환
+                        return null
                     }
                 })
-                .setCustomActionReceiver(CustomReceiver(context))
-                .setChannelImportance(NotificationManager.IMPORTANCE_DEFAULT) // 중요도 DEFAULT
+                //.setCustomActionReceiver(CustomReceiver(context))
+                .setChannelImportance(NotificationManager.IMPORTANCE_DEFAULT)
                 .build()
                 .apply {
-                    setPriority(NotificationCompat.PRIORITY_DEFAULT)          // priority 0
+                    setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     setUsePreviousAction(true)
                     setUseNextAction(true)
                     setPlayer(player)
                 }
-// 이미 setPlayer(player) 까지 있는 블록의 맨 아래에 ↓↓↓ 붙여넣기
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 15+
-                // 1) 알림 객체를 먼저 만들어 둠
 
-                // 2) 시스템 NotificationManager 에 등록
-                val nMgr = context.getSystemService(NotificationManager::class.java)
-
-                // 3) 더미 포그라운드 서비스 시작 → 플래그 붙이기
-                val intent = Intent(context, DummyFgService::class.java)
-
-            }
-
-
-
+            // ✅ 3) 전환/메타데이터 변경 시 강제 갱신 + 캐시 초기화
+            player.addListener(object : Player.Listener {
+                override fun onMediaItemTransition(
+                    item: androidx.media3.common.MediaItem?, reason: Int
+                ) {
+                    invalidateArtwork()
+                }
+                override fun onMediaMetadataChanged(
+                    mediaMetadata: androidx.media3.common.MediaMetadata
+                ) {
+                    invalidateArtwork()
+                }
+            })
         }
     }
 
+    private fun invalidateArtwork() {
+        cachedArtworkKey = null
+        cachedLarge = null
+        currentArtTarget?.let { /* 그대로 두면 됩니다. 다음 로드에서 교체/clear */ }
+        pnManager?.invalidate()
+    }
+    // 유틸: 너무 작은 이미지면 키워서 흐릿함 완화(선택)
+    private fun ensureMinSize(src: Bitmap, min: Int): Bitmap {
+        if (src.width >= min && src.height >= min) return src
+        val w = maxOf(min, src.width)
+        val h = maxOf(min, src.height)
+        return Bitmap.createScaledBitmap(src, w, h, true)
+    }
+
+    // 유틸: artworkData → Bitmap (필요시)
+    private fun decodeBitmap(bytes: ByteArray): Bitmap? =
+        try { android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size) } catch (_: Throwable) { null }
+
+/*
     /* 커스텀 버튼(셔플·좋아요) 정의 */
     private class CustomReceiver(private val ctx: Context) :
         PlayerNotificationManager.CustomActionReceiver {
@@ -161,6 +198,8 @@ object MediaSessionHelper {
             )
         )
     }
+
+ */
 
 }
 

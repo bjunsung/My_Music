@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.media.AudioAttributes;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,6 +53,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.C;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
@@ -204,6 +204,19 @@ public class MainActivity extends AppCompatActivity {
         // Activity 또는 Fragment 내부
 
 
+        /**
+         * 음악 카테고리 삭제
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+            for (NotificationChannel channel : nm.getNotificationChannels()) {
+                nm.deleteNotificationChannel(channel.getId());
+            }
+        }
+         */
+
+
+
 // 그 다음에 ViewModel의 플레이어 초기화 로직을 호출하세요.
 // viewModel.initPlayer(); 등...
 
@@ -211,14 +224,9 @@ public class MainActivity extends AppCompatActivity {
         NotificationUtils.createPlaybackChannel(this);
 
 // 1) Player 생성 → final 변수
+        // 1) ExoPlayer 생성 (필요하면 ExternalLoader 붙인 MediaSourceFactory 사용)
         final ExoPlayer exo = new ExoPlayer.Builder(this)
-                .setAudioAttributes(
-                        new androidx.media3.common.AudioAttributes.Builder()
-                                .setUsage(androidx.media3.common.C.USAGE_MEDIA)
-                                .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
-                                .build(),
-                        /* handleAudioFocus = */ true
-                )
+                .setAudioAttributes(AudioAttributes.DEFAULT, true)
                 .build();
 
 // 2) 기존 로직
@@ -226,8 +234,20 @@ public class MainActivity extends AppCompatActivity {
         viewModel.initPlayer();
         PlayerManager.INSTANCE.setExoPlayer(exo);
 
-// 3) 시스템 미디어 UI 붙이기
-        MediaSessionHelper.attach(exo, this);
+
+// 3) ★ 핵심: MediaSession 직접 생성해 시스템 미디어 컨트롤 노출
+        PendingIntent sessionActivity = PendingIntent.getActivity(
+                this, 0,
+                new Intent(this, MainActivity.class),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        final androidx.media3.session.MediaSession mediaSession =
+                new androidx.media3.session.MediaSession.Builder(this, exo)
+                        .setId("main")
+                        .setSessionActivity(sessionActivity)
+                        .build();
+
 
         viewModel.isPlaying().observe(this, aBoolean -> {
             if (!aBoolean.booleanValue()) {
@@ -572,6 +592,8 @@ public class MainActivity extends AppCompatActivity {
         }
         return size;
     }
+
+
 
 }
 

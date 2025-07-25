@@ -59,7 +59,7 @@ class PlaylistRecyclerFragment : Fragment() {
                     artistName: String?,
                     position: Int
                 ) {
-                    mainActivityViewModel.playAt(position)
+                    mainActivityViewModel.exoPlayer?.seekToDefaultPosition(position)
                 }
 
             },
