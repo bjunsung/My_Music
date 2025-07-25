@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="activity_background">#121212</color>
     <color name="textPrimary">#DBDBDB</color>
+    <color name="icon_primary">#DBDBDB</color>
     <color name="text_secondary">#DBDBDB</color>
     <color name="background_basic">#212121</color>
     <color name="navBarBasic">#FF000000</color>

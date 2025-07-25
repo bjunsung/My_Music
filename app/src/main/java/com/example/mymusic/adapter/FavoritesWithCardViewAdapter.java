@@ -17,8 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
+import com.example.mymusic.main.playlist.PlaylistTrackAdapter;
 import com.example.mymusic.model.Favorite;
-import com.example.mymusic.model.PlaylistItemDiffCallback;
+
 import com.example.mymusic.model.Track;
 import com.example.mymusic.util.DarkModeUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
@@ -27,6 +28,7 @@ import com.google.android.material.card.MaterialCardView;
 
 
 import java.util.List;
+import java.util.Objects;
 
 public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<FavoritesWithCardViewAdapter.FavoritesWithCardViewHolder> {
     private final String TAG = "FavoritesWithCardViewAdapter";
@@ -196,7 +198,7 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
 
 
         holder.itemView.setOnClickListener(v -> {
-            itemClickListener.onItemClick(track.trackId, track.trackName, track.albumName, track.artistName, holder.getAdapterPosition());
+            itemClickListener.onItemClick(track.trackId, track.trackName, track.albumName, track.artistName, holder.getBindingAdapterPosition());
         });
     }
     public void updateColors(){
@@ -209,12 +211,38 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
         return favoritesList.size();
     }
 
-    public void updateData(List<Favorite> newList) {
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                new PlaylistItemDiffCallback(this.favoritesList, newList, backgroundColor, 0)
+    public void updateData(List<Favorite> newList, int newColor) {
+        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(
+                new DiffUtil.Callback() {
+
+                    @Override
+                    public int getOldListSize() {
+                        return favoritesList.size();
+                    }
+
+                    @Override
+                    public int getNewListSize() {
+                        return newList.size();
+                    }
+
+                    @Override
+                    public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                        Favorite oldItem = favoritesList.get(oldItemPosition);
+                        Favorite newItem = newList.get(newItemPosition);
+                        return Objects.equals(oldItem.track.trackId, newItem.track.trackId);
+                    }
+
+                    @Override
+                    public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                        Favorite oldItem = favoritesList.get(oldItemPosition);
+                        Favorite newItem = newList.get(newItemPosition);
+                        return Objects.equals(oldItem.track.trackId, newItem.track.trackId) &&
+                                Objects.equals(FavoritesWithCardViewAdapter.this.backgroundColor, newColor);
+                    }
+                }
         );
         this.favoritesList = newList;
-        diffResult.dispatchUpdatesTo(this);
+        diff.dispatchUpdatesTo(this);
     }
 
 

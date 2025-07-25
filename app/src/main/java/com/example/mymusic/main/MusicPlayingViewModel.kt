@@ -1,11 +1,10 @@
 package com.example.mymusic.main
 
 import android.widget.ImageView
-import android.widget.SeekBar
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import java.time.LocalDate
+import com.example.mymusic.main.playtime.ContributionDay
 
 class MusicPlayingViewModel : ViewModel() {
     private val _rotationAngle = MutableLiveData(0f)

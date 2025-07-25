@@ -1,4 +1,4 @@
-package com.example.mymusic.main;
+package com.example.mymusic.main.playlist;
 
 
 import android.animation.ValueAnimator;
@@ -22,7 +22,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
-import com.example.mymusic.model.PlaylistItemDiffCallback;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.util.DarkModeUtils;
 import com.example.mymusic.util.ImageColorAnalyzer;
@@ -31,6 +30,7 @@ import com.google.android.material.card.MaterialCardView;
 
 
 import java.util.List;
+import java.util.Objects;
 
 public class PlaylistTrackAdapter extends RecyclerView.Adapter<PlaylistTrackAdapter.FavoritesWithCardViewHolder> {
     private final String TAG = "FavoritesWithCardViewAdapter";
@@ -257,13 +257,42 @@ public class PlaylistTrackAdapter extends RecyclerView.Adapter<PlaylistTrackAdap
         return favoritesList.size();
     }
 
-    public void updateData(List<Favorite> newList, int playingPosition) {
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-                new PlaylistItemDiffCallback(this.favoritesList, newList, backgroundColor, playingPosition)
+    public void updateData(List<Favorite> newList, int playingPosition, int newColor) {
+        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(
+                new DiffUtil.Callback() {
+
+                    @Override
+                    public int getOldListSize() {
+                        return favoritesList.size();
+                    }
+
+                    @Override
+                    public int getNewListSize() {
+                        return newList.size();
+                    }
+
+                    @Override
+                    public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                        Favorite oldItem = favoritesList.get(oldItemPosition);
+                        Favorite newItem = newList.get(newItemPosition);
+                        return Objects.equals(oldItem.track.trackId, newItem.track.trackId);
+                    }
+
+                    @Override
+                    public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                        Favorite oldItem = favoritesList.get(oldItemPosition);
+                        Favorite newItem = newList.get(newItemPosition);
+                        return Objects.equals(oldItem.track.trackId, newItem.track.trackId) &&
+                                Objects.equals(PlaylistTrackAdapter.this.playingPosition, playingPosition) &&
+                                Objects.equals(PlaylistTrackAdapter.this.backgroundColor, newColor);
+                    }
+                }
         );
         this.playingPosition = playingPosition;
         this.favoritesList = newList;
-        diffResult.dispatchUpdatesTo(this);
+        //this.backgroundColor = newColor;
+        //diffResult.dispatchUpdatesTo(this);
+        diff.dispatchUpdatesTo(this);
     }
 
 

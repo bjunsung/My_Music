@@ -86,15 +86,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="앨범: "
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:visibility="gone"/>
-                <TextView
                     android:id="@+id/artistTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

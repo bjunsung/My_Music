@@ -16,6 +16,19 @@
     </fragment>
 
     <fragment
+        android:id="@+id/navigation_playlist_library"
+        android:name="com.example.mymusic.ui.playlist.PlaylistLibraryFragment"
+        android:label="Playlist"
+        tools:layout="@layout/fragment_playlist_library" >
+        <action
+            android:id="@+id/action_navPlaylistLibrary_to_fragSearchPlaylist"
+            app:destination="@id/fragment_search_playlist" />
+        <action
+            android:id="@+id/action_navPlaylistLibrary_to_fragPlaylistDetail"
+            app:destination="@id/fragment_playlist_detail" />
+    </fragment>
+
+    <fragment
         android:id="@+id/navigation_dashboard"
         android:name="com.example.mymusic.ui.dashboard.DashboardFragment"
         android:label="@string/title_dashboard"
@@ -219,4 +232,18 @@
             app:destination="@id/musicInfoFragment" />
     </fragment>
 
+
+    <fragment
+        android:id="@+id/fragment_search_playlist"
+        android:name="com.example.mymusic.ui.playlist.searchPlaylist.SearchPlaylistFragment"
+        android:label="Search Playlist"
+        tools:layout="@layout/fragment_search_playlist" >
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragment_playlist_detail"
+        android:name="com.example.mymusic.ui.playlist.playlistDetail.PlaylistDetailFragment"
+        android:label="Playlist Detail"
+        tools:layout="@layout/fragment_playlist_detail" >
+    </fragment>
 </navigation>

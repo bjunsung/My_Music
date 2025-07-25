@@ -501,6 +501,19 @@ public class MusicInfoFragment extends Fragment {
             ImageColorAnalyzer.analyzePrimaryColor(requireContext(), track.artworkUrl, new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
                 @Override
                 public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+                    if (favorite.addedDate != null && !favorite.addedDate.isEmpty() && favorite.track.primaryColor == null) {
+                        favorite.track.primaryColor = primaryColor;
+                        new Thread(() -> {
+                            favoritesViewModel.updateFavoriteSong(favorite, new FavoritesViewModel.OnFavoriteViewModelCallback() {
+                                @Override
+                                public void onSuccess() {}
+
+                                @Override
+                                public void onFailure() {}
+                            });
+                        }).start();
+                    }
+
                     MusicInfoFragment.this.primaryColor = primaryColor;
                     MusicInfoFragment.this.selectedColor = selectedColor;
                     MusicInfoFragment.this.unselectedColor = unselectedColor;

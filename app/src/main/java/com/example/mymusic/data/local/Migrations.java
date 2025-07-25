@@ -20,6 +20,91 @@ import java.util.List;
 import java.util.Map;
 
 public class Migrations {
+    public static final Migration MIGRATION_15_16 = new Migration(15, 16) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // trackIds가 빈 문자열("") 또는 "[]" 인 경우 NULL로 변경
+            db.execSQL(
+                    "UPDATE playlist_table " +
+                            "SET trackIds = NULL " +
+                            "WHERE trackIds IS NOT NULL " +
+                            "AND (TRIM(trackIds) = '' OR TRIM(trackIds) = '[]')"
+            );
+        }
+    };
+    public static final Migration MIGRATION_14_15 = new Migration(14, 15) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // 1. 새 테이블 생성 (trackIds를 NULL 허용으로 변경)
+            db.execSQL("CREATE TABLE playlist_table_new (" +
+                    "playlistId TEXT NOT NULL PRIMARY KEY, " +
+                    "playlistName TEXT NOT NULL, " +
+                    "trackIds TEXT, " +  // NULL 허용
+                    "totalDurationSec INTEGER NOT NULL, " +
+                    "createdDate TEXT NOT NULL, " +
+                    "lastPlayedTimeMs INTEGER, " +
+                    "playCount INTEGER NOT NULL" +
+                    ")");
+
+            // 2. 기존 데이터 복사
+            db.execSQL("INSERT INTO playlist_table_new " +
+                    "(playlistId, playlistName, trackIds, totalDurationSec, createdDate, lastPlayedTimeMs, playCount) " +
+                    "SELECT playlistId, playlistName, " +
+                    "CASE WHEN trackIds = '[]' OR trackIds = '' THEN NULL ELSE trackIds END, " + // []는 NULL로 변환
+                    "totalDurationSec, createdDate, lastPlayedTimeMs, playCount " +
+                    "FROM playlist_table");
+
+            // 3. 기존 테이블 삭제
+            db.execSQL("DROP TABLE playlist_table");
+
+            // 4. 새 테이블 이름 변경
+            db.execSQL("ALTER TABLE playlist_table_new RENAME TO playlist_table");
+        }
+    };
+
+    static final Migration MIGRATION_13_14 = new Migration(13, 14) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // 기본 데이터가 없으면 삽입
+            db.execSQL("INSERT OR IGNORE INTO playlist_table " +
+                    "(playlistId, playlistName, trackIds, totalDurationSec, createdDate, lastPlayedTimeMs, playCount) " +
+                    "VALUES ('sys_recently_played', '최근 재생한 음악', '[]', 0, DATE('now'), null, 0)");
+        }
+    };
+
+    static final Migration MIGRATION_12_13 = new Migration(12, 13) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // 1. 임시 테이블 생성 (NOT NULL 제약 맞추기)
+            db.execSQL("CREATE TABLE IF NOT EXISTS playlist_table_new (" +
+                    "playlistId TEXT NOT NULL PRIMARY KEY, " +
+                    "playlistName TEXT NOT NULL, " +              // ✅ NOT NULL 추가
+                    "trackIds TEXT NOT NULL, " +                   // ✅ NOT NULL 추가
+                    "totalDurationSec INTEGER NOT NULL, " +
+                    "createdDate TEXT NOT NULL, " +                // ✅ NOT NULL 추가
+                    "lastPlayedTimeMs INTEGER, " +
+                    "playCount INTEGER NOT NULL)");
+
+            // 2. 기존 데이터 복사
+            db.execSQL("INSERT INTO playlist_table_new " +
+                    "(playlistId, playlistName, trackIds, totalDurationSec, createdDate, lastPlayedTimeMs, playCount) " +
+                    "SELECT playlistId, " +
+                    "IFNULL(playlistName, ''), " +                 // ✅ NULL 방지
+                    "IFNULL(trackIds, '[]'), " +                   // ✅ NULL 방지
+                    "totalDurationSec, " +
+                    "IFNULL(createdDate, DATE('now')), " +         // ✅ NULL 방지
+                    "NULL, " +
+                    "playCount " +
+                    "FROM playlist_table");
+
+            // 3. 기존 테이블 삭제
+            db.execSQL("DROP TABLE playlist_table");
+
+            // 4. 새 테이블 이름 변경
+            db.execSQL("ALTER TABLE playlist_table_new RENAME TO playlist_table");
+        }
+    };
+
 
     static final Migration  MIGRATION_10_11 = new Migration(10, 11) {
         @Override

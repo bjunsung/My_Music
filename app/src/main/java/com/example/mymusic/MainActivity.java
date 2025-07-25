@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -35,6 +36,7 @@ import com.example.mymusic.main.MusicPlayingBottomSheet;
 import com.example.mymusic.main.NotificationUtils;
 import com.example.mymusic.main.PlayerManager;
 import com.example.mymusic.model.Favorite;
+import com.example.mymusic.model.SessionKind;
 import com.example.mymusic.ui.favorites.FavoritesFragment;
 import com.example.mymusic.ui.setting.SettingFragment;
 import com.example.mymusic.util.DarkModeUtils;
@@ -74,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+@UnstableApi
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
 
@@ -114,57 +117,21 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-
         /**
-         * db update
+         * playlist toggle test
          */
 
-        /*
-        FavoriteSongRepository favoriteSongRepository = new FavoriteSongRepository(this);
-
-
-        new Thread(()->{
-            long startMs = System.currentTimeMillis();
-            List<Favorite> favs =  favoriteSongRepository.getAllFavoriteTracksWithPlayCount();
-            long fetchedMs = System.currentTimeMillis();
-            Log.d(TAG, "favorites songs with play count by day fetched time: " + (fetchedMs - startMs) + " ms");
-            for (Favorite item: favs) {
-                Map<LocalDate, Integer> map = item.playCountByDay;
-                if (map.isEmpty()) continue;
-                LocalDate ld = null;
-                for (Map.Entry<LocalDate, Integer> entry:  map.entrySet()){
-                    LocalDate key = entry.getKey();
-                    if (ld == null) ld = key;
-                    else if (key.isAfter(ld)) ld = key;
-                }
-                item.lastPlayedDate = ld;
-                //Log.d(TAG, item.toString());
-                favoriteSongRepository.updateFavoriteSongWithPlayCount(item, new FavoriteSongRepository.FavoriteDbCallback() {
-                    @Override
-                    public void onSuccess() {}
-
-                    @Override
-                    public void onFailure() {}
-                });
-            }
-        }).start();
-        */
-
-
+        viewModel.loadFavorite();
 
         FrameLayout musicPlayingBar = binding.musicPlayingBar;
         musicPlayingBar.setOnClickListener(v-> {
             viewModel.requestBottomSheet(true);
         });
 
-        viewModel.getShowBottomSheet().observe(this,
-                new Observer<Boolean>() {
-                    @Override
-                    public void onChanged(Boolean visible) {
-                        if (visible) {
-                            MusicPlayingBottomSheet musicPlayingBottomSheet = new MusicPlayingBottomSheet().newInstance(viewModel.getCurrentTrack().getValue());
-                            musicPlayingBottomSheet.show(getSupportFragmentManager(), MusicPlayingBottomSheet.TAG);
-                        }
+        viewModel.getShowBottomSheet().observe(this, visible -> {
+                    if (visible) {
+                        MusicPlayingBottomSheet musicPlayingBottomSheet = new MusicPlayingBottomSheet().newInstance(viewModel.getCurrentTrack().getValue());
+                        musicPlayingBottomSheet.show(getSupportFragmentManager(), MusicPlayingBottomSheet.TAG);
                     }
                 });
 
@@ -200,28 +167,6 @@ public class MainActivity extends AppCompatActivity {
 
         viewModel.getRepeatMode().observe(this, this::setVisibilityByRepeatMode);
 
-        // Activity 또는 Fragment 내부
-
-
-        /**
-         * 음악 카테고리 삭제
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager nm = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-            for (NotificationChannel channel : nm.getNotificationChannels()) {
-                nm.deleteNotificationChannel(channel.getId());
-            }
-        }
-         */
-
-
-
-// 그 다음에 ViewModel의 플레이어 초기화 로직을 호출하세요.
-// viewModel.initPlayer(); 등...
-
-
-
-
         viewModel.isPlaying().observe(this, aBoolean -> {
             if (!aBoolean.booleanValue()) {
                 audioPauseButton.setVisibility(View.INVISIBLE);
@@ -240,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
                 musicPlayingBar.setVisibility(View.GONE);
                 return;
             }
+
 
             musicPlayingBar.setVisibility(View.VISIBLE);
             titleTextView.setText(favorite.getTitle());
@@ -298,11 +244,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-
-
-
-         // ActionBar actionBar = getSupportActionBar();
-        //  actionBar.hide();
 
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
@@ -427,7 +368,20 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        viewModel.getTotalPlayCountInARow().observe(this, integer -> Log.d("MainActivityViewModel", "play times changed: " + integer));
+        viewModel.getTrackDuration().observe(this, integer -> Log.d("MainActivityViewModel", "play times changed: " + integer));
+
+
+        viewModel.getShuffleMode().observe(this, aBoolean -> {
+            if (aBoolean) {
+                shuffleOnStateButton.setVisibility(View.VISIBLE);
+                shuffleButton.setVisibility(View.INVISIBLE);
+            }
+            else {
+                shuffleOnStateButton.setVisibility(View.INVISIBLE);
+                shuffleButton.setVisibility(View.VISIBLE);
+            }
+        });
+
 
         /**
          * end of onCreate
@@ -570,4 +524,41 @@ public class MainActivity extends AppCompatActivity {
 
 }
 
+
+
+
+/**
+ * db update uri 초기화
+ */
+
+        /*
+        FavoriteSongRepository favoriteSongRepository = new FavoriteSongRepository(this);
+
+
+        new Thread(()->{
+            long startMs = System.currentTimeMillis();
+            List<Favorite> favs =  favoriteSongRepository.getAllFavoriteTracksWithPlayCount();
+            long fetchedMs = System.currentTimeMillis();
+            Log.d(TAG, "favorites songs with play count by day fetched time: " + (fetchedMs - startMs) + " ms");
+            for (Favorite item: favs) {
+                Map<LocalDate, Integer> map = item.playCountByDay;
+                if (map.isEmpty()) continue;
+                LocalDate ld = null;
+                for (Map.Entry<LocalDate, Integer> entry:  map.entrySet()){
+                    LocalDate key = entry.getKey();
+                    if (ld == null) ld = key;
+                    else if (key.isAfter(ld)) ld = key;
+                }
+                item.lastPlayedDate = ld;
+                //Log.d(TAG, item.toString());
+                favoriteSongRepository.updateFavoriteSongWithPlayCount(item, new FavoriteSongRepository.FavoriteDbCallback() {
+                    @Override
+                    public void onSuccess() {}
+
+                    @Override
+                    public void onFailure() {}
+                });
+            }
+        }).start();
+        */
 

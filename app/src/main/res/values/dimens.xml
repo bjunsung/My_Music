@@ -48,6 +48,7 @@
     <dimen name="simple_album_max_text_length">100dp</dimen>
 
     <dimen name="artwork_side_margin">20dp</dimen>
+    <dimen name="artwork_side_margin_v2">15dp</dimen>
 
     <dimen name="rounded_background_radius">16dp</dimen>
 

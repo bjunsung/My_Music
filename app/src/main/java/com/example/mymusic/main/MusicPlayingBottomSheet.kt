@@ -18,7 +18,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.SeekBar
@@ -28,15 +27,17 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import androidx.viewpager2.widget.ViewPager2
+import com.bumptech.glide.Glide
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.databinding.BottomSheetMusicPlayingBinding
-import com.example.mymusic.model.ArtistMetadata
+import com.example.mymusic.main.pager.MusicPlayingPagerAdapter
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.model.Playlist
+import com.example.mymusic.model.SessionKind
 import com.example.mymusic.model.TrackMetadata
 import com.example.mymusic.util.DarkModeUtils
 import com.example.mymusic.util.ImageColorAnalyzer
@@ -232,31 +233,16 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
             v.parent.requestDisallowInterceptTouchEvent(true)
             false
         }
-        //setViewByTrack()
 
 
         mainActivityViewModel.trackDuration.observe(viewLifecycleOwner) { duration ->
             Log.d(TAG, "Track Duration changed "+ duration )
-            val newDuration = mediaController.duration.toInt()
-            totalTimeTextView.text = formatDuration(newDuration)
-            seekBar.max = newDuration
-            setViewByTrack()
-        }
 
-
-
-/*
-        mainActivityViewModel.totalPlayCountInARow.observe(viewLifecycleOwner) {
-            val duration = mainActivityViewModel.trackDuration.value ?: 0
             totalTimeTextView.text = formatDuration(duration)
             seekBar.max = duration
-            updateSeekBarRunnable?.let { handler.removeCallbacks(it) }
+
             setViewByTrack()
         }
-
- */
-
-
 
 
 
@@ -336,6 +322,48 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         }
 
 
+        if (mainActivityViewModel.isDualSessionAvailable) {
+
+        }
+        else {
+            binding.switchAdHoc.visibility = View.INVISIBLE
+            binding.switchSaved.visibility = View.INVISIBLE
+        }
+
+        binding.switchSaved.setOnClickListener {
+            mainActivityViewModel.toggleSession()
+        }
+        binding.switchAdHoc.setOnClickListener {
+            mainActivityViewModel.toggleSession()
+        }
+
+        mainActivityViewModel.activeKind.observe(viewLifecycleOwner) { sessionType ->
+            when (sessionType) {
+                SessionKind.SAVED -> {
+                    val currentPlaylist: Playlist? = mainActivityViewModel.getLastSelectedPlaylist()
+                    if (currentPlaylist != null) {
+                        binding.playlistName.visibility = View.VISIBLE
+                        binding.playlistName.text = currentPlaylist.playlistName
+                    }
+                    else binding.playlistName.visibility = View.GONE
+                }
+                else -> { binding.playlistName.visibility = View.GONE }
+            }
+            if (mainActivityViewModel.isDualSessionAvailable) {
+                if (sessionType == SessionKind.AD_HOC) {
+                    binding.switchAdHoc.visibility = View.VISIBLE
+                    binding.switchSaved.visibility = View.INVISIBLE
+                } else {
+                    binding.switchAdHoc.visibility = View.INVISIBLE
+                    binding.switchSaved.visibility = View.VISIBLE
+                }
+            }
+            else {
+                binding.switchAdHoc.visibility = View.GONE
+                binding.switchSaved.visibility = View.GONE
+            }
+        }
+
         /**
          * end of bind()
          */
@@ -343,8 +371,10 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
 
 
+
+
     private fun setVisibilityByShuffledMode(){
-        if (mainActivityViewModel.shuffledMode) {
+        if (mainActivityViewModel.shuffleMode.value == true) {
             shuffleButton.visibility = View.INVISIBLE
             shuffleOnStateButton.visibility = View.VISIBLE
         }
@@ -378,7 +408,15 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         favorite = mainActivityViewModel.currentTrack.value ?: favorite
         val track = favorite.track
         val metadata: TrackMetadata? = favorite.metadata
+        val artworkImage = binding.backgroudArtworkImage
+        Glide.with(requireContext())
+            .load(track.artworkUrl)
+            .error(R.drawable.ic_image_not_found_foreground)
+            .centerCrop()
+            .into(artworkImage)
+
         val primaryColor: Int? = track.primaryColor
+
         if (primaryColor != null) {
             setBackgroundColor(primaryColor)
         } else {
@@ -408,6 +446,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                     override fun onFailure() {}
                 })
         }
+
+
 
         lyricsTextView.text = "\n\n\n\n\n\n\n" + (metadata?.lyrics ?: "제목없음")  + "\n\n\n\n\n\n\n"
 
@@ -512,9 +552,10 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         }
 
         val colorPair = MyColorUtils.generateBoundedContrastColors(
-            MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.7f),
-            0.9f, 0.15f, 0.1f, 0.9f, 0.29f, 0.9f
+            MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.45f),
+            2.0f, 0.15f, 0.1f, 2.0f, 0.29f, 2.0f
         )
+
         gradientColors = intArrayOf(colorPair[1], colorPair[0], colorPair[1])
         updateGradientShader()
 
@@ -549,36 +590,6 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         gradientPaint.maskFilter = BlurMaskFilter(30f, BlurMaskFilter.Blur.NORMAL)
         gradientBackground.invalidate()
     }
-
-/*
-    private fun startGradientRotation() {
-        val clockwise = if (mainActivityViewModel.currentIndex % 2 == 0) 1.0f else -1.0f
-        animator?.cancel()
-        animator = ValueAnimator.ofFloat(currentRotation, currentRotation + clockwise * 360f).apply {
-            duration = musicPlayingViewModel.rotationDuration
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = LinearInterpolator()
-            addUpdateListener {
-                val value = it.animatedValue as Float
-                currentRotation = value % 360
-                musicPlayingViewModel.setRotationAngle(currentRotation)
-                gradientBackground.rotation = currentRotation
-                //artworkImage.rotation = value % 360
-            }
-            start()
-        }
-    }
-
-
-
-    private fun stopGradientRotation() {
-        animator?.cancel()
-        currentRotation = gradientBackground.rotation % 360
-    }
-
-
- */
-
 
 
     companion object {

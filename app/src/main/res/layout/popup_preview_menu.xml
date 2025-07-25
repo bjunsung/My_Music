@@ -6,11 +6,6 @@
     android:background="@drawable/bg_popup_dark"
     android:padding="8dp">
 
-
-
-
-
-
     <LinearLayout
         android:id="@+id/add_mp3_button"
         android:layout_width="match_parent"

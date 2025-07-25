@@ -160,7 +160,7 @@
                         android:layout_marginBottom="6dp"
                         android:layout_marginLeft="0dp"
                         android:layout_weight="1"
-                        app:cardBackgroundColor="@color/black"
+                        app:cardBackgroundColor="@android:color/transparent"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="4dp">
 
@@ -170,12 +170,20 @@
                             android:background="@android:color/transparent"
                             android:layout_height="match_parent">
 
+                            <ImageView
+                                android:id="@+id/backgroud_artwork_image"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@android:color/transparent">
+                            </ImageView>
+
                             <FrameLayout
                                 android:id="@+id/gradient_background"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:scaleX="3.25"
                                 android:scaleY="1.5"
+                                android:alpha="0.88"
                                 android:background="@android:color/transparent">
                             </FrameLayout>
 
@@ -292,18 +300,65 @@
                 android:layout_height="match_parent">
 
                 <ImageButton
+                    android:id="@+id/switch_ad_hoc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_switch_right"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#FFFFFF"
+                    android:layout_marginLeft="50dp"
+                    android:padding="8dp"
+                    android:visibility="visible"/>
+
+                <ImageButton
+                    android:id="@+id/switch_saved"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_round_switch_left"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#FFFFFF"
+                    android:layout_marginLeft="50dp"
+                    android:padding="8dp"
+                    android:visibility="invisible"/>
+
+                <TextView
+                    android:id="@+id/playlist_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxWidth="200dp"
+                    android:singleLine="true"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/switch_ad_hoc"
+                    android:text="Now Playing Queue"
+                    android:textColor="@color/white"
+                    android:layout_marginStart="20dp"
+                    android:visibility="gone"
+                    android:textSize="@dimen/text_size_xsmall">
+                </TextView>
+
+
+                <ImageButton
                     android:id="@+id/shuffle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/ic_round_shuffle"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/repeat_off"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     app:tint="#61FFFFFF"
                     android:layout_marginLeft="50dp"
                     android:padding="8dp"
                     android:visibility="visible"/>
+
+
 
                 <ImageButton
                     android:id="@+id/shuffle_on_state"
@@ -312,7 +367,7 @@
                     android:src="@drawable/ic_round_shuffle"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/repeat_off"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     app:tint="#FFFFFF"
                     android:layout_marginLeft="50dp"

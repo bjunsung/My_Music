@@ -62,6 +62,7 @@ import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL2;
 import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.data.repository.ArtistMetadataRepository;
 import com.example.mymusic.databinding.FragmentArtistInfoBinding;
+import com.example.mymusic.extension.ViewPager2Animator;
 import com.example.mymusic.model.Album;
 import com.example.mymusic.model.ArtistMetadata;
 import com.example.mymusic.model.Favorite;
@@ -400,7 +401,8 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         sliderRunnable = () -> {
           if (pager != null && pageAdapter != null){
               int nextItem = (pager.getCurrentItem() + 1) % pageAdapter.getItemCount();
-              pager.setCurrentItem(nextItem, true);
+              //pager.setCurrentItem(nextItem, true);
+              ViewPager2Animator.setCurrentItemWithDuration(pager, nextItem, 350L);
               sliderHandler.postDelayed(sliderRunnable, AUTO_SLIDER_DELAY_TIME);
           }
         };

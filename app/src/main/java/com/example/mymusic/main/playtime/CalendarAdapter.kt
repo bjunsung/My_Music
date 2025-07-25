@@ -1,4 +1,4 @@
-package com.example.mymusic.main
+package com.example.mymusic.main.playtime
 
 import android.graphics.Color
 import android.util.Log
@@ -7,11 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import coil.request.Tags
 import com.example.mymusic.R
 import com.google.android.material.card.MaterialCardView
-import kotlinx.coroutines.channels.ticker
-import java.time.LocalDate
 
 class CalendarAdapter(private var days: List<ContributionDay>) :
     RecyclerView.Adapter<CalendarAdapter.DayViewHolder>() {

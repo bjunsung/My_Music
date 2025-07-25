@@ -1,4 +1,4 @@
-package com.example.mymusic.main
+package com.example.mymusic.main.playtime
 
 import android.content.res.Configuration
 import android.content.res.Resources
@@ -27,6 +27,7 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
+import com.example.mymusic.main.MusicPlayingViewModel
 
 
 class PlayTimeCalendar : Fragment() {

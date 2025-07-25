@@ -577,7 +577,7 @@ class ReleaseDateChart: Fragment() {
         lineChart.description.isEnabled = false
 
         // 애니메이션
-        lineChart.animateY(800)
+        lineChart.animateY(750)
 
 
         seeMoreButton = binding.seeMoreButton

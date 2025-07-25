@@ -16,6 +16,10 @@
         android:icon="@drawable/ic_calendar_month"
         android:title="Calendar" />
 
+    <item
+        android:id="@+id/navigation_playlist_library"
+        android:icon="@drawable/ic_round_library_music"
+        android:title="Playlist" />
 
     <item
         android:id="@+id/navigation_settings"

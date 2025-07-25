@@ -51,6 +51,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.media3.common.util.UnstableApi;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
@@ -106,6 +107,7 @@ import jp.wasabeef.recyclerview.animators.LandingAnimator;
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
 
 
+@UnstableApi
 public class FavoritesFragment extends Fragment {
     public static int FAVORITE_ARTIST_REPRESENTATIVE_ARTWORK_SIZE = 160;
     private final String TAG = "FavoriteFragment";
@@ -740,9 +742,6 @@ public class FavoritesFragment extends Fragment {
 
 
 
-
-
-
         filterImageButton.setOnClickListener(v -> {
             if (favoriteOption == 0) {
                 if (!bottomSheet.isAdded() && !bottomSheet.isVisible()) {
@@ -886,14 +885,14 @@ public class FavoritesFragment extends Fragment {
         int popupWidth = 360;
         final PopupWindow popupWindow = new PopupWindow(
                 popupView,
-                360,
+                popupWidth,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 true
         );
         popupWindow.setOutsideTouchable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setElevation(16f);
-
+        popupWindow.setFocusable(false);
 
 
         // **뷰가 완전히 그려진 후 좌표 계산**
@@ -1025,8 +1024,6 @@ public class FavoritesFragment extends Fragment {
 
         return targetFile;  // 복사한 파일 반환
     }
-
-
 
 
 
@@ -1575,13 +1572,11 @@ public class FavoritesFragment extends Fragment {
             artistsOtherMusicCardView.setCardBackgroundColor(adjustedForWhiteText);
             artistsOtherMusicRecyclerView.setAdapter(artistsOtherMusicAdapter);
 
-
-
             favoritesViewModel.loadAllFavorites(favoriteList -> {
                 if (!favoriteList.isEmpty()){
                     boolean isDescending = true;
                     List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(getContext(), favoriteList, "ARTIST", favorite.track, "RELEASE_DATE", isDescending);
-                    artistsOtherMusicAdapter.updateData(filtered);
+                    artistsOtherMusicAdapter.updateData(filtered, primaryColor);
                     if (filtered.isEmpty()){
                         artistsOtherMusicCardView.setVisibility(View.GONE);
                     } else{
@@ -1602,7 +1597,7 @@ public class FavoritesFragment extends Fragment {
             return;
         }
 
-        if (showSlideAnimation) {
+        if (showSlideAnimation && !Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue())) {
             toggleLyricsVisibility(true);
         }
         favoritesViewModel.setLyricsMode(true);
@@ -1614,6 +1609,7 @@ public class FavoritesFragment extends Fragment {
         }
         else{
             Log.d(TAG, "null point saved in focused favorite");
+            return;
         }
         Track track = favorite.track;
         //lyricsModeCancelButton.setVisibility(View.VISIBLE);
@@ -1629,6 +1625,11 @@ public class FavoritesFragment extends Fragment {
         previousKeywordButton.setVisibility(View.GONE);
         nextKeywordButton.setVisibility(View.GONE);
 
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE && artistsOtherMusicRecyclerView != null && artistsOtherMusicCardView != null) {
+            artistsOtherMusicRecyclerView.postDelayed(()-> artistsOtherMusicRecyclerView.smoothScrollToPosition(recyclerViewPosition), 200);
+
+        }
        if (favorite.track.primaryColor != null) {
            setBackgroundColor(favorite);
        } else{

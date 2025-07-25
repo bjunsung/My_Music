@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.mymusic.data.local.converter.Converters;
 
-@Database(entities = {Token.class, Favorites.class, FavoriteArtist.class, Settings.class, ArtistMetadata.class} , version = 11)
+@Database(entities = {Token.class, Favorites.class, FavoriteArtist.class, Settings.class, ArtistMetadata.class, PlaylistEntity.class} , version = 16)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase instance;
@@ -20,13 +20,15 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract FavoriteArtistDao favoriteArtistDao();
     public abstract SettingDao settingDao();
     public abstract ArtistMetadataDao artistMetadataDao();
+    public abstract PlaylistDao playlistDao();
+
     public static synchronized AppDatabase getInstance(Context context){
         if (instance == null){
             instance = Room.databaseBuilder(
                     context.getApplicationContext(),
                     AppDatabase.class,
                     "app_database"
-            ).addMigrations(Migrations.MIGRATION_10_11).addCallback(roomCallback).build();
+            ).addMigrations(Migrations.MIGRATION_15_16).addCallback(roomCallback).build();
         }
         return instance;
     }
@@ -40,6 +42,9 @@ public abstract class AppDatabase extends RoomDatabase {
                     "VALUES (0, 20, 20, 20, 0)");
 
             // DB가 처음 생성될 때 1회 호출됨 (기본값 insert 용도)
+            db.execSQL("INSERT INTO playlist_table " +
+                    "(playlistId, playlistName, trackIds, totalDurationSec, createdDate, lastPlayedTimeMs, playCount) " +
+                    "VALUES ('sys_recently_played', '최근 재생한 음악', null, 0, DATE('now'), null, 0)");
         }
 
         @Override

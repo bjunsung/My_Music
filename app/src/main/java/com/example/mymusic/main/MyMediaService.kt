@@ -33,6 +33,12 @@ class MyMediaService : MediaSessionService() {
         const val KEY_AUDIO_SESSION_ID = "audio_session_id"
     }
 
+    /**앱 종료시 플레이 종료*/
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        stopSelf()
+    }
+
     override fun onCreate() {
         super.onCreate()
         ensurePlaybackChannel()

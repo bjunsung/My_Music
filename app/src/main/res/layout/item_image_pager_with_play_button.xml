@@ -1,0 +1,35 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToOutline="true"
+    android:clipChildren="true"
+    android:background="@drawable/rounded_background">
+
+    <ImageView
+        android:id="@+id/artwork_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:clipToOutline="true" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/cardview_dark_background"
+        android:alpha="0.2">
+    </View>
+
+    <ImageButton
+        android:id="@+id/music_play_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|bottom"
+        android:src="@drawable/ic_play_arrow"
+        android:background="@android:color/transparent"
+        android:padding="20dp"
+        app:tint="@color/white"
+        android:scaleX="1.25"
+        android:scaleY="1.25"
+        android:layout_marginBottom="4dp">
+    </ImageButton>
+</FrameLayout>

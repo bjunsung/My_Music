@@ -8,8 +8,6 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -20,10 +18,13 @@ import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
@@ -50,6 +51,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -57,14 +59,15 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
 
+@UnstableApi
 class PlayTimeChart: Fragment() {
 
 
     private var _binding: FragmentPlayCountChartBinding? = null
     private val binding get() = _binding!!
 
-    private val mainActivityViewModel: MainActivityViewModel by activityViewModels()
     private val playCountViewModel: PlayCountChartViewModel by viewModels()
+    private var mainVm: MainActivityViewModel? = null
 
     private val today = LocalDate.now()
     private var recyclerView: RecyclerView? = null
@@ -83,6 +86,7 @@ class PlayTimeChart: Fragment() {
     private val modifySpecificYearButton: MaterialCardView by lazy { binding.modifySpecificYearCard }
     private val prefs: SharedPreferences by lazy { requireActivity().getSharedPreferences("last_saved_value", Context.MODE_PRIVATE) }
 
+    private var viewPager : ViewPager2? = null
     override fun onResume() {
         super.onResume()
         updateChart(playCountViewModel.chartOption)
@@ -110,6 +114,8 @@ class PlayTimeChart: Fragment() {
         if (navController == null) {
             navController = findNavController()
         }
+        val owner = (context as? FragmentActivity) ?: return
+        mainVm = ViewModelProvider(owner)[MainActivityViewModel::class.java]
     }
 
     override fun onCreateView(
@@ -175,13 +181,17 @@ class PlayTimeChart: Fragment() {
         if (!playCountViewModel.reenterStateFromMusicInfoFragment && !playCountViewModel.reenterStateFromAlbumInfoFragment)
             startPostponedEnterTransition()
         else if (playCountViewModel.reenterStateFromArtistInfoFragment) {
-            Handler(Looper.getMainLooper()).postDelayed({
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(280)
                 playCountViewModel.reenterStateFromArtistInfoFragment = false
                 showPopupWindowAgain()
-            }, 280)
+            }
         }
         else{
-            Handler(Looper.getMainLooper()).postDelayed({startPostponedEnterTransition()}, 200)
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(200)
+                startPostponedEnterTransition()
+            }
         }
 
         Log.d(TAG, "onViewCreated")
@@ -571,6 +581,8 @@ class PlayTimeChart: Fragment() {
         chart.legend.isEnabled = true
         chart.invalidate()
 
+        chart.animateY(750)
+
         val legend = chart.legend
         val textPrimary = ContextCompat.getColor(requireContext(), R.color.textPrimary)
         legend.textColor = textPrimary
@@ -600,8 +612,9 @@ class PlayTimeChart: Fragment() {
         // 왼쪽에 tailHeight만큼 padding 추가
         popupView.setPadding(dpToPx(ctx, 4), 0, 0, 0)
 
-        val viewPager = popupView.findViewById<ViewPager2>(R.id.popup_view_pager)
-        viewPager.adapter =
+        viewPager = popupView.findViewById<ViewPager2>(R.id.popup_view_pager)
+        viewPager?.adapter = null
+        viewPager?.adapter =
             PopupPagerAdapter(item, object : PopupPagerAdapter.OnClickEventListener {
                 override fun onTitleClick(item: Favorite) {
                     this@PlayTimeChart.onTitleClick(item)
@@ -625,7 +638,7 @@ class PlayTimeChart: Fragment() {
                     playlist?.let {
                         val ordered = (it.subList(position, it.size) +
                                 it.subList(0, position)).toMutableList()
-                        mainActivityViewModel.setPlaylist(ordered, 0)
+                        mainVm?.setPlaylist(ordered, 0)
                     }
 
 
@@ -710,10 +723,8 @@ class PlayTimeChart: Fragment() {
 
         popupWindow.setOnDismissListener {
             if (!preventUnfocus) {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    playCountViewModel.onFocused = false
-                    //viewModel.focusedPage = 0
-                }, 0)
+                playCountViewModel.onFocused = false
+                //viewModel.focusedPage = 0
             }
 
         }
@@ -747,8 +758,6 @@ class PlayTimeChart: Fragment() {
 
             })
         }
-
-
     }
 
     private fun onAlbumNameClick(item: Favorite) {
@@ -809,11 +818,25 @@ class PlayTimeChart: Fragment() {
     fun dpToPx(context: Context, dp: Int): Int {
         return (dp * context.resources.displayMetrics.density).toInt()
     }
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+
+    private fun safeDismissPopups() {
+        if (this::popupWindow.isInitialized && popupWindow.isShowing) {
+            popupWindow.setOnDismissListener(null) // 불필요한 콜백 방지(선택)
+            popupWindow.dismiss()
+        }
     }
 
+    override fun onPause() {
+        super.onPause()
+        safeDismissPopups()
+    }
+
+    override fun onDestroyView() {
+        safeDismissPopups()
+        viewPager?.adapter = null
+        _binding = null
+        super.onDestroyView()
+    }
 
     companion object {
         const val TAG = "PlayTimeChart"

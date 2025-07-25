@@ -84,8 +84,8 @@ val media3Version = "1.8.0" // sessionCompat을 지원하는 안정적인 최신
 dependencies {
     // Room, Glide 등 기존에 잘 사용하던 다른 라이브러리들은 그대로 둡니다.
     implementation("io.github.everythingme:overscroll-decor-android:1.1.1")
-    implementation("androidx.room:room-runtime:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-runtime:2.7.2")
+    kapt("androidx.room:room-compiler:2.7.2")
     implementation(files("libs/auth-release.aar"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -120,7 +120,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("io.coil-kt:coil-compose:2.3.0")
-
+    implementation("androidx.navigation:navigation-compose:2.8.0")
     // 버전 카탈로그(libs)로 관리하던 라이브러리들
     implementation(libs.palette)
     implementation(libs.appcompat)

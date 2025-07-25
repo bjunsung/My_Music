@@ -22,6 +22,11 @@ public interface FavoritesDao {
     @Query("DELETE FROM favorites_table WHERE trackId IN (:trackIds)")
     int deleteFavoritesByIds(List<String> trackIds);
 
+    @Query("SELECT * FROM favorites_table WHERE trackId IN (:trackIds)")
+    List<Favorites> getFavoritesByIds(List<String> trackIds);
+
+
+
     //save favorite song
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void saveFavoritesSong(Favorites song);
@@ -37,6 +42,9 @@ public interface FavoritesDao {
     //get favorites songs by selected artists
     @Query("SELECT * FROM favorites_table WHERE artistId IN (:artistIds)")
     List<Favorites> getFavoritesByArtistIds(List<String> artistIds);
+
+    @Query("SELECT * FROM favorites_table WHERE artistId = :artistId")
+    List<Favorites> getFavoritesByArtistId(String artistId);
 
     @Update
     int updateFavoriteSong(Favorites song);  // update
