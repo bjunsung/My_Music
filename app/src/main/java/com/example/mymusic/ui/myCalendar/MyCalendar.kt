@@ -96,7 +96,7 @@ class MyCalendar : Fragment() {
         val navToReleaseDateChartButton = binding.releaseDateChartText
         navToReleaseDateChartButton.setOnClickListener { findNavController().navigate(R.id.action_myCalendarFragment_to_releaseDateChart) }
         val moveTodayTextView = binding.moveTodayText
-        moveTodayTextView.setOnClickListener{ calendarView.smoothScrollToMonth(LocalDate.now().yearMonth) }
+        moveTodayTextView.setOnClickListener{ calendarView.scrollToMonth(LocalDate.now().yearMonth) }
 
     }
 

@@ -115,10 +115,10 @@ public class FavoritesFragment extends Fragment {
     TextView lyricsTextView;
     ScrollView scrollAreaView;
     LinearLayout countLayout, onLyricsContainer;
-    ImageButton lyricsModeCancelButton;
+   // ImageButton lyricsModeCancelButton;
     ImageView focusedImageView;
     TextView focusedTitleTextView, focusedAlbumTextView, focusedArtistTextView, focusedDurationTextView, focusedReleaseDateTextView;
-    MaterialCardView musicInfoContainer, simpleMusicInfoContainer, lyricsTextContainer, lyricsContainer;
+    MaterialCardView simpleMusicInfoContainer, lyricsTextContainer, lyricsContainer;
     TextView cancelSelectionModeTextView, removeSelectedFavoritesTextView;
     SwitchCompat favoriteOptionSwitch;
     private FragmentFavoritesBinding binding;
@@ -398,12 +398,10 @@ public class FavoritesFragment extends Fragment {
         webView = view.findViewById(R.id.hidden_web_view);
         webView2 = view.findViewById(R.id.hidden_web_view_2);
         lyricsContainer = view.findViewById(R.id.lyrics_container);
-        lyricsModeCancelButton = view.findViewById(R.id.cancel_button);
+      //  lyricsModeCancelButton = view.findViewById(R.id.cancel_button);
         countLayout = view.findViewById(R.id.count_layout);
         onLyricsContainer = view.findViewById(R.id.on_lyrics_container);
         onLyricsContainer.setVisibility(View.GONE);
-        musicInfoContainer = view.findViewById(R.id.music_info_container);
-        musicInfoContainer.setClipToOutline(true);
         focusedImageView = view.findViewById(R.id.focused_image);
         focusedTitleTextView = view.findViewById(R.id.focused_title);
         focusedAlbumTextView = view.findViewById(R.id.focused_album_title);
@@ -487,9 +485,12 @@ public class FavoritesFragment extends Fragment {
             loadFavoritesAndUpdateUI();
         });
 
+        /*
         lyricsModeCancelButton.setOnClickListener(v -> {
             cancelLyricsMode();
         });
+
+         */
 
 
         //다중삭제 취소 버튼
@@ -1337,7 +1338,8 @@ public class FavoritesFragment extends Fragment {
     }
 
     private void LyricsOnMode(Favorite favorite, int recyclerViewPosition, boolean showSlideAnimation){
-        if (getView() == null || lyricsModeCancelButton == null) {
+
+        if (getView() == null) {
             Log.w(TAG, "View not ready yet, skipping LyricsOnMode()");
             return;
         }
@@ -1356,7 +1358,7 @@ public class FavoritesFragment extends Fragment {
             Log.d(TAG, "null point saved in focused favorite");
         }
         Track track = favorite.track;
-        lyricsModeCancelButton.setVisibility(View.VISIBLE);
+        //lyricsModeCancelButton.setVisibility(View.VISIBLE);
         countLayout.setVisibility(View.GONE);
         trackRecyclerView.setVisibility(View.GONE);
         favoriteOptionSwitch.setVisibility(View.GONE);
@@ -1379,11 +1381,9 @@ public class FavoritesFragment extends Fragment {
                 if (context != null && DarkModeUtils.isDarkMode(context)){
                     darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.3f);
                     int adjustedPrimaryColorForDarkMode = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.7f);
-                    musicInfoContainer.setCardBackgroundColor(adjustedPrimaryColorForDarkMode);
                     lyricsContainer.setCardBackgroundColor(adjustedPrimaryColorForDarkMode);
                 }else{
                     darkenColor = MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.9f);
-                    musicInfoContainer.setCardBackgroundColor(primaryColor);
                     lyricsContainer.setCardBackgroundColor(primaryColor);
                 }
 
@@ -2233,7 +2233,7 @@ public class FavoritesFragment extends Fragment {
             });
 
         }
-        lyricsModeCancelButton.setVisibility(View.GONE);
+       // lyricsModeCancelButton.setVisibility(View.GONE);
         favoriteOptionSwitch.setVisibility(View.VISIBLE);
         filterImageButton.setVisibility(View.VISIBLE);
         dropUpImageButton.setVisibility(View.VISIBLE);

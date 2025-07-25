@@ -34,4 +34,6 @@
     <dimen name="rounded_background_radius">16dp</dimen>
 
     <dimen name="custom_dialog_width">300dp</dimen>
+
+    <dimen name="artwork_mini">60dp</dimen>
 </resources>

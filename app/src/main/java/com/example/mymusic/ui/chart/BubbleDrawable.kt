@@ -1,14 +1,17 @@
 package com.example.mymusic.ui.chart
 
+import android.content.Context
+import android.content.res.Configuration
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import androidx.annotation.ColorInt
 
 class BubbleDrawable(
+    private val context: Context,
     @ColorInt private val bubbleColor: Int,
-    private val cornerRadius: Float = 12f,
-    private val tailHeight: Float = 12f,
-    private val tailWidth: Float = 24f,
+    private var cornerRadius: Float = 12f,
+    private var tailHeight: Float = 12f,
+    private var tailWidth: Float = 24f,
     private val tailPosition: TailPosition = TailPosition.CENTER,
     private val dx: Float
 ) : Drawable() {
@@ -21,6 +24,13 @@ class BubbleDrawable(
     }
 
     override fun draw(canvas: Canvas) {
+
+        if (!isTablet(context)) {
+            cornerRadius = 40f
+            tailHeight = 20f
+            tailWidth = 40f
+        }
+
         val width = bounds.width().toFloat()
         val height = bounds.height().toFloat()
 
@@ -54,4 +64,14 @@ class BubbleDrawable(
     }
 
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
+
+
+    fun isTablet(context: Context): Boolean {
+        val configuration = context.resources.configuration
+        val screenLayout = configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK
+        return screenLayout >= Configuration.SCREENLAYOUT_SIZE_LARGE
+    }
+
+
+
 }

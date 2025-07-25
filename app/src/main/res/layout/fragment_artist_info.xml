@@ -109,6 +109,7 @@
                                     android:layout_height="wrap_content"
                                     android:orientation="vertical"
                                     android:paddingLeft="16dp"
+                                    android:paddingRight="16dp"
                                     android:paddingTop="4dp">
 
                                     <LinearLayout
@@ -121,9 +122,9 @@
                                             android:layout_width="0dp"
                                             android:layout_height="wrap_content"
                                             android:layout_weight="1"
+                                            android:gravity="center"
                                             android:paddingTop="4dp"
                                             android:text="Apink"
-                                            android:gravity="center"
                                             android:textSize="@dimen/text_size_artist_name_in_artist_info"
                                             android:textStyle="bold" />
 
@@ -132,9 +133,9 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_gravity="center"
+                                            android:background="?attr/selectableItemBackgroundBorderless"
                                             android:padding="8dp"
-                                            android:src="@drawable/ic_heart_plus"
-                                            android:background="?attr/selectableItemBackgroundBorderless" />
+                                            android:src="@drawable/ic_heart_plus" />
                                     </LinearLayout>
 
 
@@ -142,8 +143,8 @@
                                         android:id="@+id/debut_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
@@ -157,29 +158,29 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="2011-04-19"
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
                                     </LinearLayout>
 
                                     <LinearLayout
                                         android:id="@+id/activity_years_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="연대: "
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
 
                                         <TextView
                                             android:id="@+id/activity_years"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="2010, 2020"
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
                                     </LinearLayout>
 
 
@@ -187,16 +188,16 @@
                                         android:id="@+id/members_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
-                                            android:text="멤버: "
                                             android:layout_gravity="top"
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:text="멤버: "
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
 
                                         <TextView
                                             android:id="@+id/members"
@@ -204,44 +205,44 @@
                                             android:layout_height="wrap_content"
                                             android:text="박초롱, 정은지, 윤보미, 김남주, 오하영"
                                             android:textSize="@dimen/text_size_between_small_and_basic"
-                                            android:textStyle="italic"/>
+                                            android:textStyle="italic" />
                                     </LinearLayout>
 
                                     <LinearLayout
                                         android:id="@+id/agency_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="소속사: "
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
 
                                         <TextView
                                             android:id="@+id/agency"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="아이에스티엔터테인먼트"
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
                                     </LinearLayout>
 
                                     <LinearLayout
                                         android:id="@+id/activity_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="활동: "
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
 
                                         <TextView
                                             android:id="@+id/activity"
@@ -261,15 +262,15 @@
                                         android:id="@+id/added_date_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="추가한 날짜: "
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
 
                                         <TextView
                                             android:id="@+id/added_date"
@@ -283,8 +284,8 @@
                                         android:id="@+id/genres_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
@@ -300,30 +301,29 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="[k-pop]"
-                                            android:textSize="@dimen/text_size_between_small_and_basic"  />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
                                     </LinearLayout>
 
                                     <LinearLayout
                                         android:id="@+id/followers_layout"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:gravity="center"
                                         android:layout_marginTop="8dp"
+                                        android:gravity="center"
                                         android:orientation="horizontal">
 
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="followers: "
-                                            android:textSize="@dimen/text_size_between_small_and_basic"/>
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
 
                                         <TextView
                                             android:id="@+id/followers"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="1,303,633"
-                                            android:textSize="@dimen/text_size_between_small_and_basic"
-                                            />
+                                            android:textSize="@dimen/text_size_between_small_and_basic" />
                                     </LinearLayout>
 
 

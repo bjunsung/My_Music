@@ -21,8 +21,8 @@
         app:layout_constraintEnd_toStartOf="parent">
         <ImageView
             android:id="@+id/artwork_image"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="@dimen/artwork_mini"
+            android:layout_height="@dimen/artwork_mini"
             android:layout_gravity="center"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_image_not_found_foreground" />

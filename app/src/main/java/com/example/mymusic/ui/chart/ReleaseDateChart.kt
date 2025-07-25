@@ -1,5 +1,7 @@
 package com.example.mymusic.ui.chart
 
+import android.content.Context
+import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -128,7 +130,17 @@ class ReleaseDateChart: Fragment() {
         val indicator = popupView.findViewById<me.relex.circleindicator.CircleIndicator3>(R.id.page_indicator)
         indicator.setViewPager(viewPager)
 
-        val layoutWidth = 480
+        //val layoutWidth = (220 * context?.resources?.displayMetrics!!.density).toInt()
+
+
+
+        val context: Context = requireContext()
+        val layoutWidth = if (isTablet(context)) {
+            dpToPx(context, 235)   // 태블릿
+        } else {
+            dpToPx(context, 195)   // 폰
+        }
+
         popupWindow = PopupWindow(
             popupView,
             layoutWidth,
@@ -139,6 +151,21 @@ class ReleaseDateChart: Fragment() {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
 
+
+        val minHeight = if (isTablet(context)) dpToPx(context, 389) else dpToPx(context, 280)
+        popupView.minimumHeight = minHeight
+
+// 먼저 내부 뷰 강제 측정
+        popupView.measure(
+            View.MeasureSpec.makeMeasureSpec(layoutWidth, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+
+        val contentHeight = popupView.measuredHeight
+
+// 최소 높이와 실제 내용 높이 중 큰 값으로 적용
+        popupWindow.height = maxOf(minHeight, contentHeight)
+
         val location = IntArray(2)
         anchorView.getLocationOnScreen(location)
         val x = location[0]
@@ -148,20 +175,23 @@ class ReleaseDateChart: Fragment() {
         Log.d(TAG, "x: " + x + " y: " + y + " screenWidth " + screenWidth)
 
 
+        val adjustedDx = if (isTablet(context)) 60f else 100f
 
         val bubbleDrawable = if (screenWidth - x < layoutWidth) {
             BubbleDrawable(
+                context,
                 bubbleColor = Color.parseColor("#333333"),
                 cornerRadius = 24f,
                 tailPosition = BubbleDrawable.TailPosition.RIGHT,
-                dx = (screenWidth - x - 60f)
+                dx = (screenWidth - x - adjustedDx)
             )
         } else{
              BubbleDrawable(
+                 context,
                  bubbleColor = Color.parseColor("#333333"),
                  cornerRadius = 24f,
                  tailPosition = BubbleDrawable.TailPosition.LEFT,
-                 dx = 60f
+                 dx = adjustedDx
             )
         }
 
@@ -180,6 +210,17 @@ class ReleaseDateChart: Fragment() {
 
         }
     }
+
+    fun isTablet(context: Context): Boolean {
+        val configuration = context.resources.configuration
+        val screenLayout = configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK
+        return screenLayout >= Configuration.SCREENLAYOUT_SIZE_LARGE
+    }
+
+    fun dpToPx(context: Context, dp: Int): Int {
+        return (dp * context.resources.displayMetrics.density).toInt()
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -318,7 +359,7 @@ class ReleaseDateChart: Fragment() {
 
 
     private var gradientColor = intArrayOf()
-    private lateinit var recyclerView: RecyclerView
+    private var recyclerView: RecyclerView? = null
 
     override fun onResume() {
         super.onResume()
@@ -421,7 +462,7 @@ class ReleaseDateChart: Fragment() {
         legend.textColor = textColor
         legend.verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
         legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
-        legend.textSize = 18f
+        legend.textSize = if (isTablet(requireContext())) 18f else 12f
         legend.setDrawInside(false)
 
 
@@ -492,9 +533,6 @@ class ReleaseDateChart: Fragment() {
         // 애니메이션
         lineChart.animateY(800)
 
-        recyclerView = binding.favoriteRecyclerView
-        recyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        recyclerView.adapter = adapter
 
         seeMoreButton = binding.seeMoreButton
         foldButton = binding.foldButton
@@ -546,13 +584,22 @@ class ReleaseDateChart: Fragment() {
 
         lineChart.invalidate()
 
+        setRecyclerView()
+
         restoreData()
+    }
+
+    private fun setRecyclerView() {
+        if (recyclerView != null) return
+        recyclerView = binding.favoriteRecyclerView
+        recyclerView?.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        recyclerView?.adapter = adapter
     }
 
     private fun restoreData() {
         yearSelectedTextView = binding.xValue
         favoriteCountTextView = binding.yValue
-        recyclerView.scrollToPosition(viewModel.focusedPosition)
+        recyclerView?.scrollToPosition(viewModel.focusedPosition)
         val shuffled = viewModel.shuffledList
         if (shuffled.isNotEmpty()){
             adapter.updateList(shuffled)
@@ -572,10 +619,10 @@ class ReleaseDateChart: Fragment() {
                     viewModel.reenterStateFromMusicInfoFragment
                     || viewModel.reenterStateFromAlbumInfoFragment
                     || viewModel.reenterStateFromArtistInfoFragment)) {
-            recyclerView.post { showPopupWindowAgain() }
+            recyclerView?.post { showPopupWindowAgain() }
         }
         else if (viewModel.reenterStateFromArtistInfoFragment) {
-            recyclerView.postDelayed({
+            recyclerView?.postDelayed({
                 viewModel.reenterStateFromArtistInfoFragment = false
                 showPopupWindowAgain()}, 280)
         }
@@ -585,7 +632,8 @@ class ReleaseDateChart: Fragment() {
     }
 
     private fun showPopupWindowAgain() {
-        val viewHolder = recyclerView.findViewHolderForAdapterPosition(viewModel.focusedPosition)
+        setRecyclerView()
+        val viewHolder = recyclerView?.findViewHolderForAdapterPosition(viewModel.focusedPosition)
         if (viewHolder != null) {
             showPopupWindow(
                 viewHolder.itemView,

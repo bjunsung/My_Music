@@ -31,4 +31,7 @@
 
     <dimen name="artwork_side_margin">30dp</dimen>
     <dimen name="custom_dialog_width">400dp</dimen>
+
+
+    <dimen name="artwork_mini">72dp</dimen>
 </resources>
