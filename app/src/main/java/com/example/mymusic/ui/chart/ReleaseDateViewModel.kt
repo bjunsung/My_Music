@@ -2,11 +2,11 @@ package com.example.mymusic.ui.myCalendar
 
 import android.app.Application
 import android.util.Log
-import android.view.View
 import androidx.lifecycle.AndroidViewModel
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.model.Favorite
 import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.highlight.Highlight
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.properties.Delegates
@@ -25,7 +25,13 @@ class ReleaseDateViewModel (application: Application): AndroidViewModel(applicat
     var onFocused = false
     var shuffledList: List<Favorite> = listOf()
     var focusedPosition: Int = 0
-    lateinit var focusedTrack: Favorite
+    var focusedTrack: Favorite? = null
+    var itemClickRepeated = 0
+    var reenterStateFromMusicInfoFragment = false
+    var reenterStateFromAlbumInfoFragment = false
+    var reenterStateFromArtistInfoFragment = false
+
+    lateinit var selectedHighlightYear: Highlight
 
     fun getFavoriteList() : List<Favorite> {
         return favoriteList

@@ -12,13 +12,8 @@
         android:title="Favorites"/>
 
     <item
-        android:id="@+id/navigation_searches"
-        android:icon="@drawable/ic_search_button"
-        android:title="Search" />
-
-    <item
         android:id="@+id/fragment_my_calendar"
-        android:icon="@drawable/ic_filled_settings"
+        android:icon="@drawable/ic_calendar_month"
         android:title="Calendar" />
 
 

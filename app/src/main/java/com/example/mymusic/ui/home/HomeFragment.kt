@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.example.mymusic.R
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageDiskCacheL3
 import com.example.mymusic.cache.reader.FavoriteArtistReader
@@ -16,10 +18,12 @@ import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter
 import com.example.mymusic.databinding.FragmentHomeBinding
 import com.example.mymusic.model.FavoriteArtist
 import com.example.mymusic.ui.artistInfo.ArtistInfoFragment
+import com.example.mymusic.ui.search.SearchFragment
 import com.example.mymusic.util.SortFilterArtistUtil
 
 class HomeFragment : Fragment() {
-    private var binding: FragmentHomeBinding? = null
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
     var viewGroupContext: Context? = null
 
     override fun onCreateView(
@@ -30,8 +34,8 @@ class HomeFragment : Fragment() {
 
         val homeViewModel: HomeViewModel by viewModels()
 
-        binding = FragmentHomeBinding.inflate(inflater, container, false)
-        val root: View = binding!!.root
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        val root: View = binding.root
 
         if (container != null) {
             viewGroupContext = container.context
@@ -42,44 +46,28 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        /**
-         * Custom L1 L3 캐시 데이터 삭제 메소드 (테스트용, 기본 주석처리)
-         */
-        //CustomFavoriteArtistImageCacheL1.getInstance().clear()
-        //CustomFavoriteArtistImageDiskCacheL3.getInstance(viewGroupContext).clear()
+        bind()
 
-        val successToFetchDiskCache =
-            CustomFavoriteArtistImageWriter.saveRepresentativeImageFromL3DiskCacheToL1Cache(
-                viewGroupContext
-            )
 
-        if (successToFetchDiskCache) {
-            Log.d(TAG, "success to load L3 disk cache and store to L1 memory cache")
-        } else {
-            Log.d(
-                TAG,
-                "fail to load L3 disk cache, start to load FavoriteArtist List from room db and store to L1, L3 cache"
-            )
-            FavoriteArtistReader.loadFavoritesOriginalForm(
-                viewGroupContext
-            ) { favoriteArtistList: List<FavoriteArtist?>? ->
-                val filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(
-                    viewGroupContext,
-                    favoriteArtistList
-                )
-                CustomFavoriteArtistImageWriter.saveRepresentativeImagesByFavoriteArtistList(
-                    viewGroupContext,
-                    filtered,
-                    ArtistInfoFragment.ARTIST_ARTWORK_SIZE,
-                    ArtistInfoFragment.ARTIST_ARTWORK_SIZE
-                )
+    }
+
+    private fun bind() {
+        val searchBar = binding.searchBar
+        searchBar.setOnClickListener {
+            val navController = findNavController()
+            val args = Bundle()
+            args.putBoolean(SearchFragment.ARG_REQUEST_FOCUS, true)
+            if (navController.currentDestination?.id == R.id.navigation_home) {
+                navController.navigate(R.id.action_home_to_searchFragment,  args)
+            } else{
+                Log.d(TAG, "navigation departure mismatch")
             }
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        binding = null
+        _binding = null
     }
 
     companion object {

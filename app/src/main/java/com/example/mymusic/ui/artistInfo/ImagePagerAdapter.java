@@ -22,17 +22,11 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
-import com.bumptech.glide.request.transition.Transition;
 import com.example.mymusic.R;
-import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1;
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL2;
-import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageDiskCacheL3;
 import com.example.mymusic.cache.reader.CustomFavoriteArtistImageReader;
-import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.model.Artist;
-
 import java.util.List;
 
 public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.ImageViewHolder> {

@@ -80,6 +80,7 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
 
     @Override
     public int getItemCount() {
+        if (albumList == null) return 0;
         return albumList.size();
     }
 

@@ -160,7 +160,6 @@ public class FavoritesFragment extends Fragment {
 
             @Override
             public void run() {
-
                 if (!activity.isFinishing() && !activity.isDestroyed()) {
                     if (detailsVisibleState == SimpleArtistDialogHelper.OFF_DETAILS) {
                         artistDialogHelper.showArtistDialog(lastPosition, favoriteArtistList, lastGradient);
@@ -179,6 +178,11 @@ public class FavoritesFragment extends Fragment {
         handler.post(tryShow);
     }
 
+    public void onIconDoubleTapped() {
+        if (Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue())) {
+            cancelLyricsMode();
+        }
+    }
 
 
     @Override

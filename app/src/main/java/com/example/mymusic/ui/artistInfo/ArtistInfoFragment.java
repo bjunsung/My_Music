@@ -19,6 +19,7 @@ import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,6 +47,9 @@ import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.Explode;
+import androidx.transition.Fade;
+import androidx.transition.Slide;
 import androidx.transition.Transition;
 import androidx.transition.TransitionInflater;
 import androidx.viewpager2.widget.MarginPageTransformer;
@@ -188,6 +192,10 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
         setSharedElementReturnTransition(transform);
 
 
+        setEnterTransition(new Slide(Gravity.START));
+
+
+
         //ImageDetailFragment to ArtistFragment
         getParentFragmentManager().setFragmentResultListener(ImageDetailFragment.REQUEST_KEY_POSITION, this, (requestKey, bundle) -> {
             if (requestKey.equals(ImageDetailFragment.REQUEST_KEY_POSITION)){
@@ -276,10 +284,12 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
                 @Override
                 public void onTransitionEnd(@NonNull Transition transition) {
-                    Bundle result = new Bundle();
-                    result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
-                    getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
-                    transition.removeListener(this);
+                    if (isRemoving()) {
+                        Bundle result = new Bundle();
+                        result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
+                        getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
+                        transition.removeListener(this);
+                    }
                 }
 
                 @Override
@@ -473,7 +483,7 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
         }
         sliderHandler.removeCallbacks(sliderRunnable);
-
+        setEnterTransition(null);
     }
 
     @Override

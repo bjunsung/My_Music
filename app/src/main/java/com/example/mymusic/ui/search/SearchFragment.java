@@ -85,6 +85,7 @@ public class SearchFragment extends Fragment {
     private FragmentSearchBinding binding;
     private ArtistAdapter artistAdapter;
     private final String TAG = "SearchFragment";
+    public final static String ARG_REQUEST_FOCUS = "request_focus";
 
     //ViewModel 연결, repository 연결
     @Override
@@ -108,6 +109,8 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+
         if (searchViewModel.getTrackPosition() != -1) { //reenter state
             postponeEnterTransition();
             RecyclerView recyclerView = binding.resultRecyclerView;
@@ -143,6 +146,13 @@ public class SearchFragment extends Fragment {
             recyclerView.setAdapter(artistAdapter);
         }
         getTokenAndEnableSearch();
+
+        Bundle args = getArguments();
+        if (args != null) {
+            boolean requestFocus = args.getBoolean(SearchFragment.ARG_REQUEST_FOCUS, false);
+            keyboardUp();
+
+        }
     }
 
 

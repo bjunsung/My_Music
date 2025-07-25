@@ -74,37 +74,25 @@
                 app:layout_constraintTop_toTopOf="@id/artwork_layout"
                 app:layout_constrainedWidth="true">
 
-                <LinearLayout
+
+                <TextView
+                    android:id="@+id/album_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal">
+                    android:paddingTop="14dp"
+                    android:text="HORN"
+                    android:textSize="30sp"
+                    android:textStyle="bold"
+                    android:textIsSelectable="true" />
 
-                    <TextView
-                        android:id="@+id/album_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="10dp"
-                        android:text="HORN"
-                        android:textSize="30sp"
-                        android:textStyle="bold"
-                        android:textIsSelectable="true" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=" - "
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/artist_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Apink"
-                        android:textSize="22sp"
-                        android:textStyle="bold|italic" />
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/artist_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Apink"
+                    android:textSize="@dimen/text_size_basic"
+                    android:textStyle="bold|italic" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -116,7 +104,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="발매일: "
-                        android:textSize="24sp"
+                        android:textSize="@dimen/text_size_basic"
                         android:textIsSelectable="true" />
 
                     <TextView
@@ -124,7 +112,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="2022-02-14"
-                        android:textSize="24sp"
+                        android:textSize="@dimen/text_size_basic"
                         android:textIsSelectable="true" />
                 </LinearLayout>
 
@@ -138,7 +126,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="수록곡: "
-                        android:textSize="24sp"
+                        android:textSize="@dimen/text_size_basic"
                         android:textIsSelectable="true" />
 
                     <TextView
@@ -146,7 +134,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="6"
-                        android:textSize="24sp" />
+                        android:textSize="@dimen/text_size_basic" />
                 </LinearLayout>
 
             </LinearLayout>

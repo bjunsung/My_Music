@@ -9,7 +9,7 @@
     android:layout_margin="16dp"
     android:clipChildren="false"
     android:clipToPadding="false"
-    app:cardCornerRadius="16dp"
+    app:cardCornerRadius="@dimen/rounded_background_radius"
     app:cardElevation="4dp"
     app:cardBackgroundColor="@android:color/transparent">
 

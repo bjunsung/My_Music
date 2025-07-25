@@ -28,6 +28,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -51,6 +52,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.transition.Slide;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
@@ -67,6 +69,7 @@ import com.example.mymusic.model.TrackMetadata;
 import com.example.mymusic.network.ArtistApiHelper;
 import com.example.mymusic.network.ArtistMetadataService;
 import com.example.mymusic.simpleArtistInfo.SimpleArtistDialogHelper;
+import com.example.mymusic.ui.albumInfo.AlbumInfoFragment;
 import com.example.mymusic.ui.favorites.FavoriteArtistViewModel;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
 import com.example.mymusic.util.DateFormatMismatchException;
@@ -109,6 +112,11 @@ public class MusicInfoFragment extends Fragment {
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_track_artwork_ended";
     private LinkedHashMap<String, ArtistMetadata> artistMetadataMap;
     private  SimpleArtistDialogHelper dialogHelper;
+    private android.content.res.ColorStateList originalTextColorStateList;
+    private android.content.res.ColorStateList originalIconColorStateList;
+    private com.google.android.material.bottomnavigation.BottomNavigationView bnv;
+    private Drawable originalBottomNavBackground;
+
 
     //ViewModel 연결
     @Override
@@ -127,7 +135,7 @@ public class MusicInfoFragment extends Fragment {
         setSharedElementReturnTransition(transform);
 
         // ✅ 2. 나머지 뷰(텍스트 등)를 위한 전환 설정
-        setEnterTransition(new Explode());
+        setEnterTransition(new Slide(Gravity.BOTTOM));
 
         // ✅ 3. transition end (Fragment) callback
         androidx.transition.Transition returnTransition = (androidx.transition.Transition) getSharedElementReturnTransition();
@@ -138,10 +146,13 @@ public class MusicInfoFragment extends Fragment {
 
                 @Override
                 public void onTransitionEnd(@NonNull androidx.transition.Transition transition) {
-                    Bundle result = new Bundle();
-                    result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
-                    getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
-                    transition.removeListener(this);
+                    if (isRemoving()) {
+                        Log.d(TAG, "Transition end");
+                        Bundle result = new Bundle();
+                        result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
+                        getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
+                        transition.removeListener(this);
+                    }
                 }
 
                 @Override
@@ -177,6 +188,23 @@ public class MusicInfoFragment extends Fragment {
             safeShowDialog(getActivity(), lastPosition, visibleState, favoriteArtistList, lastGradient);
         }
 
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Activity activity = getActivity();
+        if (activity != null) {
+            if (bottomNavView == null) {
+                bottomNavView = activity.findViewById(R.id.nav_view);
+            }
+            if (bottomNavView != null) {
+                bottomNavView.setBackground(originalBottomNavBackground);
+            }
+        }
+        bnv.setItemTextColor(originalTextColorStateList);
+        bnv.setItemIconTintList(originalIconColorStateList);
+        setEnterTransition(null);
     }
 
     private void safeShowDialog(Activity activity, int lastPosition, int detailsVisibleState, List<FavoriteArtist> favoriteArtistList, GradientDrawable lastGradient){
@@ -468,6 +496,7 @@ public class MusicInfoFragment extends Fragment {
                             bottomNavView = activity.findViewById(R.id.nav_view);
                         }
                         if (bottomNavView != null) {
+
                             bottomNavView.setBackgroundColor(primaryColor);
                         }
                     }
@@ -489,8 +518,10 @@ public class MusicInfoFragment extends Fragment {
                     // 4. BottomNavigationView에 최종 적용합니다.
                     // BottomNavigationView 타입으로 캐스팅해야 관련 메서드를 쓸 수 있습니다.
                     if (bottomNavView instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
-                        com.google.android.material.bottomnavigation.BottomNavigationView bnv =
-                                (com.google.android.material.bottomnavigation.BottomNavigationView) bottomNavView;
+                        bnv = (com.google.android.material.bottomnavigation.BottomNavigationView) bottomNavView;
+
+                        originalTextColorStateList = bnv.getItemTextColor();
+                        originalIconColorStateList = bnv.getItemIconTintList();
 
                         bnv.setItemTextColor(textColorStateList);
                         bnv.setItemIconTintList(iconColorStateList);
@@ -603,9 +634,9 @@ public class MusicInfoFragment extends Fragment {
                         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                                 .addSharedElement(artworkImage, artworkImage.getTransitionName())
                                         .build();
-                        bundle.putString("transitionName", transitionName);
+                        bundle.putString(AlbumInfoFragment.TRANSITION_NAME_KEY, transitionName);
 
-                        bundle.putParcelable("album", album);
+                        bundle.putParcelable(AlbumInfoFragment.ARGUMENTS_KEY, album);
                         NavController navController = NavHostFragment.findNavController(this);
 
                         //✅ 1. navigate() 호출 전에 현재 destination이 맞는지 검사

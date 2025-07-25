@@ -126,49 +126,6 @@
 
 
 
-
-        <!--
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/favorite_recycler_view"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/text_info_layout"
-                    app:layout_constraintEnd_toStartOf="@id/see_more_button"/>
-
-                <TextView
-                    android:id="@+id/see_more_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="8dp"
-                    android:padding="6dp"
-                    android:text="더 보기"
-                    android:textSize="14sp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/favorite_recycler_view"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:visibility="invisible"/>
-
-                <TextView
-                    android:id="@+id/fold_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="8dp"
-                    android:padding="6dp"
-                    android:text="접기"
-                    android:textSize="14sp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/favorite_recycler_view"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:visibility="invisible"/>
-        -->
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- LineChart 섹션 -->

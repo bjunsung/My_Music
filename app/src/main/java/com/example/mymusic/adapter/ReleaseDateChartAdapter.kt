@@ -67,7 +67,7 @@ class ReleaseDateChartAdapter (private var list: List<Favorite>, private val lis
         //holder.artwork
 
         holder.itemView.setOnClickListener {
-            listener.onItemClick(it, fav, position)
+            listener.onItemClick(it, fav, holder.bindingAdapterPosition)
         }
     }
 

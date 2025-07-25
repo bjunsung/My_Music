@@ -24,6 +24,7 @@ import android.webkit.WebView;
 import android.widget.ImageButton;
 
 import com.example.mymusic.cache.ImagePreloader;
+import com.example.mymusic.ui.favorites.FavoritesFragment;
 import com.example.mymusic.ui.setting.SettingFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -35,8 +36,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.FragmentNavigator;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
@@ -68,21 +73,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //ImagePreloader.preloadRepresentativeFavoriteArtistImage(MainActivity.this);
         WebView.setWebContentsDebuggingEnabled(true);
-
-        /*
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-        );
-         */
-
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -97,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_favorites, R.id.navigation_searches, R.id.navigation_settings)
+                R.id.navigation_home, R.id.navigation_favorites, R.id.fragment_my_calendar, R.id.navigation_settings)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
@@ -127,6 +118,18 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == lastSelectedItemId && (currentTime - lastClickTime) < DOUBLE_CLICK_THRESHOLD) {
                 // 더블 클릭: 루트로 이동
                 navController.popBackStack(itemId, false);
+
+                // favorites fragment 에서 더블 클릭 시 가사 on -> off
+                if (itemId == R.id.navigation_favorites) {
+                    NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                            .findFragmentById(R.id.nav_host_fragment_activity_main); // NavHost의 ID
+                    Fragment currentFragment = navHostFragment.getChildFragmentManager().getFragments().get(0);
+
+                    if (currentFragment instanceof FavoritesFragment) {
+                        ((FavoritesFragment) currentFragment).onIconDoubleTapped();
+                    }
+
+                }
             } else {
                 // 일반 클릭: 원래 로직대로 작동
                 NavigationUI.onNavDestinationSelected(item, navController);

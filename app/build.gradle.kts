@@ -94,6 +94,8 @@ dependencies {    // Room core
     implementation("com.kizitonwose.calendar:view:2.3.0") //custom 캘린더
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0") //chart
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    implementation("com.tbuonomo:dotsindicator:4.3") // 원형 인디케이터
+    implementation("me.relex:circleindicator:2.1.6")
     implementation(libs.palette)  //Glide
     implementation(libs.appcompat)
     implementation(libs.material)

@@ -1,16 +1,23 @@
 package com.example.mymusic;
 
 import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 
-import com.bumptech.glide.Glide;
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL1;
 import com.example.mymusic.cache.customCache.CustomFavoriteArtistImageCacheL2;
+import com.example.mymusic.cache.reader.FavoriteArtistReader;
+import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
 import com.example.mymusic.data.repository.TokenRepository;
+import com.example.mymusic.model.FavoriteArtist;
 import com.example.mymusic.network.TokenHelper;
 import com.example.mymusic.ui.artistInfo.ArtistInfoFragment;
+import com.example.mymusic.util.SortFilterArtistUtil;
+
+import java.util.List;
 
 public class MyMusicApplication extends Application {
+    private final static String TAG = "MyMusicApplication";
     @Override
     public void onCreate() {
         super.onCreate();
@@ -21,9 +28,49 @@ public class MyMusicApplication extends Application {
         //Glide.get(this).clearMemory();
         //new Thread(() -> Glide.get(this).clearDiskCache()).start();
 
+        customCacheSetting(this);
         setCustomCache();
 
     }
+    private void customCacheSetting(Context context) {
+        /**
+         * Custom L1 L3 캐시 데이터 삭제 메소드 (테스트용, 기본 주석처리)
+         */
+        // CustomFavoriteArtistImageCacheL1.getInstance().clear();
+        // CustomFavoriteArtistImageDiskCacheL3.getInstance(viewGroupContext).clear();
+
+        boolean successToFetchDiskCache =
+                CustomFavoriteArtistImageWriter.saveRepresentativeImageFromL3DiskCacheToL1Cache(
+                        context
+                );
+
+        if (successToFetchDiskCache) {
+            Log.d(TAG, "success to load L3 disk cache and store to L1 memory cache");
+        } else {
+            Log.d(
+                    TAG,
+                    "fail to load L3 disk cache, start to load FavoriteArtist List from room db and store to L1, L3 cache"
+            );
+
+            FavoriteArtistReader.loadFavoritesOriginalForm(
+                    context,
+                    favoriteArtistList -> {
+                        List<FavoriteArtist> filtered = SortFilterArtistUtil.sortAndFilterFavoritesList(
+                                context,
+                                favoriteArtistList
+                        );
+
+                        CustomFavoriteArtistImageWriter.saveRepresentativeImagesByFavoriteArtistList(
+                                context,
+                                filtered,
+                                ArtistInfoFragment.ARTIST_ARTWORK_SIZE,
+                                ArtistInfoFragment.ARTIST_ARTWORK_SIZE
+                        );
+                    }
+            );
+        }
+    }
+
 
 
     private void setCustomCache(){

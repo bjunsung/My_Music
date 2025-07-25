@@ -35,6 +35,7 @@
                 android:layout_marginRight="8dp"
                 android:layout_marginLeft="4dp"
                 app:layout_constraintStart_toStartOf="parent"
+                android:background="@android:color/transparent"
                 android:checked="false"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
@@ -45,7 +46,7 @@
                 android:layout_marginTop="3dp"
                 android:layout_marginLeft="6dp"
                 android:src="@drawable/ic_filter_button"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:background="@android:color/transparent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/favorite_option_switch"
                 />

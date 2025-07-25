@@ -2,6 +2,7 @@ package com.example.mymusic.ui.chart
 
 import android.content.res.Resources
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
@@ -36,15 +37,23 @@ import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import java.time.LocalDate
 import kotlin.properties.Delegates
 import androidx.core.graphics.toColorInt
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.viewpager2.widget.ViewPager2
+import com.example.mymusic.data.repository.FavoriteArtistRepository
+import com.example.mymusic.dataLoader.FavoriteArtistLoader
+import com.example.mymusic.model.FavoriteArtist
+import com.example.mymusic.network.ArtistApiHelper
+import com.example.mymusic.ui.albumInfo.AlbumInfoFragment
+import com.example.mymusic.ui.artistInfo.ArtistInfoFragment
 import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import com.example.mymusic.util.DateUtils
 import com.github.mikephil.charting.components.Legend
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
+import com.tbuonomo.viewpagerdotsindicator.SpringDotsIndicator
+import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 
 class ReleaseDateChart: Fragment() {
     private var _binding: FragmentReleaseDateChartBinding? = null
@@ -59,9 +68,23 @@ class ReleaseDateChart: Fragment() {
     private lateinit var favListForYearMap: MutableMap<Int, List<Favorite>>
     private lateinit var seeMoreButton: TextView
     private lateinit var foldButton: TextView
+    private lateinit var yearSelectedTextView: TextView
+    private lateinit var favoriteCountTextView: TextView
+    private lateinit var popupWindow: PopupWindow
+    private var preventUnfocus = false
+    private lateinit var anchorView: View
+
 
     private val adapter: ReleaseDateChartAdapter = ReleaseDateChartAdapter(listOf(), object: ReleaseDateChartAdapter.OnItemEventListener {
         override fun onItemClick(view: View, item: Favorite, position: Int) {
+
+            if (viewModel.focusedTrack != null && item.equals(viewModel.focusedTrack)) {
+                if (viewModel.itemClickRepeated++ % 2 == 1)
+                    return
+            }
+            else {
+                viewModel.itemClickRepeated = 1
+            }
             showPopupWindow(view, item, position)
         }
 
@@ -74,68 +97,47 @@ class ReleaseDateChart: Fragment() {
     })
 
     private fun showPopupWindow(anchorView: View, item: Favorite, position: Int) {
+        if (viewModel.reenterStateFromMusicInfoFragment || viewModel.reenterStateFromAlbumInfoFragment || viewModel.reenterStateFromArtistInfoFragment)
+            return
+
+        this.anchorView = anchorView
+
         viewModel.onFocused = true
         viewModel.focusedPosition = position
         viewModel.focusedTrack = item
 
-        val popupView = layoutInflater.inflate(R.layout.popup_favorite_detail, null)
-        val titleView = popupView.findViewById<TextView>(R.id.track_title)
-
-        if (item.metadata!= null && item.metadata.title != null && item.metadata.title.isNotEmpty()){
-            titleView.text = item.metadata.title
-        }
-        else{
-            titleView.text = item.title
-        }
-
-        val artistNameTextView = popupView.findViewById<TextView>(R.id.artist_name)
-        artistNameTextView.text = item.artistName
-        val albumNameTextView = popupView.findViewById<TextView>(R.id.album_name)
-        albumNameTextView.text = item.track.albumName
-        val releaseDateTextView = popupView.findViewById<TextView>(R.id.release_date)
-        releaseDateTextView.text = item.releaseDate
-        val durationTextView = popupView.findViewById<TextView>(R.id.duration_ms)
-        val durationSec = (item.duration.toDouble() / 1000).toInt()
-        durationTextView.text = "${durationSec / 60}분 ${durationSec % 60}초"
-
-
-
-        val daysBetween = popupView.findViewById<TextView>(R.id.days_between)
-        val vocalistsLayout = popupView.findViewById<LinearLayout>(R.id.vocalists_layout)
-        val lyricistsLayout = popupView.findViewById<LinearLayout>(R.id.lyricists_layout)
-        val composersLayout = popupView.findViewById<LinearLayout>(R.id.composers_layout)
-
-        val vocalistsTextView = popupView.findViewById<TextView>(R.id.vocalists)
-        val lyricistsTextView = popupView.findViewById<TextView>(R.id.lyricists)
-        val composersTextView = popupView.findViewById<TextView>(R.id.composers)
-        val addedDateTextView = popupView.findViewById<TextView>(R.id.added_date)
-
-        daysBetween.text = DateUtils.calculateDateDiffrence(item.releaseDate, LocalDate.now().toString()).toString()
-        addedDateTextView.text = item.addedDate
-
-        if (item.metadata != null){
-            val metadata = item.metadata
-            if (!metadata.vocalists.isNullOrEmpty()) {
-                vocalistsLayout.visibility = View.VISIBLE
-                vocalistsTextView.text = metadata.vocalistsToString()
+        //val popupView = layoutInflater.inflate(R.layout.page_favorite_detail_info, null)
+        val popupView = layoutInflater.inflate(R.layout.popup_favorite_detail_pager, null)
+        val viewPager = popupView.findViewById<ViewPager2>(R.id.popup_view_pager)
+        viewPager.adapter = PopupPagerAdapter(item, object: PopupPagerAdapter.OnClickEventListener {
+            override fun onTitleClick(item: Favorite) {
+                this@ReleaseDateChart.onTitleClick(item)
             }
-            if (!metadata.lyricists.isNullOrEmpty()) {
-                lyricistsLayout.visibility = View.VISIBLE
-                lyricistsTextView.text = metadata.lyricists.joinToString(", ")
+
+            override fun onAlbumNameClick(item: Favorite) {
+                this@ReleaseDateChart.onAlbumNameClick(item)
             }
-            if (!metadata.composers.isNullOrEmpty()) {
-                composersLayout.visibility = View.VISIBLE
-                composersTextView.text = metadata.composers.joinToString(", ")
+
+            override fun onArtistNameClick(item: Favorite) {
+                this@ReleaseDateChart.onArtistNameClick(item)
             }
-        }
+
+        })
+
+
+        val indicator = popupView.findViewById<me.relex.circleindicator.CircleIndicator3>(R.id.page_indicator)
+        indicator.setViewPager(viewPager)
 
         val layoutWidth = 480
-        val popupWindow = PopupWindow(
+        popupWindow = PopupWindow(
             popupView,
             layoutWidth,
             ViewGroup.LayoutParams.WRAP_CONTENT,
-            true
-        )
+            false
+        ).apply {
+            isOutsideTouchable = true
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
 
         val location = IntArray(2)
         anchorView.getLocationOnScreen(location)
@@ -166,31 +168,108 @@ class ReleaseDateChart: Fragment() {
 
         popupView.background = bubbleDrawable
 
-
-
-
-        popupWindow.showAtLocation(anchorView, Gravity.NO_GRAVITY, x, y + anchorView.height)
         popupWindow.isOutsideTouchable = true
+        popupWindow.showAtLocation(anchorView, Gravity.NO_GRAVITY, x, y + anchorView.height)
 
-        var preventUnfocus = false
 
-        titleView.setOnClickListener {
-            preventUnfocus = true
-            popupWindow.dismiss()
-            val args = Bundle()
-            args.putString(MusicInfoFragment.TRANSITION_NAME_KEY, anchorView.transitionName)
-            args.putParcelable(MusicInfoFragment.ARGUMENTS_KEY, item)
-            val extras = FragmentNavigatorExtras(
-                anchorView to anchorView.transitionName
-            )
-
-            findNavController().navigate(R.id.action_releaseDateChart_to_musicInfoFragment, args, null, extras)
-        }
+        preventUnfocus = false
 
         popupWindow.setOnDismissListener {
             if (!preventUnfocus)
-                viewModel.onFocused = false
+                Handler(Looper.getMainLooper()).postDelayed({ viewModel.onFocused = false }, 0)
+
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+
+    }
+
+    fun onTitleClick(item: Favorite) {
+        preventUnfocus = true
+        popupWindow.dismiss()
+        val args = Bundle()
+
+        args.putString(MusicInfoFragment.TRANSITION_NAME_KEY, anchorView.transitionName)
+        args.putParcelable(MusicInfoFragment.ARGUMENTS_KEY, item)
+        val extras = FragmentNavigatorExtras(
+            anchorView to anchorView.transitionName
+        )
+        val navController = NavHostFragment.findNavController(this)
+        val currentDestination = navController.currentDestination
+        if (currentDestination?.id == R.id.fragment_release_date_chart) {
+            viewModel.reenterStateFromMusicInfoFragment = true
+            findNavController().navigate(R.id.action_releaseDateChart_to_musicInfoFragment, args, null, extras)
+        } else {
+            Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨")
+        }
+    }
+
+    fun onAlbumNameClick(item: Favorite) {
+        preventUnfocus = true
+        popupWindow.dismiss()
+
+        val track = item.track
+        val apiHelper = ArtistApiHelper(requireContext(), requireActivity())
+        apiHelper.getAlbum(null, track.albumId) { album ->
+            if (album != null) {
+                val args = Bundle().apply {
+                    putString(AlbumInfoFragment.TRANSITION_NAME_KEY, anchorView.transitionName)
+                    putParcelable(AlbumInfoFragment.ARGUMENTS_KEY, album)
+                }
+
+                val extras = FragmentNavigatorExtras(
+                    anchorView to anchorView.transitionName
+                )
+
+                val navController = NavHostFragment.findNavController(this)
+                val currentDestination = navController.currentDestination
+                if (currentDestination?.id == R.id.fragment_release_date_chart) {
+                    viewModel.reenterStateFromAlbumInfoFragment = true
+                    findNavController().navigate(R.id.action_releaseDateChart_to_albumInfoFragment, args, null, extras)
+                } else {
+                    Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨")
+                }
+            }
+        }
+    }
+
+    fun onArtistNameClick(item: Favorite) {
+        preventUnfocus = true
+        popupWindow.dismiss()
+        val args = Bundle()
+        FavoriteArtistLoader.loadFavoriteArtistById(requireContext(), item.track.artistId, object : FavoriteArtistLoader.Companion.OnLoadListener {
+            override fun onLoadSuccess(fav: FavoriteArtist) {
+                args.putParcelable(ArtistInfoFragment.ARGUMENTS_KEY, fav)
+                val navController = findNavController()
+                if (navController.currentDestination!!.id == R.id.fragment_release_date_chart) {
+                    viewModel.reenterStateFromArtistInfoFragment = true
+                    navController.navigate(R.id.action_releaseDateChart_to_artistInfoFragment, args)
+                } else {
+                    Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨")
+                }
+
+            }
+
+            override fun onLoadFailed() {
+                Log.d(TAG, "favorite artist load failed")
+                val apiHelper = ArtistApiHelper(requireContext(), requireActivity())
+                apiHelper.getArtist(null, item.track.artistId) { artist ->
+                    val artist = FavoriteArtist(artist)
+                    args.putParcelable(ArtistInfoFragment.ARGUMENTS_KEY, artist)
+                    val navController = findNavController()
+                    if (navController.currentDestination!!.id == R.id.fragment_release_date_chart) {
+                        viewModel.reenterStateFromArtistInfoFragment = true
+                        navController.navigate(R.id.action_releaseDateChart_to_artistInfoFragment, args)
+                    } else {
+                        Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨")
+                    }
+                }
+            }
+
+        })
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?)
@@ -199,12 +278,37 @@ class ReleaseDateChart: Fragment() {
         return binding.root
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?){
         super.onViewCreated(view, savedInstanceState)
         postponeEnterTransition()
         setGradientColor()
         bind()
         prepareChart()
+
+        //reenter from MusicInfoFragment
+        parentFragmentManager.setFragmentResultListener(
+            MusicInfoFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { key, bundle ->
+            val transitionEnded = bundle.getBoolean(MusicInfoFragment.BUNDLE_KEY_TRANSITION_END, false)
+            if (transitionEnded) {
+                Log.d(TAG, "transition end callback, show popupwindow")
+                viewModel.reenterStateFromMusicInfoFragment = false
+                showPopupWindowAgain()
+            }
+        }
+
+        parentFragmentManager.setFragmentResultListener(
+            AlbumInfoFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { key, bundle ->
+            val transitionEnd = bundle.getBoolean(AlbumInfoFragment.BUNDLE_KEY_TRANSITION_END, false)
+            if (transitionEnd){
+                viewModel.reenterStateFromAlbumInfoFragment = false
+                showPopupWindowAgain()
+            }
+        }
     }
 
     private fun bind(){
@@ -405,13 +509,19 @@ class ReleaseDateChart: Fragment() {
             lineChart.setOnChartValueSelectedListener(object: OnChartValueSelectedListener {
                 override fun onValueSelected(e: Entry?, h: Highlight?) {
                     Log.d(TAG, "value selected")
+                    if (h != null) {
+                        viewModel.selectedHighlightYear = h
+                    }
+
                     var x = e?.x!!.toInt()
                     var yearSelected = yearLabels.get(x)
                     var favoriteCount = e.y.toInt().toString()
-                    val yearSelectedTextView = binding.xValue
-                    val favoriteCountTextView = binding.yValue
+                    yearSelectedTextView = binding.xValue
+                    favoriteCountTextView = binding.yValue
+
                     yearSelectedTextView.text = yearSelected
                     favoriteCountTextView.text = favoriteCount
+
 
                     val favListForYear: List<Favorite> = favListForYearMap[yearSelected.toInt()] ?: emptyList()
 
@@ -434,38 +544,54 @@ class ReleaseDateChart: Fragment() {
             })
         }
 
-
         lineChart.invalidate()
 
         restoreData()
     }
 
     private fun restoreData() {
+        yearSelectedTextView = binding.xValue
+        favoriteCountTextView = binding.yValue
         recyclerView.scrollToPosition(viewModel.focusedPosition)
         val shuffled = viewModel.shuffledList
         if (shuffled.isNotEmpty()){
             adapter.updateList(shuffled)
             setSeeMoreAndFoldButton(shuffled)
+            yearSelectedTextView.text = shuffled.get(0).releaseDate.substring(0, 4)
+            favoriteCountTextView.text = shuffled.size.toString()
+            lineChart.postDelayed({
+                lineChart.highlightValue(viewModel.selectedHighlightYear, false) }
+                , 800)
         }
 
         if (viewModel.seeMoreState) {
             adapter.updateVisibleCount(shuffled.size)
         }
 
-        if (viewModel.onFocused) {
-            recyclerView.post {
-                val viewHolder = recyclerView.findViewHolderForAdapterPosition(viewModel.focusedPosition)
-                if (viewHolder != null) {
-                    showPopupWindow(
-                        viewHolder.itemView,
-                        viewModel.focusedTrack,
-                        viewModel.focusedPosition
-                    )
-                }
-            }
+        if (viewModel.onFocused && !(
+                    viewModel.reenterStateFromMusicInfoFragment
+                    || viewModel.reenterStateFromAlbumInfoFragment
+                    || viewModel.reenterStateFromArtistInfoFragment)) {
+            recyclerView.post { showPopupWindowAgain() }
+        }
+        else if (viewModel.reenterStateFromArtistInfoFragment) {
+            recyclerView.postDelayed({
+                viewModel.reenterStateFromArtistInfoFragment = false
+                showPopupWindowAgain()}, 280)
         }
         else{
             startPostponedEnterTransition()
+        }
+    }
+
+    private fun showPopupWindowAgain() {
+        val viewHolder = recyclerView.findViewHolderForAdapterPosition(viewModel.focusedPosition)
+        if (viewHolder != null) {
+            showPopupWindow(
+                viewHolder.itemView,
+                viewModel.focusedTrack!!,
+                viewModel.focusedPosition
+            )
         }
     }
 

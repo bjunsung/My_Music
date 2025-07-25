@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.transition.Explode;
+import androidx.transition.Slide;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -54,10 +56,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
+import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
+
 
 public class  AlbumInfoFragment extends Fragment {
     private final String TAG = "AlbumInfoFragment";
     public static final String ARGUMENTS_KEY = "album";
+    public static final String TRANSITION_NAME_KEY = "transitionName";
     private Album album;
 
     private ArtistApiHelper apiHelper;
@@ -74,6 +79,8 @@ public class  AlbumInfoFragment extends Fragment {
     private ImageOverlayManager imageOverlayManager;
     private ImageView enlargeButton;
     private FragmentAlbumInfoBinding binding;
+    public static final String REQUEST_KEY = "album_info_fragment_request";
+    public static final String BUNDLE_KEY_TRANSITION_END = "transition_album_artwork_ended";
 
     private AlbumInfoViewModel viewModel;
 
@@ -88,11 +95,46 @@ public class  AlbumInfoFragment extends Fragment {
         setSharedElementReturnTransition(transform);
 
 
-        setEnterTransition(new Explode());
+        setEnterTransition(new Slide(Gravity.TOP));
+
+        // ✅ 3. transition end (Fragment) callback
+        androidx.transition.Transition returnTransition = (androidx.transition.Transition) getSharedElementReturnTransition();
+        if (returnTransition != null){
+            returnTransition.addListener(new androidx.transition.Transition.TransitionListener() {
+                @Override
+                public void onTransitionStart(@NonNull androidx.transition.Transition transition) {}
+
+                @Override
+                public void onTransitionEnd(@NonNull androidx.transition.Transition transition) {
+                    if (isRemoving()) {
+                        Log.d(TAG, "Transition end");
+                        Bundle result = new Bundle();
+                        result.putBoolean(BUNDLE_KEY_TRANSITION_END, true);
+                        getParentFragmentManager().setFragmentResult(REQUEST_KEY, result);
+                        transition.removeListener(this);
+                    }
+                }
+
+                @Override
+                public void onTransitionCancel(@NonNull androidx.transition.Transition transition) {}
+
+                @Override
+                public void onTransitionPause(@NonNull androidx.transition.Transition transition) {}
+
+                @Override
+                public void onTransitionResume(@NonNull androidx.transition.Transition transition) {}
+            });
+        }
 
         viewModel = new ViewModelProvider(this).get(AlbumInfoViewModel.class);
         favoritesViewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
         favoriteArtistViewModel = new ViewModelProvider(this).get(FavoriteArtistViewModel.class);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        setEnterTransition(null);
     }
 
     @Override
@@ -109,7 +151,7 @@ public class  AlbumInfoFragment extends Fragment {
         postponeEnterTransition();
 
         if (viewModel.getInitialTransitionName() == null){
-            String receivedTransitionName = getArguments().getString("transitionName");
+            String receivedTransitionName = getArguments().getString(TRANSITION_NAME_KEY);
             viewModel.setInitialTransitionName(receivedTransitionName);
             ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
             Log.d(TAG, "navigation 으로 '전달받은' 이름 설정, name=" + receivedTransitionName);
