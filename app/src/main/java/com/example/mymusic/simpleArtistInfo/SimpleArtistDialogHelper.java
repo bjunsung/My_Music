@@ -251,31 +251,43 @@ public class SimpleArtistDialogHelper {
             paletteFrame.setBackground(currentGradient);
         }
 
-        ImageColorAnalyzer.analyzePrimaryColor(context, artistMetadata.images.get(0), new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
-            @Override
-            public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
+        if (artistMetadata.images.isEmpty()) {
+            if (currentGradient != null) {
+                paletteFrame.setBackground(currentGradient);
+            } else {
+                Log.d(TAG, "gradient is null");
+                int brightenColor = Color.parseColor("#B39DDB"); // 밝은 보라
+                int darkenColor = Color.parseColor("#4527A0");   // 진한 보라
+                gradiantToFrame(paletteFrame, brightenColor, darkenColor);
+            }
+        }
+        else {
+            ImageColorAnalyzer.analyzePrimaryColor(context, artistMetadata.images.get(0), new ImageColorAnalyzer.OnPrimaryColorAnalyzedListener() {
+                @Override
+                public void onSuccess(int dominantColor, int primaryColor, int selectedColor, int unselectedColor) {
                 /*
                 int[] colorPair = MyColorUtils.generateContrastColors(primaryColor, 1.5f, 0.42f, 0.1f, 0.9f, 0.3f);
 int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.7f), 0.85f, 0.15f, 0.3f, 0.7f, 0.6f,0.9f);
                  */
-                int[] colorPair = MyColorUtils.generateContrastColors(MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.5f), 1.5f, 0.42f, 0.1f, 0.9f, 0.3f);
+                    int[] colorPair = MyColorUtils.generateContrastColors(MyColorUtils.darkenHslColor(MyColorUtils.ensureContrastWithWhite(primaryColor), 0.5f), 1.5f, 0.42f, 0.1f, 0.9f, 0.3f);
 
-                gradiantToFrame(paletteFrame, colorPair[0], colorPair[1]);
+                    gradiantToFrame(paletteFrame, colorPair[0], colorPair[1]);
 
-            }
-
-            @Override
-            public void onFailure() {
-                if (currentGradient != null){
-                    paletteFrame.setBackground(currentGradient);
-                } else {
-                    Log.d(TAG, "gradient is null");
-                    int brightenColor = Color.parseColor("#B39DDB"); // 밝은 보라
-                    int darkenColor = Color.parseColor("#4527A0");   // 진한 보라
-                    gradiantToFrame(paletteFrame, brightenColor, darkenColor);
                 }
-            }
-        });
+
+                @Override
+                public void onFailure() {
+                    if (currentGradient != null) {
+                        paletteFrame.setBackground(currentGradient);
+                    } else {
+                        Log.d(TAG, "gradient is null");
+                        int brightenColor = Color.parseColor("#B39DDB"); // 밝은 보라
+                        int darkenColor = Color.parseColor("#4527A0");   // 진한 보라
+                        gradiantToFrame(paletteFrame, brightenColor, darkenColor);
+                    }
+                }
+            });
+        }
         expandButton.setOnClickListener(v -> {
             expandDetails();;
         });
@@ -316,6 +328,7 @@ int[] colorPair = MyColorUtils.generateBoundedContrastColors(MyColorUtils.darken
     }
 
     public int getRealPosition(int position) {
+        if (pagerAdapter.getRealCount() == 0) return position;
         return position % pagerAdapter.getRealCount();
     }
 

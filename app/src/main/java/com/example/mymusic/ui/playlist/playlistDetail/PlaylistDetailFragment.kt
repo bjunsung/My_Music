@@ -7,44 +7,47 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.transition.ArcMotion
-import android.transition.ChangeBounds
-import android.transition.ChangeTransform
-import android.transition.TransitionSet
+import androidx.transition.ArcMotion
+import androidx.transition.ChangeBounds
+import androidx.transition.ChangeTransform
+import androidx.transition.TransitionSet
+import androidx.transition.Slide
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.AccelerateInterpolator
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
+import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.Fade
-import androidx.transition.Transition
-import androidx.transition.TransitionInflater
+
+import com.bumptech.glide.Glide
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.data.repository.PlaylistRepository
 import com.example.mymusic.databinding.FragmentPlaylistDetailBinding
 import com.example.mymusic.model.Favorite
 import com.example.mymusic.model.Playlist
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment
+import com.example.mymusic.ui.playlist.searchPlaylist.SearchPlaylistFragment
 import com.example.mymusic.util.ImageCollageUtil
 import com.example.mymusic.util.VerticalSpaceItemDecoration
-import com.google.android.material.transition.platform.MaterialArcMotion
-import com.google.android.material.transition.platform.MaterialContainerTransform
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -59,13 +62,36 @@ class PlaylistDetailFragment: Fragment() {
     val callback :DragReorderCallback by lazy { DragReorderCallback(adapter, vmPlaylistDetail) }
     val itemTouchHelper: ItemTouchHelper by lazy { ItemTouchHelper(callback) }
 
+    private var combinedImageReadyFlag = false
+    //private var focusedImageReadyFlag = false
+
     val adapter: PlaylistDetailAdapter by lazy {
         PlaylistDetailAdapter(
             mutableListOf(),
             mutableSetOf(),
             object: PlaylistDetailAdapter.OnClickListener {
-                override fun onItemClick(favorite: Favorite, position: Int) {
-                    //todo move to music info detail
+                override fun onItemClick(
+                    holder: PlaylistDetailAdapter.ViewHolder,
+                    favorite: Favorite,
+                ) {
+                    val args = Bundle().apply {
+                        putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+                        putString(
+                            MusicInfoFragment.TRANSITION_NAME_KEY,
+                            holder.artworkImage.transitionName
+                        )
+                    }
+                    val extras = FragmentNavigatorExtras(
+                        holder.artworkImage to holder.artworkImage.transitionName,
+                        holder.titleTextView to holder.titleTextView.transitionName,
+                        holder.artistNameTextView to holder.artistNameTextView.transitionName,
+                        holder.albumNameTextView to holder.albumNameTextView.transitionName,
+                        holder.durationLayout to holder.durationLayout.transitionName,
+                        holder.releaseDateLayout to holder.releaseDateLayout.transitionName
+                    )
+                    findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
+                    binding.trackRecyclerView.post { vmPlaylistDetail.focusedTrackId = favorite.track.trackId
+                    }
                 }
 
                 override fun onPlayButtonClick(trackList: List<Favorite>, position: Int) {
@@ -90,6 +116,31 @@ class PlaylistDetailFragment: Fragment() {
 
                 override fun onItemSelected(selectedIds: Set<String>) {
                     vmPlaylistDetail.updateSelectedIdSet(selectedIds)
+                }
+
+                override fun onImageReady(trackId: String) {
+
+
+                    val focusedTrackId = vmPlaylistDetail.focusedTrackId
+
+                    if (focusedTrackId == trackId) {
+                        Log.d(TAG, "image ready for id: " + trackId)
+                    }
+                    /*
+                   if (focusedTrackId == null || focusedTrackId == trackId) {
+
+                       focusedImageReadyFlag = true
+                       if (focusedImageReadyFlag && combinedImageReadyFlag) {
+                           startPostponedEnterTransition()
+                       }
+                   }
+
+                     */
+
+
+
+
+
                 }
 
                 override fun onMoreButtonClick(anchorView: View, favorite: Favorite) {
@@ -123,7 +174,7 @@ class PlaylistDetailFragment: Fragment() {
                             popupView.findViewById<LinearLayout>(R.id.music_shuffle_here_layout)
                         val createNewPlaylistLayout =
                             popupView.findViewById<LinearLayout>(R.id.create_new_playlist)
-                        val showPlaylistForTrackLayout =
+                        val showContainingPlaylistLayout =
                             popupView.findViewById<LinearLayout>(R.id.show_playlists_for_track)
                         val removeTrackLayout =
                             popupView.findViewById<LinearLayout>(R.id.remove_from_playlist_layout)
@@ -148,7 +199,7 @@ class PlaylistDetailFragment: Fragment() {
                             val anchorY = anchorLocation[1]
                             val screenWidth = Resources.getSystem().displayMetrics.widthPixels
                             var x = screenWidth - 7 * anchorX - popupWindowWidth
-                            var y = if (isNonEditable) anchorY + popupViewHeight else anchorY
+                            var y =  anchorY
                             popupWindow.showAtLocation(
                                 anchorView.rootView,
                                 Gravity.NO_GRAVITY,
@@ -216,6 +267,55 @@ class PlaylistDetailFragment: Fragment() {
                             )
 
                         }
+                        showContainingPlaylistLayout.setOnClickListener {
+                            popupWindow.dismiss()
+                            val dialog = Dialog(requireContext()).apply {
+                                window?.setBackgroundDrawableResource(android.R.color.transparent)
+                                setContentView(R.layout.dialog_custom_playlists)
+                                setCancelable(true)
+                            }
+                            val focusedImageView = dialog.findViewById<ImageView>(R.id.artwork_image)
+                            val containingPlaylistRecyclerView = dialog.findViewById<RecyclerView>(R.id.playlist_recycler_view)
+                            val dismissButton = dialog.findViewById<TextView>(R.id.dismiss_button)
+                            Glide.with(requireContext())
+                                .load(favorite.track.artworkUrl)
+                                .error(R.drawable.ic_image_not_found_foreground)
+                                .override(160, 160)
+                                .centerCrop()
+                                .into(focusedImageView)
+                            val containingPlaylistAdapter =  ContainingPlaylistAdapter(
+                                emptyList(),
+                                object : ContainingPlaylistAdapter.OnClickListener {
+                                    override fun onItemClick(playlist: Playlist) {
+                                        dialog.dismiss()
+                                        vmPlaylistDetail._playlist.value = playlist
+                                    }
+
+                                    override fun onPlayButtonClick(playlist: Playlist) {
+                                        if (playlist.trackIds.isEmpty()) return
+                                        vmMainActivity.setPlaylistFromPlaylist(playlist, 0)
+                                    }
+
+                                    override fun onShuffleButtonClick(playlist: Playlist) {
+                                        if (playlist.trackIds.isEmpty()) return
+                                        vmMainActivity.setPlaylistFromPlaylist(playlist.deepCopy().apply { favorites = favorites.shuffled() }, 0)
+                                    }
+
+                                }
+                            )
+                            containingPlaylistRecyclerView.adapter = containingPlaylistAdapter
+                            containingPlaylistRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+                            vmPlaylistDetail.viewModelScope.launch(Dispatchers.IO) {
+                                val containingPlaylists = vmPlaylistDetail.findContainingPlaylist(favorite.track.trackId)
+                                withContext(Dispatchers.Main) { containingPlaylistAdapter.updateList(containingPlaylists) }
+                            }
+
+                            dismissButton.setOnClickListener {
+                                dialog.dismiss()
+                            }
+                            dialog.show()
+                            dialog.setOnDismissListener { containingPlaylistRecyclerView.adapter = null }
+                        }
                     }
                 }
 
@@ -224,6 +324,7 @@ class PlaylistDetailFragment: Fragment() {
             }
         )
     }
+
     val arc = ArcMotion().apply {
         minimumHorizontalAngle = 60f // 좌우 곡률 최소 각도
         minimumVerticalAngle = 80f   // 상하 곡률 최소 각도
@@ -234,10 +335,21 @@ class PlaylistDetailFragment: Fragment() {
             ordering = TransitionSet.ORDERING_TOGETHER
             addTransition(ChangeBounds())
             addTransition(ChangeTransform()) // 스케일/회전 변환 추가
-            pathMotion = arc
+            setPathMotion(arc)
             duration = 435L
             interpolator = AccelerateDecelerateInterpolator()
             addTarget(targetName) // transitionName
+        }
+    }
+    fun buildImageTransition(targetName: String): TransitionSet {
+        return TransitionSet().apply {
+            ordering = TransitionSet.ORDERING_TOGETHER
+            addTransition(ChangeBounds())
+            addTransition(ChangeTransform())
+            setPathMotion(ArcMotion())
+            duration = 350L
+            interpolator = AccelerateDecelerateInterpolator()
+            addTarget(targetName)
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -247,22 +359,10 @@ class PlaylistDetailFragment: Fragment() {
         val playlistId = playlist.playlistId
 
 
-        //  1. 전환 애니메이션 종류 설정
-        //  이미지 전환 — ArcMotion 경로
-        val imageTrans = TransitionSet().apply {
-            ordering = TransitionSet.ORDERING_TOGETHER
-            addTransition(ChangeBounds())
-            addTransition(ChangeTransform())
-            pathMotion = ArcMotion()
-            duration = 350L
-            interpolator = AccelerateDecelerateInterpolator()
-            addTarget("artworks_$playlistId")
-        }
-
-        // 텍스트도 동일한 전환 구성
         val nameTrans = buildTextTransition("name_$playlistId")
         val countTrans = buildTextTransition("count_$playlistId")
         val durationTrans = buildTextTransition("duration_$playlistId")
+        val imageTrans = buildImageTransition( "combined_artworks_$playlistId")
 
         sharedElementEnterTransition = TransitionSet().apply {
             ordering = TransitionSet.ORDERING_TOGETHER
@@ -274,8 +374,9 @@ class PlaylistDetailFragment: Fragment() {
 
         sharedElementReturnTransition = (sharedElementEnterTransition as TransitionSet).clone()
 
-
-
+        // ✅ 2. 나머지 뷰를 위한 전환 설정
+        enterTransition = Slide(Gravity.BOTTOM).setDuration(275L)
+        returnTransition = null
 
     }
 
@@ -291,6 +392,14 @@ class PlaylistDetailFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         postponeEnterTransition()
+
+
+        vmPlaylistDetail.viewModelScope.launch {
+            delay(200)
+            startPostponedEnterTransition()
+        }
+
+
         receiveBundle()
         bind()
         setObserver()
@@ -302,6 +411,7 @@ class PlaylistDetailFragment: Fragment() {
         if (vmPlaylistDetail.playlist.value == null) {
             vmPlaylistDetail._playlist.value = receivedPlaylist
         }
+        vmPlaylistDetail.synchronizePlaylist()
     }
 
     private fun bind() {
@@ -345,12 +455,20 @@ class PlaylistDetailFragment: Fragment() {
             withContext(Dispatchers.Main) {
                 binding.combinedArtworks.setImageBitmap(bitmap)
                 startPostponedEnterTransition()
+                /*
+                combinedImageReadyFlag = true
+                if (focusedImageReadyFlag && combinedImageReadyFlag) {
+                    startPostponedEnterTransition()
+                }
+
+                 */
             }
         }
     }
 
     private fun setTransitionName(playlistId: String) {
         // 2) transitionName을 '출발 프래그먼트'에서 준 값과 동일하게 세팅
+        binding.combinedArtworks.transitionName = "combined_artworks_$playlistId"
         binding.combinedArtworksCard.transitionName = "artworks_$playlistId"
         binding.playlistName.transitionName = "name_$playlistId"
         binding.playlistCount.transitionName = "count_$playlistId"
@@ -369,11 +487,17 @@ class PlaylistDetailFragment: Fragment() {
         vmPlaylistDetail.selectedIdsSet.observe(viewLifecycleOwner) {newSet ->
             adapter.updateSelectedIdSet(newSet)
         }
+
+        /** 최근 재생한 플레이리스트 면 mainActivityViewModel 의 플레이리스트에 observe */
+        if (vmPlaylistDetail.playlist.value?.playlistId == PlaylistRepository.PLAYLIST_ID_RECENTLY_PLAYED) {
+            vmMainActivity.currentlyPlayedPlaylist.observe(viewLifecycleOwner) { recentlyPlayedPlaylist ->
+                vmPlaylistDetail._playlist.value = recentlyPlayedPlaylist
+            }
+        }
     }
 
     private fun setClickEvent() {
-        val playlist = vmPlaylistDetail.playlist.value
-
+       val playlist = vmPlaylistDetail.playlist.value
         if (playlist?.isEmpty() != false) {
             binding.musicPlay.alpha = 0.4f
             binding.musicShuffle.alpha = 0.4f
@@ -393,6 +517,7 @@ class PlaylistDetailFragment: Fragment() {
         }
         if (vmPlaylistDetail.playlist.value?.playlistId?.equals(PlaylistRepository.PLAYLIST_ID_RECENTLY_PLAYED) ?: false) {
             binding.rename.visibility = View.GONE
+            binding.addTracks.visibility = View.GONE
         }
         else {
             binding.rename.setOnClickListener {
@@ -477,6 +602,16 @@ class PlaylistDetailFragment: Fragment() {
                         }
                     }
                 }
+            }
+        }
+
+        binding.addTracks.setOnClickListener {
+            val pli = vmPlaylistDetail.playlist.value
+            pli?.let {
+                val args = Bundle().apply {
+                    putParcelable(SearchPlaylistFragment.PLAYLIST_KEY, pli)
+                }
+                findNavController().navigate(R.id.fragment_search_playlist, args)
             }
         }
 

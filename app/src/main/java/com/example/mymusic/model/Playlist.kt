@@ -2,7 +2,6 @@ package com.example.mymusic.model
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.example.mymusic.ui.playlist.playlistDetail.PlaylistDetailFragment
 import java.time.LocalDate
 import java.util.UUID
 
@@ -16,7 +15,30 @@ data class Playlist(
     var playCount: Int = 0,
     var favorites: List<Favorite>  = emptyList()
 ) : Parcelable{
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Playlist) return false
+        return playlistId == other.playlistId &&
+                playlistName == other.playlistName &&
+                trackIds == other.trackIds &&
+                totalDurationSec == other.totalDurationSec &&
+                createdDate == other.createdDate &&
+                lastPlayedTimeMs == other.lastPlayedTimeMs &&
+                playCount == other.playCount &&
+                favorites == other.favorites
+    }
 
+    override fun hashCode(): Int {
+        var result = playlistId.hashCode()
+        result = 31 * result + playlistName.hashCode()
+        result = 31 * result + trackIds.hashCode()
+        result = 31 * result + totalDurationSec
+        result = 31 * result + createdDate.hashCode()
+        result = 31 * result + (lastPlayedTimeMs?.hashCode() ?: 0)
+        result = 31 * result + playCount
+        result = 31 * result + favorites.hashCode()
+        return result
+    }
     fun deepCopy() = Playlist(
         playlistId,
         playlistName,
@@ -27,6 +49,11 @@ data class Playlist(
         playCount,
         favorites
     )
+    // 원본 정의가 MutableList라면 새 인스턴스로 복제해서 넘겨야 함
+    fun copyWithTrackIds(newIds: List<String>): Playlist =
+        this.copy(
+            trackIds = newIds.toMutableList()
+        )
 
     fun shuffle() {
         this.favorites = favorites.shuffled()
@@ -41,10 +68,10 @@ data class Playlist(
     }
 
     /** 중복이 있으면 그 항목을 앞으로 이동 (맨 앞에 쌓임) */
-    fun addTracksMoveDuplicatesToFront(newIds: List<String>, maxQueueSize: Int? = null) {
+    fun addTracksMoveDuplicatesToBack(newIds: List<String>, maxQueueSize: Int? = null) {
         for (id in newIds) {
             trackIds.remove(id)
-            trackIds.add(0, id)
+            trackIds.add(trackIds.size, id)
         }
         enforceLimit(maxQueueSize)
     }
@@ -120,6 +147,8 @@ data class Playlist(
     override fun toString(): String {
         return "${playlistName} track count: ${favorites.size}"
     }
+
+
     companion object CREATOR : Parcelable.Creator<Playlist> {
         override fun createFromParcel(parcel: Parcel): Playlist {
             val playlistId = parcel.readString() ?: UUID.randomUUID().toString()

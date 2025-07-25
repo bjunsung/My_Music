@@ -65,6 +65,7 @@ import com.example.mymusic.adapter.FavoriteArtistAdapter;
 import com.example.mymusic.adapter.FavoritesAdapter;
 import com.example.mymusic.adapter.FavoritesWithCardViewAdapter;
 import com.example.mymusic.cache.writer.CustomFavoriteArtistImageWriter;
+import com.example.mymusic.data.repository.FavoriteSongRepository;
 import com.example.mymusic.data.repository.SettingRepository;
 import com.example.mymusic.databinding.FragmentFavoritesBinding;
 import com.example.mymusic.model.Artist;
@@ -944,10 +945,62 @@ public class FavoritesFragment extends Fragment {
             addMp3File(fav, position);
         });
 
+        TextView hideButton = popupView.findViewById(R.id.hide_track);
+        hideButton.setOnClickListener(v -> {
+            popupWindow.dismiss();
+            hideTrack(fav, position);
+        });
+
 
     }
     LinearLayout addMp3Button;
     LinearLayout editMp3Button;
+
+    private void hideTrack(Favorite fav, int position) {
+        Dialog dialog = new Dialog(requireContext());
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.dialog_custom);
+        TextView titleTextView = dialog.findViewById(R.id.title);
+        TextView subTextView = dialog.findViewById(R.id.subtext);
+        TextView cancelButton = dialog.findViewById(R.id.cancel_button);
+        TextView confirmButton = dialog.findViewById(R.id.confirm_button);
+        titleTextView.setText("숨김");
+        subTextView.setText("정말 " + fav.getTitle() + " - " + fav.getArtistName() + " 을(를) 숨김처리 하시겠습니까?\n 숨긴 항목은 설정에서 관리할 수 있습니다.");
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        confirmButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            fav.isHidden = true;
+            new Thread(() -> {
+                favoritesViewModel.repository.updateFavoriteSongExceptPlayCount(fav, new FavoriteSongRepository.FavoriteDbCallback() {
+                    @Override
+                    public void onSuccess() {
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            favoritesViewModel.loadAllFavorites(updatedList -> {
+                                if (updatedList.isEmpty()) {
+                                    emptyFavoriteSongTextView.setVisibility(View.VISIBLE);
+                                } else {
+                                    emptyFavoriteSongTextView.setVisibility(View.GONE);
+                                }
+                                Context context = getContext();
+                                if (context != null){
+                                    List<Favorite> filtered = SortFilterUtil.sortAndFilterFavoritesList(context, updatedList, null);
+                                    favoritesViewModel.setFavoriteList(filtered);
+                                    favoriteTrackAdapter.updateData(filtered);
+                                    updateEmptyState(filtered.isEmpty());
+                                    setFavoritesCountText(filtered.size());
+                                }
+                            });
+                        });
+                    }
+                    @Override
+                    public void onFailure() {}
+                });
+            }).start();
+
+        });
+        dialog.show();
+    }
 
 
     private static final int REQUEST_CODE_PICK_AUDIO = 1001;
@@ -1043,10 +1096,7 @@ public class FavoritesFragment extends Fragment {
                 return null;
             });
 
-
-
             int visibility = Boolean.TRUE.equals(favoritesViewModel.getLyricsMode().getValue()) ? View.GONE : View.VISIBLE;
-
 
             if (highlightedPositions != null && !highlightedPositions.isEmpty()){
                 previousKeywordButton.setVisibility(visibility);
@@ -2286,8 +2336,9 @@ public class FavoritesFragment extends Fragment {
     /**
      * 어댑터의 아이템 클릭을 받아 내비게이션을 실행하는 메서드
      */
-    private void handleItemNavigation(Favorite favorite, ImageView sharedImageView, int position) {
+    private void handleItemNavigation(FavoritesAdapter.FavoriteViewHolder holder, Favorite favorite, int position) {
         Log.d(TAG, "handleItemNavigation() 호출됨");
+        View sharedImageView = holder.image;
         String transitionName = ViewCompat.getTransitionName(sharedImageView);
         favoritesViewModel.setFocusedTransitionName(transitionName);
         favoritesViewModel.setTransitionPosition(position);
@@ -2300,19 +2351,26 @@ public class FavoritesFragment extends Fragment {
             favoritesViewModel.setReenterScrollOffset(offset);
         }
         Bundle bundle = new Bundle();
-        bundle.putParcelable("favorite", favorite);
-        bundle.putString("transitionName", transitionName);
+        bundle.putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite);
+        bundle.putString(MusicInfoFragment.TRANSITION_NAME_KEY, transitionName);
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
                 .addSharedElement(sharedImageView, transitionName)
+                .addSharedElement(holder.title, holder.title.getTransitionName())
+                .addSharedElement(holder.artist, holder.artist.getTransitionName())
+                .addSharedElement(holder.album, holder.album.getTransitionName())
+                .addSharedElement(holder.durationLayout, holder.durationLayout.getTransitionName())
+                .addSharedElement(holder.releaseDateLayout, holder.releaseDateLayout.getTransitionName())
                 .build();
 
         Navigation.findNavController(requireView()).navigate(
-                R.id.action_favoritesFragment_to_musicInfoFragment,
+                R.id.musicInfoFragment,
                 bundle,
                 null,
                 extras
         );
+
+
     }
 
 

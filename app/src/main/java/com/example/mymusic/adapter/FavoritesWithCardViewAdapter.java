@@ -145,7 +145,7 @@ public class FavoritesWithCardViewAdapter extends RecyclerView.Adapter<Favorites
         }
 
 
-        Glide.with(context)
+        Glide.with(holder.itemView)
                 .load(track.artworkUrl)
                 .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                 .into(holder.image);

@@ -31,6 +31,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.example.mymusic.R;
 import com.example.mymusic.cache.CacheUtil;
@@ -49,7 +50,7 @@ public class SettingFragment extends Fragment {
     private ImageView colorCircleStrawberryPink, colorCircleManchesterCity, colorCircleBasic, colorCirclePantone;
     private ImageButton clearCacheImageButton;
     private SharedPreferences prefs;
-    private ImageButton backupButton, restoreButton;
+    private ImageButton backupButton, restoreButton, manageHiddenTrackButton;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -85,6 +86,7 @@ public class SettingFragment extends Fragment {
         clearCacheImageButton = view.findViewById(R.id.clear_cache_button);
         backupButton = view.findViewById(R.id.backup_button);
         restoreButton = view.findViewById(R.id.restore_button);
+        manageHiddenTrackButton = view.findViewById(R.id.handle_hidden_tracks);
     }
 
     private void setViewInitialState(){
@@ -269,6 +271,7 @@ public class SettingFragment extends Fragment {
             DatabaseBackupHelper.startRestore((AppCompatActivity) requireActivity(), restoreLauncher);
         });
 
+        manageHiddenTrackButton.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.fragment_hidden_track));
 
     }
 

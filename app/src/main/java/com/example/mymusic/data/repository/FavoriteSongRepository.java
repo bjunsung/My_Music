@@ -52,7 +52,7 @@ public class FavoriteSongRepository {
         // 2) id -> Favorite 매핑
         Map<String, Favorite> byId = new HashMap<>(rawDataList.size());
         for (Favorites item : rawDataList) {
-            Favorite model = entityToModel(item);
+            Favorite model = entityToModelWithoutPlayCountByDay(item);
             byId.put(item.trackId, model);
         }
 
@@ -60,113 +60,73 @@ public class FavoriteSongRepository {
         List<Favorite> ordered = new ArrayList<>(ids.size());
         for (String id : ids) {
             Favorite f = byId.get(id);
-            if (f != null) ordered.add(f);
+            if (f != null && !f.isHidden) ordered.add(f);
         }
 
         return ordered;
     }
 
 
-    private Favorite entityToModel(Favorites rawData) {
-        if(rawData == null) {
+    private Favorite entityToModelWithoutPlayCountByDay(Favorites entity) {
+        if(entity == null) {
             return null;
         }
         Track track = new Track(
-                rawData.trackId,
-                rawData.albumId,
-                rawData.artistId,
-                rawData.trackName,
-                rawData.albumName,
-                rawData.artistName,
-                rawData.artworkUrl,
-                rawData.releaseDate,
-                rawData.durationMs);
-        track.primaryColor = rawData.primaryColor;
-        TrackMetadata metadata = new TrackMetadata(rawData.vibeTrackId, rawData.trackNameKr, rawData.lyrics, rawData.vocalists, rawData.lyricists, rawData.composers);
-        Favorite fav = new Favorite(track, rawData.addedDate, metadata);
-        fav.audioUri = rawData.audioUri;
-        fav.playCount = rawData.playCount;
+                entity.trackId,
+                entity.albumId,
+                entity.artistId,
+                entity.trackName,
+                entity.albumName,
+                entity.artistName,
+                entity.artworkUrl,
+                entity.releaseDate,
+                entity.durationMs);
+        track.primaryColor = entity.primaryColor;
+        TrackMetadata metadata = new TrackMetadata(entity.vibeTrackId, entity.trackNameKr, entity.lyrics, entity.vocalists, entity.lyricists, entity.composers);
+        Favorite model = new Favorite(track, entity.addedDate, metadata);
+        model.audioUri = entity.audioUri;
+        model.playCount = entity.playCount;
         //fav.playCountByDay = song.playCountByDay;
-        fav.firstCountedDate = rawData.firstCountedDate;
-        fav.lastPlayedDate = rawData.lastPlayedDate;
-        return fav;
+        model.firstCountedDate = entity.firstCountedDate;
+        model.lastPlayedDate = entity.lastPlayedDate;
+        model.isHidden =  entity.isHidden;
+        return model;
     }
+
+
     public Favorite getFavoritesSong(String trackId){
         Favorites song = favoritesDao.getFavoritesSong(trackId);
-        if(song == null) {
+        if(song == null || song.isHidden) {
             return null;
         }
-        Track track = new Track(
-                song.trackId,
-                song.albumId,
-                song.artistId,
-                song.trackName,
-                song.albumName,
-                song.artistName,
-                song.artworkUrl,
-                song.releaseDate,
-                song.durationMs);
-        track.primaryColor = song.primaryColor;
-        TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
-        Favorite fav = new Favorite(track, song.addedDate, metadata);
-        fav.audioUri = song.audioUri;
-        fav.playCount = song.playCount;
-        //fav.playCountByDay = song.playCountByDay;
-        fav.firstCountedDate = song.firstCountedDate;
-        fav.lastPlayedDate = song.lastPlayedDate;
-        return fav;
+        return entityToModelWithoutPlayCountByDay(song);
     }
+
+    public Favorite getFavoriteIncludeHidden(String trackId) {
+        Favorites song = favoritesDao.getFavoritesSong(trackId);
+        return entityToModelWithoutPlayCountByDay(song);
+    }
+
 
     public Favorite getFavoriteSongWithPlayCount(String trackId) {
         Favorites song = favoritesDao.getFavoritesSong(trackId);
-        if(song == null) {
+        if(song == null || song.isHidden) {
             return null;
         }
-        Track track = new Track(
-                song.trackId,
-                song.albumId,
-                song.artistId,
-                song.trackName,
-                song.albumName,
-                song.artistName,
-                song.artworkUrl,
-                song.releaseDate,
-                song.durationMs);
-        track.primaryColor = song.primaryColor;
-        TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
-        Favorite fav = new Favorite(track, song.addedDate, metadata);
-        fav.audioUri = song.audioUri;
-        fav.playCount = song.playCount;
-        fav.playCountByDay = song.playCountByDay;
-        fav.firstCountedDate = song.firstCountedDate;
-        fav.lastPlayedDate = song.lastPlayedDate;
-        return fav;
+        Favorite model = entityToModelWithoutPlayCountByDay(song);
+        model.playCountByDay = song.playCountByDay;
+        return model;
     }
 
     public List<Favorite> getAllFavoriteTracksWithPlayCount() {
         List<Favorites> songs = favoritesDao.getAllFavorites();
         List<Favorite> favoriteList = new ArrayList<>();
         for (Favorites song : songs) {
-            Track track = new Track(
-                    song.trackId,
-                    song.albumId,
-                    song.artistId,
-                    song.trackName,
-                    song.albumName,
-                    song.artistName,
-                    song.artworkUrl,
-                    song.releaseDate,
-                    song.durationMs
-            );
-            track.primaryColor = song.primaryColor;
-            TrackMetadata metadata = new TrackMetadata(song.vibeTrackId, song.trackNameKr, song.lyrics, song.vocalists, song.lyricists, song.composers);
-            Favorite fav = new Favorite(track, song.addedDate, metadata);
-            fav.audioUri = song.audioUri;
-            fav.playCount = song.playCount;
-            fav.playCountByDay = song.playCountByDay;
-            fav.firstCountedDate = song.firstCountedDate;
-            fav.lastPlayedDate = song.lastPlayedDate;
-            favoriteList.add(fav);
+            if (!song.isHidden) {
+                Favorite item = entityToModelWithoutPlayCountByDay(song);
+                item.playCountByDay = song.playCountByDay;
+                favoriteList.add(item);
+            }
         }
         return favoriteList;
     }
@@ -181,7 +141,8 @@ public class FavoriteSongRepository {
         List<Favorites> songs = favoritesDao.getAllFavorites();
         List<Favorite> favorites = new ArrayList<>();
         for (Favorites song : songs) {
-            favorites.add(entityToModel(song));
+            if (!song.isHidden)
+                favorites.add(entityToModelWithoutPlayCountByDay(song));
         }
         return favorites;
     }
@@ -191,7 +152,8 @@ public class FavoriteSongRepository {
         List<Favorites> rawList = favoritesDao.getFavoritesByArtistId(artistId);
         List<Favorite> converted = new ArrayList<>();
         for (Favorites item: rawList) {
-            converted.add(entityToModel(item));
+            if (!item.isHidden)
+                converted.add(entityToModelWithoutPlayCountByDay(item));
         }
         return converted;
     }
@@ -208,49 +170,50 @@ public class FavoriteSongRepository {
         callback.accept(result);
     }
 
-    public void updateFavoriteSongExceptPlayCount(Favorite favorite, FavoriteDbCallback callback) {
-        Favorites existing = favoritesDao.getFavoritesSong(favorite.track.trackId);
-        TrackMetadata metadata = favorite.metadata;
-        existing.addedDate = favorite.addedDate;
-        existing.vibeTrackId = metadata.vibeTrackId;
-        existing.trackNameKr = metadata.title;
-        existing.lyrics = metadata.lyrics;
-        existing.vocalists = metadata.vocalists;
-        existing.lyricists = metadata.lyricists;
-        existing.composers = metadata.composers;
-        existing.audioUri = favorite.audioUri;
-        existing.primaryColor = favorite.track.primaryColor;
+    private Favorites modelToEntityWithoutPlayCountByDay(Favorite model) {
+        if (model == null) return null;
+        Favorites entity = favoritesDao.getFavoritesSong(model.track.trackId);
+        TrackMetadata metadata = model.metadata;
+        entity.addedDate = model.addedDate;
+        entity.vibeTrackId = metadata.vibeTrackId;
+        entity.trackNameKr = metadata.title;
+        entity.lyrics = metadata.lyrics;
+        entity.vocalists = metadata.vocalists;
+        entity.lyricists = metadata.lyricists;
+        entity.composers = metadata.composers;
+        entity.audioUri = model.audioUri;
+        entity.primaryColor = model.track.primaryColor;
+        entity.isHidden = model.isHidden;
+        return entity;
+    }
 
-        int result = favoritesDao.updateFavoriteSong(existing);
+    public void updateFavoriteSongExceptPlayCount(Favorite favorite, FavoriteDbCallback callback) {
+        Favorites entity = modelToEntityWithoutPlayCountByDay(favorite);
+        int result = favoritesDao.updateFavoriteSong(entity);
         if (result > 0) callback.onSuccess();
         else callback.onFailure();
     }
 
     public void updateFavoriteSongWithPlayCount(Favorite favorite, FavoriteDbCallback callback) {
-        TrackMetadata metadata = favorite.metadata;
-        String audioUriStr = favorite.audioUri;
-        Favorites converted = new Favorites(favorite.track,
-                favorite.addedDate,
-                metadata.vibeTrackId,
-                metadata.title,
-                metadata.lyrics,
-                metadata.vocalists,
-                metadata.lyricists,
-                metadata.composers,
-                audioUriStr,
-                favorite.playCount,
-                favorite.playCountByDay,
-                favorite.firstCountedDate,
-                favorite.lastPlayedDate);
-        converted.primaryColor = favorite.track.primaryColor;
-        int result = favoritesDao.updateFavoriteSong(converted);
+        Favorites entity = modelToEntityWithoutPlayCountByDay(favorite);
+        entity.playCountByDay = favorite.playCountByDay;
+        int result = favoritesDao.updateFavoriteSong(entity);
         if (result > 0) callback.onSuccess();
         else callback.onFailure();
     }
 
-
     public int deleteFavoritesByIds(List<String> trackIds){
         return favoritesDao.deleteFavoritesByIds(trackIds);
+    }
+
+    public List<Favorite> getHiddenTracks() {
+        List<Favorites> songs = favoritesDao.getAllFavorites();
+        List<Favorite> result = new ArrayList<>();
+        for (Favorites song : songs) {
+            if (song.isHidden)
+                result.add(entityToModelWithoutPlayCountByDay(song));
+        }
+        return result;
     }
 }
 

@@ -72,7 +72,7 @@ public class SimpleRectangleImagePagerAdapter extends RecyclerView.Adapter<Simpl
                 imageLoadListener.onLoadSuccess(realPosition, bitmapCache);
             }
         } else {
-            Glide.with(viewGroupContext)
+            Glide.with(holder.itemView)
                     .asBitmap()
                     .load(url)
                     .centerCrop()

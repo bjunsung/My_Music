@@ -15,19 +15,24 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.annotation.OptIn
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.media3.common.util.UnstableApi
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mymusic.R
 import com.example.mymusic.databinding.FragmentMyCalendarBinding
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.DayPosition
+import com.kizitonwose.calendar.core.OutDateStyle
 import com.kizitonwose.calendar.core.yearMonth
 import com.kizitonwose.calendar.view.CalendarView
 import com.kizitonwose.calendar.view.DaySize
@@ -37,6 +42,7 @@ import com.kizitonwose.calendar.view.ViewContainer
 import okhttp3.internal.notify
 import java.time.DayOfWeek // 요청하신 import
 import java.time.LocalDate // 요청하신 import
+import java.time.Year
 import java.time.YearMonth // 요청하신 import
 
 
@@ -48,6 +54,7 @@ class MyCalendar : Fragment() {
     private val today = LocalDate.now() // java.time.LocalDate 사용
     private lateinit var calendarView: CalendarView
 
+    private var shownMonth: YearMonth? = null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMyCalendarBinding.inflate(inflater, container, false)
         return binding.root
@@ -60,6 +67,9 @@ class MyCalendar : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        postponeEnterTransition()
+        Handler(Looper.getMainLooper()).postDelayed(Runnable{ startPostponedEnterTransition() }, 50)
 
         bind()
 
@@ -112,6 +122,7 @@ class MyCalendar : Fragment() {
 
 
         calendarView.monthScrollListener = { month ->
+            shownMonth = month.yearMonth
             calendarViewModel.currentMonth = month.yearMonth
             val yearText = month.yearMonth.year.toString().toCharArray().joinToString("\n") // month.yearMonth는 YearMonth 사용
             val monthTextEn = month.yearMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }
@@ -136,10 +147,10 @@ class MyCalendar : Fragment() {
             override fun create(view: View): DayViewContainer {
                 return DayViewContainer(view)
             }
-
             override fun bind(container: DayViewContainer, data: CalendarDay) {
                 container.day = data // CalendarDay는 내부적으로 LocalDate (java.time) 사용
                 container.dayText.text = data.date.dayOfMonth.toString() // data.date는 LocalDate (java.time)
+
 
                 // 오늘 날짜 하이라이트
                 if (data.date == LocalDate.now()) { // LocalDate (java.time)
@@ -149,6 +160,7 @@ class MyCalendar : Fragment() {
                     container.dayText.background = null
                     container.dayText.setTextColor(Color.LTGRAY)
                     container.dayText.setTypeface(null, Typeface.NORMAL)
+                    return
                 }
                 else {
                     container.dayText.background = null
@@ -167,13 +179,37 @@ class MyCalendar : Fragment() {
 
                 // 이벤트 RecyclerView 설정 및 어댑터에 데이터 전달
                 // DayEventAdapter는 ListAdapter를 사용하는 것이 성능상 유리합니다.
-                val adapter = DayEventAdapter(dateEvents, data.date)
+                val adapter = DayEventAdapter(
+                    dateEvents,
+                    data.date,
+                    object : DayEventAdapter.OnClickListener {
+                        @OptIn(UnstableApi::class)
+                        override fun onItemClick(
+                            holder: DayEventAdapter.EventViewHolder,
+                            favorite: Favorite
+                        ) {
+                            val args = Bundle().apply {
+                                putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+                                putString(MusicInfoFragment.TRANSITION_NAME_KEY, holder.itemView.transitionName)
+                            }
+                            val extras = FragmentNavigatorExtras(
+                                holder.itemView to holder.itemView.transitionName
+                            )
+                            findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
+                        }
+
+                        override fun onDataReady() {
+                            startPostponedEnterTransition()
+                        }
+                    })
                 container.eventRecyclerView.layoutManager = LinearLayoutManager(container.view.context)
                 container.eventRecyclerView.adapter = adapter
                 adapter.submitList(dateEvents) // ListAdapter를 사용한다면 submitList
             }
         }
     }
+
+
 
 
     private var isExpanded = false
@@ -222,6 +258,7 @@ class MyCalendar : Fragment() {
 }
 
 class DayViewContainer(view: View) : ViewContainer(view) {
+    val root: View = view
     var eventRecyclerView: RecyclerView = view.findViewById(R.id.calendar_day_event_recycler_view)
     val dayText: TextView = view.findViewById(R.id.calendar_day_text)
     lateinit var day: CalendarDay

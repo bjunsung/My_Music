@@ -59,4 +59,8 @@
     <dimen name="chart_item_info_bar_height">72dp</dimen>
     <dimen name="chart_item_info_text_width">60dp</dimen>
 
+    <dimen name="combined_artworks_corner_radius">20dp </dimen>
+
+    <dimen name="artwork_override_small">160px</dimen>
+
 </resources>

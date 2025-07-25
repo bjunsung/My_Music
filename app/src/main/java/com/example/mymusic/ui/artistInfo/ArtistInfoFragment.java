@@ -1206,12 +1206,12 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
     }
 
 
-    public void onTrackClick(Track track, ImageView sharedImageView, int position){
+    public void onTrackClick(TrackAdapter.TrackViewHolder holder, Track track, int position){
         Log.d(TAG, "onTrackClick() 호출됨");
         Bundle bundle = new Bundle();
         Favorite favorite = new Favorite(track);
         bundle.putParcelable("favorite", favorite);
-        String transitionName = ViewCompat.getTransitionName(sharedImageView);
+        String transitionName = ViewCompat.getTransitionName(holder.image);
         viewModel.setTrackPosition(position);
         viewModel.setFirstFragmentCreation(false);
 
@@ -1219,7 +1219,9 @@ public class ArtistInfoFragment extends Fragment implements ImagePagerAdapter.On
 
 
         FragmentNavigator.Extras extras = new FragmentNavigator.Extras.Builder()
-                .addSharedElement(sharedImageView, transitionName)
+                .addSharedElement(holder.image, holder.image.getTransitionName())
+                .addSharedElement(holder.artist, holder.artist.getTransitionName())
+                .addSharedElement(holder.title, holder.title.getTransitionName())
                 .build();
         bundle.putString("transitionName", transitionName);
 

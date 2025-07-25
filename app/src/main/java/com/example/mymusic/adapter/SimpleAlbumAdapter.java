@@ -62,7 +62,7 @@ public class SimpleAlbumAdapter extends RecyclerView.Adapter<SimpleAlbumAdapter.
         ViewCompat.setTransitionName(holder.albumImage, transitionName);
         Log.d(TAG, "set transitionName at position " + holder.getAdapterPosition() + " : " + transitionName);
 
-        Glide.with(context)
+        Glide.with(holder.itemView)
                 .load(album.artworkUrl)
                 .override(400, 400)
                 .error(R.drawable.ic_image_not_found_foreground)

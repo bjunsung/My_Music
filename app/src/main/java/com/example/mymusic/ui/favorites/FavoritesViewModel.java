@@ -23,7 +23,7 @@ public class FavoritesViewModel extends AndroidViewModel {
         void onSuccess();
         void onFailure();
     }
-    private final FavoriteSongRepository repository;
+    public final FavoriteSongRepository repository;
     private final MutableLiveData<Favorite> focusedTrack = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLyricsMode = new MutableLiveData<>(false);
     private int focusedPosition = -1;

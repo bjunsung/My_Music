@@ -29,7 +29,7 @@ class FavoriteArtistLoader {
                 else {
                     val artist = Artist(loaded.artistId, loaded.artistName, loaded.artworkUrl, loaded.genres, loaded.followers, loaded.popularity)
                     val addedDate: String = favArtistRepository.getAddedDate(id)
-                    val metadata: ArtistMetadata =
+                    val metadata: ArtistMetadata? =
                         artistMetadataRepository.getArtistMetadataBySpotifyId(id)
                     val result = FavoriteArtist(artist, addedDate, metadata)
                     Handler(Looper.getMainLooper()).post {

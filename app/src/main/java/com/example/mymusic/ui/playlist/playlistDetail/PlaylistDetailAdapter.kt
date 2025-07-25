@@ -1,5 +1,6 @@
 package com.example.mymusic.ui.playlist.playlistDetail
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -10,8 +11,12 @@ import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.OptIn
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.MutableLiveData
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -19,6 +24,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.mymusic.R
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import com.google.android.material.card.MaterialCardView
 import com.google.common.base.Objects
 
@@ -29,11 +35,12 @@ class PlaylistDetailAdapter(
     ): RecyclerView.Adapter<PlaylistDetailAdapter.ViewHolder>() {
 
     interface OnClickListener {
-        fun onItemClick(favorite: Favorite, position: Int)
+        fun onItemClick(holder: PlaylistDetailAdapter.ViewHolder, favorite: Favorite)
         fun onPlayButtonClick(trackList: List<Favorite>, position: Int)
         fun onMoreButtonClick(anchorView: View ,favorite: Favorite)
         fun onDragHandleButtonClick(viewHolder: RecyclerView.ViewHolder)
         fun onItemSelected(selectedIds: Set<String>)
+        fun onImageReady(trackId: String)
     }
 
     var isEditMode : Boolean = false
@@ -63,6 +70,8 @@ class PlaylistDetailAdapter(
 
     override fun getItemCount(): Int = trackList.size
 
+    @OptIn(UnstableApi::class)
+    @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = trackList.get(position)
         //bindVisualStateOnly(holder, position)
@@ -90,17 +99,47 @@ class PlaylistDetailAdapter(
             holder.checkBox.visibility = View.GONE
         }
 
-        Glide.with(viewGroupContext)
+        val trackId = item.track.trackId
+
+        ViewCompat.setTransitionName(
+            holder.artworkImage,
+            MusicInfoFragment.TRANSITION_NAME_FORM_ARTWORK_IMAGE + trackId
+        )
+        ViewCompat.setTransitionName(
+            holder.titleTextView,
+            MusicInfoFragment.TRANSITION_NAME_FORM_TITLE + trackId
+        )
+        holder.artistNameTextView.transitionName = MusicInfoFragment.TRANSITION_NAME_FORM_ARTIST + trackId
+        ViewCompat.setTransitionName(
+            holder.albumNameTextView,
+            MusicInfoFragment.TRANSITION_NAME_FORM_ALBUM + trackId
+        )
+        ViewCompat.setTransitionName(
+            holder.durationLayout,
+            MusicInfoFragment.TRANSITION_NAME_FORM_DURATION + trackId
+        )
+        ViewCompat.setTransitionName(
+            holder.releaseDateLayout,
+            MusicInfoFragment.TRANSITION_NAME_FORM_RELEASE_DATE + trackId
+        )
+
+        Glide.with(holder.itemView)
             .asBitmap()
             .load(item.track.artworkUrl)
+            .dontAnimate()
             .error(R.drawable.ic_image_not_found_foreground)
             .override(160, 160)
             .centerCrop()
             .into(object: CustomTarget<Bitmap>(){
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     holder.artworkImage.setImageBitmap(resource)
+                    listener.onImageReady(trackId)
                 }
                 override fun onLoadCleared(placeholder: Drawable?) {}
+                override fun onLoadFailed(errorDrawable: Drawable?) {
+                    super.onLoadFailed(errorDrawable)
+                    listener.onImageReady(trackId)
+                }
             })
 
         holder.titleTextView.text = item.title
@@ -125,7 +164,7 @@ class PlaylistDetailAdapter(
                 listener.onItemSelected(selectedIds)
             }
             else {
-                listener.onItemClick(item, holder.bindingAdapterPosition)
+                listener.onItemClick(holder, item)
             }
         }
 
@@ -153,28 +192,13 @@ class PlaylistDetailAdapter(
         val moved = trackList.removeAt(from)
         trackList.add(to, moved)
         notifyItemMoved(from, to)
+        //updateList(this.trackList, selectedIds)
     }
 
     // 필요 시 외부에서 현재 순서 확인
     fun currentOrder(): List<Favorite> = trackList.toList()
 
 
-    /**
-     * end of drag handle method
-     */
-
-    inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
-        val checkBox = view.findViewById<CheckBox>(R.id.checkbox)
-        val artworkImage = view.findViewById<ImageView>(R.id.artwork_image)
-        val titleTextView = view.findViewById<TextView>(R.id.title)
-        val albumNameTextView = view.findViewById<TextView>(R.id.album_name)
-        val artistNameTextView = view.findViewById<TextView>(R.id.artist_name)
-        val durationTextView = view.findViewById<TextView>(R.id.duration)
-        val releaseDateTextView = view.findViewById<TextView>(R.id.release_date)
-        val playButton = view.findViewById<ImageButton>(R.id.music_play)
-        val moreButton = view.findViewById<ImageButton>(R.id.more_button)
-        val dragHandleButton = view.findViewById<ImageButton>(R.id.drag_handle)
-    }
 
     fun toggleSelection(clickedId: String) {
         if (clickedId in selectedIds) {
@@ -223,6 +247,22 @@ class PlaylistDetailAdapter(
 
         trackList = newList.toMutableList()
         diff.dispatchUpdatesTo(this)
+    }
+
+    inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
+        val checkBox = view.findViewById<CheckBox>(R.id.checkbox)
+        val artworkImage = view.findViewById<ImageView>(R.id.artwork_image)
+        val titleTextView = view.findViewById<TextView>(R.id.title)
+        val albumNameTextView = view.findViewById<TextView>(R.id.album_name)
+        val artistNameTextView = view.findViewById<TextView>(R.id.artist_name)
+        val durationTextView = view.findViewById<TextView>(R.id.duration)
+        val releaseDateTextView = view.findViewById<TextView>(R.id.release_date)
+        val playButton = view.findViewById<ImageButton>(R.id.music_play)
+        val moreButton = view.findViewById<ImageButton>(R.id.more_button)
+        val dragHandleButton = view.findViewById<ImageButton>(R.id.drag_handle)
+
+        val durationLayout = view.findViewById<LinearLayout>(R.id.duration_layout)
+        val releaseDateLayout = view.findViewById<LinearLayout>(R.id.release_date_layout)
     }
 
 }

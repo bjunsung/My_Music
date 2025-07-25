@@ -10,13 +10,16 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.OptIn
 import androidx.compose.ui.text.intl.Locale
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.mymusic.R
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import java.time.LocalDate
 import kotlin.contracts.contract
 import kotlin.math.acos
@@ -25,7 +28,7 @@ class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private 
 
 
     interface OnItemEventListener {
-        fun onItemClick(anchorView: View, item: Favorite, position: Int)
+        fun onItemClick(holder: PlayTimeChartViewHolder, item: Favorite, position: Int)
         fun onImageReady(transitionName: String)
     }
 
@@ -43,6 +46,7 @@ class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private 
         return PlayTimeChartViewHolder(view)
     }
 
+    @OptIn(UnstableApi::class)
     override fun onBindViewHolder(holder: PlayTimeChartViewHolder, position: Int) {
         val pair = list.get(position)
         val favorite = pair.first
@@ -50,10 +54,13 @@ class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private 
         holder.rankingTextView.text = pair.second.toString()
         holder.titleTextView.text = favorite.title
         holder.titleTextView.isSelected = true
-        val transitionName = favorite.title + "_" + pair.second
-        holder.itemView.transitionName = transitionName
+        val trackId = favorite.track.trackId
+        val transitionName = MusicInfoFragment.TRANSITION_NAME_FORM_ARTWORK_IMAGE + trackId
 
-        Glide.with(context)
+        holder.itemView.transitionName = transitionName
+        holder.titleTextView.transitionName = MusicInfoFragment.TRANSITION_NAME_FORM_TITLE + trackId
+
+        Glide.with(holder.itemView)
             .asBitmap()
             .load(favorite.track.artworkUrl)
             .override(120, 120)
@@ -68,7 +75,7 @@ class PlayTimeChartAdapter(private var list: List<Pair<Favorite, Int>>, private 
             })
 
         holder.itemView.setOnClickListener {
-            listener.onItemClick(holder.itemView, favorite, holder.bindingAdapterPosition)
+            listener.onItemClick(holder, favorite, holder.bindingAdapterPosition)
         }
 
         when (chartOption) {

@@ -102,10 +102,7 @@ class SearchPlaylistFragment : Fragment() {
                 relatedAdapter.notifyExistChangedByIds(alreadyExistSet)
                 favoriteAdapter.notifyExistChangedByIds(alreadyExistSet)
             },80)
-
-
         }
-
     }
 
     private fun bind() {
@@ -213,6 +210,5 @@ class SearchPlaylistFragment : Fragment() {
     companion object {
         const val TAG = "SearchPlaylistFragment"
         const val PLAYLIST_KEY = "playlist"
-        const val ALREADY_EXIST_LIST_KEY = "already_exist_list"
     }
 }

@@ -12,6 +12,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -90,6 +91,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     val favoriteSongRepository: FavoriteSongRepository by lazy { FavoriteSongRepository(application) }
     val playlistRepository: PlaylistRepository by lazy { PlaylistRepository(application) }
 
+    private val _currentlyPlayedPlaylist = MutableLiveData<Playlist>()
+    val currentlyPlayedPlaylist get () = _currentlyPlayedPlaylist
 
     init {
         initializeController()
@@ -131,9 +134,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 super.onMediaItemTransition(mediaItem, reason)
                 Log.d(TAG, "onMediaItemTransition: reason = $reason")
 
-                if (mediaItem == null || reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) {
+                if (mediaItem == null) {
                     return
                 }
+
 
                 updateTrackInfoOnTransition(reason)
 
@@ -189,7 +193,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         Handler(Looper.getMainLooper()).postDelayed({
             _totalPlayCountInARow.value = (totalPlayCountInARow.value ?: 0) + 1
             val newDuration = mediaController?.duration?.takeIf { it != C.TIME_UNSET }?.toInt() ?: 0
-            if (newDuration > 1) { /** 값이 0 또는 1일 수 있다. 하지만 playbackState change callback 이 못 잡는 트랙이 자동으로 넘어가는 경우에 정확한 값이다 */
+            if (newDuration > 1) { /** 값이 0 또는 1일 수 있음. 하지만 playbackState change callback 이 못 잡는 트랙이 자동으로 넘어가는 경우에 정확한 값 */
                 _trackDuration.postValue(newDuration)
                 currentTrackDurationMs = newDuration.toLong()
             }
@@ -203,9 +207,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     // ✅ 1. 새로운 최종 트랙 정보 업데이트 함수
     private fun updateTrackInfoOnTransition(reason: Int) {
         // ★ 1-1. 이전 곡에 대한 마무리 작업 (재생 카운트 체크)
-        // 셔플/토글이 아닌 경우에만 이전 곡 카운트 체크
-        if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
+
+        val skipCheckPlayCount = suppressNextCountDueToSessionToggle
+        suppressNextCountDueToSessionToggle = false   // 한 번만 스킵
+
+        // 토글이 아닌 경우에만 이전 곡 카운트 체크
+        if (!skipCheckPlayCount) {
             checkPlayCount(currentTrack.value)
+        } else {
+            Log.d(TAG, "SKIP")
         }
 
         // ★ 1-2. 새로운 곡의 기본 정보 즉시 업데이트
@@ -381,14 +391,20 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 }
             })
 
-            val lastPlayedId = listOf(lastPlayedTrack.track.trackId)
-            playlistRepository.addTracksMoveDuplicatesToFront(
+            val updated =  playlistRepository.addTracksMoveDuplicatesToBack(
                 PlaylistRepository.PLAYLIST_ID_RECENTLY_PLAYED,
-                lastPlayedId
+                listOf(lastPlayedTrack.track.trackId)
             )
+
+            updated?.let {
+                playlistRepository.getByIdWithFavorites(updated.playlistId)?.let {
+                    _currentlyPlayedPlaylist.postValue(it)
+                }
+            }
 
         }
     }
+
 
     private fun resetListeningTime() {
         //stopListeningTracker()
@@ -444,8 +460,11 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     // 이전 위치가 곡 길이의 끝부분에 가까웠을 때만 루프로 인정 (탐색 오작동 방지)
                     val duration = controller.duration
                     if (duration > 0 && previousPositionMs > duration - 1000) {
-                        Log.d("LOOP_DETECTOR", "Loop Detected! Position jumped from $previousPositionMs to $currentPositionMs")
+                        /** 같은 곡 반복일 때는 onMediaItemChanged 호출 안됨*/
+                        //Log.d("LOOP_DETECTOR", "Loop Detected! Position jumped from $previousPositionMs to $currentPositionMs")
                         // 기존에 사용하던 로직 호출
+                        checkPlayCount(currentTrack.value)
+                        resetListeningTime()
                         handleTrackChange()
                     }
                 }
@@ -465,11 +484,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         previousPositionMs = 0L // 위치 초기화
     }
 
-    companion object {
-        const val TAG = "MainActivityViewModel"
-        const val COMMAND_GET_AUDIO_SESSION_ID = "com.example.mymusic.GET_AUDIO_SESSION_ID"
-        const val KEY_AUDIO_SESSION_ID = "audio_session_id"
-    }
+
 
 
     fun loadFavorite() {
@@ -625,10 +640,13 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     val isAnySessionAvailable: Boolean
         get() = savedSession != null || adHocSession != null
 
+
+    private var suppressNextCountDueToSessionToggle = false
+
     fun toggleSession() {
         // 둘 다 없거나 하나만 있으면 종료
         if (savedSession == null || adHocSession == null) return
-
+        suppressNextCountDueToSessionToggle = true
         // 1) 현재 재생 상태 저장
         saveActiveSnapshot()
 
@@ -723,10 +741,29 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         _shuffleMode.value = true
         setPlaylistFromPlaylist(playlist, 0)
     }
+
+    fun markPlayed(playlist: Playlist) {
+        if (playlist.playlistId == PlaylistRepository.PLAYLIST_ID_RECENTLY_PLAYED) return
+        val prev = playlist.lastPlayedTimeMs ?: 0L
+        val now = System.currentTimeMillis()
+        val diff = (now - prev).coerceAtLeast(0L)   // 시계가 뒤로 가도 음수 방지
+
+        if (diff >= TEN_MINUTES_MS * 3) {  /**30분 내에 다시 플레이한 경우 카운트 무시*/
+            playlist.playCount += 1
+        }
+        playlist.lastPlayedTimeMs = now
+
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistRepository.updatePlaylist(playlist)
+        }
+    }
+
     fun setPlaylistFromPlaylist(playlist: Playlist, startPosition: Int) {
         val controller = mediaController ?: return
         val queue = playlist.favorites
         if (queue.isEmpty()) return
+
+        markPlayed(playlist)
 
         lastSelectedPlaylist = playlist
 
@@ -808,7 +845,74 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    /** ---------------- 공통 코어: 현재 곡 보존 + 큐 갈아끼우기 ---------------- */
+    private fun applyPreservingCurrentToController(newOrder: List<Favorite>) {
+        val controller = mediaController ?: return
+        val cur = controller.currentMediaItemIndex
+        if (cur == C.INDEX_UNSET) return
 
+        val currentId = controller.getMediaItemAt(cur)?.mediaId ?: return
+        val idsInNew = newOrder.map { it.track.trackId }
+        require(currentId in idsInNew) {
+            "New order must contain the currently playing track. (currentId=$currentId)"
+        }
+
+        val favById = newOrder.associateBy { it.track.trackId }
+        val pivot = idsInNew.indexOf(currentId)
+        val beforeIds = idsInNew.subList(0, pivot)
+        val afterIds  = idsInNew.subList(pivot + 1, idsInNew.size)
+
+        val beforeFavs = beforeIds.mapNotNull(favById::get)
+        val afterFavs  = afterIds.mapNotNull(favById::get)
+        val currentFav = favById[currentId] ?: return
+
+        // 셔플 일시 OFF (다음 곡이 의도한 순서를 따르도록)
+        val wasShuffled = controller.shuffleModeEnabled
+        if (wasShuffled) controller.shuffleModeEnabled = false
+
+        // 현재 곡을 제외하고 모두 제거(뒤에서부터)
+        for (i in controller.mediaItemCount - 1 downTo 0) {
+            if (i != controller.currentMediaItemIndex) controller.removeMediaItem(i)
+        }
+        // 현재 곡 인덱스는 보통 0이 됨
+
+        // before를 0번에 역순으로 끼워넣기 → 최종적으로 [before..., current, after...]
+        buildMediaItems(beforeFavs).asReversed().forEach { controller.addMediaItem(0, it) }
+        // after를 뒤에 추가
+        controller.addMediaItems(buildMediaItems(afterFavs))
+
+        // UI 상태 동기화(nowPlayingList)
+        _nowPlayingList.value = buildList {
+            addAll(beforeFavs)
+            add(currentFav)     // 현재 곡
+            addAll(afterFavs)
+        }
+
+        if (wasShuffled) controller.shuffleModeEnabled = true
+    }
+
+
+    fun applyNewQueuePreservingCurrent(newOrder: List<Favorite>) {
+        if (newOrder.isEmpty()) return
+        if (currentTrack.value?.track?.trackId !in newOrder.map { it.track.trackId }) return
+        applyPreservingCurrentToController(newOrder)
+        // 스냅샷도 현재 상태로 갱신
+        saveCurrentModeSnapshotNow()
+        if (activeKind.value == SessionKind.SAVED) {
+            lastSelectedPlaylist =
+                lastSelectedPlaylist?.deepCopy().apply { this?.favorites = newOrder }
+        }
+    }
+
+
+
+
+    companion object {
+        const val TAG = "MainActivityViewModel"
+        const val COMMAND_GET_AUDIO_SESSION_ID = "com.example.mymusic.GET_AUDIO_SESSION_ID"
+        const val KEY_AUDIO_SESSION_ID = "audio_session_id"
+        private const val TEN_MINUTES_MS = 10 * 60 * 1000L
+    }
 
 
 }

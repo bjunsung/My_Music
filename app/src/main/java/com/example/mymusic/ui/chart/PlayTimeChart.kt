@@ -8,6 +8,8 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -19,7 +21,6 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -51,6 +52,7 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -113,6 +115,7 @@ class PlayTimeChart: Fragment() {
         Log.d(TAG, "onAttach")
         if (navController == null) {
             navController = findNavController()
+            playCountViewModel.navController = findNavController()
         }
         val owner = (context as? FragmentActivity) ?: return
         mainVm = ViewModelProvider(owner)[MainActivityViewModel::class.java]
@@ -133,6 +136,7 @@ class PlayTimeChart: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         postponeEnterTransition()
+        Handler(Looper.getMainLooper()).postDelayed(Runnable{ startPostponedEnterTransition() }, 50)
 
         //reenter from MusicInfoFragment
         parentFragmentManager.setFragmentResultListener(
@@ -143,7 +147,7 @@ class PlayTimeChart: Fragment() {
             if (transitionEnded) {
                 Log.d(TAG, "transition end callback, show popupwindow")
                 playCountViewModel.reenterStateFromMusicInfoFragment = false
-                showPopupWindowAgain()
+                //showPopupWindowAgain()
             }
         }
 
@@ -154,7 +158,7 @@ class PlayTimeChart: Fragment() {
             val transitionEnd = bundle.getBoolean(AlbumInfoFragment.BUNDLE_KEY_TRANSITION_END, false)
             if (transitionEnd){
                 playCountViewModel.reenterStateFromAlbumInfoFragment = false
-                showPopupWindowAgain()
+               // showPopupWindowAgain()
             }
         }
 
@@ -163,10 +167,15 @@ class PlayTimeChart: Fragment() {
                 emptyList(),
                 PlayCountChartViewModel.LAST_MONTH,
                 object : PlayTimeChartAdapter.OnItemEventListener {
-                    override fun onItemClick(anchorView: View, item: Favorite, position: Int) {
+                    override fun onItemClick(
+                        holder: PlayTimeChartAdapter.PlayTimeChartViewHolder,
+                        item: Favorite,
+                        position: Int
+                    ) {
+                        val anchorView = holder.itemView
                         playCountViewModel.focusedPosition = position
                         playCountViewModel.focusedTrack = item
-                        this@PlayTimeChart.showPopupDetails(anchorView, item, position)
+                        this@PlayTimeChart.showPopupDetails(holder, item, position)
                     }
 
                     override fun onImageReady(transitionName: String) {
@@ -184,7 +193,7 @@ class PlayTimeChart: Fragment() {
             viewLifecycleOwner.lifecycleScope.launch {
                 delay(280)
                 playCountViewModel.reenterStateFromArtistInfoFragment = false
-                showPopupWindowAgain()
+                //showPopupWindowAgain()
             }
         }
         else{
@@ -199,7 +208,7 @@ class PlayTimeChart: Fragment() {
         recyclerView = binding.recyclerView
         recyclerView?.adapter = adapter
         recyclerView?.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-        binding.dropdownButton.setOnClickListener { showCustomPopup() }
+        binding.dropdownButton.setOnClickListener { showPopupYearSelection() }
         if (playCountViewModel.rawList.isNullOrEmpty()) loadFavorites()
 
         val specificYearLastSaved =  prefs.getInt("specific_year", LocalDate.now().year)
@@ -284,7 +293,7 @@ class PlayTimeChart: Fragment() {
 
 
 
-    private fun showCustomPopup() {
+    private fun showPopupYearSelection() {
         val popupViewBinding = PopupSelectPlaytimePeriodBinding.inflate(layoutInflater)
 
         val popupView = popupViewBinding.root
@@ -470,7 +479,7 @@ class PlayTimeChart: Fragment() {
             // 4) Favorite 객체만 꺼내고
             ?.map { it.first }
             // 5) 최대 10개만
-            ?.take(10)
+            ?.take(50)
             // 6) 결과물 로깅 & 리스트로
             ?.toList()
             ?.also { Log.d(TAG, "filtered/sorted(top10) = $it") }
@@ -594,11 +603,11 @@ class PlayTimeChart: Fragment() {
 
     }
 
-    private fun showPopupDetails(anchorView: View, item: Favorite, position: Int) {
+    private fun showPopupDetails(holder: PlayTimeChartAdapter.PlayTimeChartViewHolder, item: Favorite, position: Int) {
         //if (playCountViewModel.reenterStateFromMusicInfoFragment || playCountViewModel.reenterStateFromAlbumInfoFragment || playCountViewModel.reenterStateFromArtistInfoFragment)
         // return
 
-        this.anchorView = anchorView
+        this.anchorView = holder.itemView
 
         playCountViewModel.onFocused = true
         playCountViewModel.focusedPosition = position
@@ -617,7 +626,7 @@ class PlayTimeChart: Fragment() {
         viewPager?.adapter =
             PopupPagerAdapter(item, object : PopupPagerAdapter.OnClickEventListener {
                 override fun onTitleClick(item: Favorite) {
-                    this@PlayTimeChart.onTitleClick(item)
+                    this@PlayTimeChart.onTitleClick(holder, item)
                 }
 
                 override fun onAlbumNameClick(item: Favorite) {
@@ -742,7 +751,8 @@ class PlayTimeChart: Fragment() {
                         putParcelable(ArtistInfoFragment.ARGUMENTS_KEY, fav)
                     }
                     playCountViewModel.reenterStateFromArtistInfoFragment = true
-                    navController?.navigate(R.id.artist_info, args)
+                    //?.navigate(R.id.artist_info, args)
+                    playCountViewModel.navController?.navigate(R.id.artist_info, args)
                 }
 
                 override fun onLoadFailed() {
@@ -752,7 +762,8 @@ class PlayTimeChart: Fragment() {
                             putParcelable(ArtistInfoFragment.ARGUMENTS_KEY, artist)
                         }
                         playCountViewModel.reenterStateFromArtistInfoFragment = true
-                        navController?.navigate(R.id.artist_info, args)
+                        //navController?.navigate(R.id.artist_info, args)
+                        playCountViewModel.navController?.navigate(R.id.artist_info, args)
                     }
                 }
 
@@ -774,39 +785,42 @@ class PlayTimeChart: Fragment() {
                     anchorView to anchorView.transitionName
                 )
 
-                val currentDestination = navController?.currentDestination
-                if (currentDestination?.id == R.id.fragment_play_count_chart) {
-                    playCountViewModel.reenterStateFromAlbumInfoFragment = true
-                    navController?.navigate(R.id.album_info, args, null, extras)
-                }
+                playCountViewModel.reenterStateFromAlbumInfoFragment = true
+                //navController?.navigate(R.id.album_info, args, null, extras)
+                playCountViewModel.navController?.navigate(R.id.album_info, args, null, extras)
+
             }
         }
     }
 
-    private fun onTitleClick(item: Favorite) {
+    private fun onTitleClick(holder: PlayTimeChartAdapter.PlayTimeChartViewHolder, item: Favorite) {
         playCountViewModel.reenterStateFromMusicInfoFragment = true
         popupWindow.dismiss()
         val args = Bundle()
             .apply {
-                putString(MusicInfoFragment.TRANSITION_NAME_KEY, anchorView.transitionName)
+                putString(MusicInfoFragment.TRANSITION_NAME_KEY, holder.itemView.transitionName)
                 putParcelable(MusicInfoFragment.ARGUMENTS_KEY, item)
             }
-        playCountViewModel.transitionName = anchorView.transitionName
+        playCountViewModel.transitionName = holder.itemView.transitionName
         val extras = FragmentNavigatorExtras(
-            anchorView to anchorView.transitionName
+            holder.itemView to holder.itemView.transitionName,
+            holder.titleTextView to holder.titleTextView.transitionName
         )
-        navController?.navigate(R.id.musicInfoFragment, args, null, extras)
+       // navController?.navigate(R.id.musicInfoFragment, args, null, extras)
+        //findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
+
+        playCountViewModel.navController?.navigate(R.id.musicInfoFragment, args, null, extras)
     }
 
     private fun showPopupWindowAgain() {
-        val viewHolder = recyclerView?.findViewHolderForAdapterPosition(playCountViewModel.focusedPosition)
-        if (viewHolder != null) {
-            showPopupDetails(
-                viewHolder.itemView,
-                playCountViewModel.focusedTrack!!,
-                playCountViewModel.focusedPosition
-            )
-        }
+        val viewHolder =
+            recyclerView?.findViewHolderForAdapterPosition(playCountViewModel.focusedPosition) as PlayTimeChartAdapter.PlayTimeChartViewHolder
+        showPopupDetails(
+            viewHolder,
+            playCountViewModel.focusedTrack!!,
+            playCountViewModel.focusedPosition
+        )
+
     }
 
     fun isTablet(context: Context): Boolean {

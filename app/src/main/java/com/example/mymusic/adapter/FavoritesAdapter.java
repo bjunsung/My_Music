@@ -12,10 +12,13 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.core.view.ViewCompat;
+import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,6 +28,7 @@ import com.example.mymusic.R;
 import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteDiffCallback;
 import com.example.mymusic.model.Track;
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +58,6 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     public interface OnPlayListener{
         void onItemClick(Favorite favorite, int position);
     }
-
-
     public interface OnPreviewMenuListener {
         void onItemClick(Favorite favorite, View anchorView, int position);
     }
@@ -73,7 +75,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     }
 
     public interface OnItemNavigateClickListener {
-        void onNavigateClick(Favorite favorite, ImageView sharedImageView, int position);
+        void onNavigateClick(FavoriteViewHolder holder, Favorite favorite, int position);
     }
     public FavoritesAdapter(List<Favorite> favoritesList,
                             OnPreviewMenuListener previewMenuListener,
@@ -92,16 +94,16 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
     }
 
     public class FavoriteViewHolder extends RecyclerView.ViewHolder{
-        ImageView image;
-        TextView title, titleKr, artist, album, duration, releasedDate, addedDate;
-        ImageButton previewMenuButton, lyricButton, playToggleButton;
-        CheckBox selectCheckBox;
-        TextView textDash, textDuration, textReleaseDate;
+        public ImageView image;
+        public TextView title, artist, album, duration, releasedDate, addedDate;
+        public ImageButton previewMenuButton, lyricButton, playToggleButton;
+        public CheckBox selectCheckBox;
+        public TextView textDash, textDuration, textReleaseDate;
+        public LinearLayout durationLayout, releaseDateLayout;
         public FavoriteViewHolder(@NonNull View itemView){
             super(itemView);
             image = itemView.findViewById(R.id.imageView);
             title = itemView.findViewById(R.id.titleTextView);
-            titleKr = itemView.findViewById(R.id.titleKRTextView);
             artist = itemView.findViewById(R.id.artistTextView);
             album = itemView.findViewById(R.id.albumTextView);
             duration = itemView.findViewById(R.id.durationTextView);
@@ -114,6 +116,8 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             textDuration = itemView.findViewById(R.id.text_duration);
             textReleaseDate = itemView.findViewById(R.id.text_release_date);
             playToggleButton = itemView.findViewById(R.id.play_toggle_button);
+            durationLayout = itemView.findViewById(R.id.duration_layout);
+            releaseDateLayout = itemView.findViewById(R.id.release_date_layout);
         }
     }
 
@@ -125,17 +129,17 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
         return new FavoriteViewHolder(view);
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     public void onBindViewHolder(@NonNull FavoriteViewHolder holder, int position){
 
         Favorite favorite = favoritesList.get(position);
         favorite.recyclerViewPosition = holder.getAdapterPosition();
         Track track = favorite.track;
-        if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
-            String transitionName = "Transition_favorite_adapter_to_music_"  + track.artworkUrl + "_" + track.trackId + "_" + track.durationMs + "_" + track.releaseDate + "_";
+
+        if (track.trackId != null) {
+            String transitionName = MusicInfoFragment.TRANSITION_NAME_FORM_ARTWORK_IMAGE + track.trackId;
             ViewCompat.setTransitionName(holder.image, transitionName);
-        } else {
-            ViewCompat.setTransitionName(holder.image, null);
         }
 
         if (favorite.audioUri == null) {
@@ -145,8 +149,15 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             holder.playToggleButton.setVisibility(View.VISIBLE);
         }
 
+        String trackId = track.trackId;
 
-        Glide.with(context)
+        holder.title.setTransitionName(MusicInfoFragment.TRANSITION_NAME_FORM_TITLE + trackId);
+        holder.artist.setTransitionName(MusicInfoFragment.TRANSITION_NAME_FORM_ARTIST + trackId);
+        holder.album.setTransitionName(MusicInfoFragment.TRANSITION_NAME_FORM_ALBUM + trackId);
+        holder.durationLayout.setTransitionName(MusicInfoFragment.TRANSITION_NAME_FORM_DURATION + trackId);
+        holder.releaseDateLayout.setTransitionName(MusicInfoFragment.TRANSITION_NAME_FORM_RELEASE_DATE + trackId);
+
+        Glide.with(holder.itemView)
                 .load(track.artworkUrl)
                 .override(160, 160)
                 .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
@@ -154,23 +165,16 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
                 .into(holder.image);
 
 
-        holder.title.setText(track.trackName);
-        if (favorite.metadata != null && favorite.metadata.title != null){
-            holder.titleKr.setText(favorite.metadata.title);
-            if (textColor != invalidColor){
-                holder.titleKr.setTextColor(textColor);
-            }
-        }
-        else {
-            holder.titleKr.setText(track.trackName);
-            if (textColor != invalidColor){
-                holder.titleKr.setTextColor(textColor);
-            }
+        holder.title.setText(favorite.getTitle());
+
+
+        if (textColor != invalidColor){
+                holder.title.setTextColor(textColor);
         }
 
 
         if (keyword != null && !keyword.isEmpty()){
-            highlightText(holder.titleKr, keyword);
+            highlightText(holder.title, keyword);
         }
 
         holder.artist.setText(track.artistName);
@@ -255,8 +259,8 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
             else {
                 if (navigateClickListener != null && ViewCompat.getTransitionName(holder.image) != null){
                     navigateClickListener.onNavigateClick(
+                            holder,
                             favorite,
-                            holder.image,
                             holder.getAdapterPosition()
                     );
                 }

@@ -2,6 +2,8 @@ package com.example.mymusic.adapter;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,15 +13,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.core.view.ViewCompat;
+import androidx.media3.common.util.UnstableApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.mymusic.R;
 
+import com.example.mymusic.data.repository.FavoriteSongRepository;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.Track;
 import com.example.mymusic.ui.favorites.FavoritesViewModel;
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment;
 
 
 import java.util.List;
@@ -38,7 +45,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     }
 
     public interface OnTrackClickListener{
-        void onItemClick(Track track, ImageView  sharedImageView, int position);
+        void onItemClick(TrackViewHolder holder, Track track, int position);
     }
     public interface OnAddClickListener{
         void onItemClick(Track track, int position);
@@ -57,8 +64,8 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     }
 
     public static class TrackViewHolder extends RecyclerView.ViewHolder {
-        TextView title, artist, positionTextView;
-        ImageView image;
+        public TextView title, artist, positionTextView;
+        public ImageView image;
         ImageButton addButton, detailButton;
 
         public TrackViewHolder(@NonNull View itemView) {
@@ -82,6 +89,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         return new TrackViewHolder(view);
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
         if (showPosition){
@@ -92,51 +100,57 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         //Favorites list 에 있는지 먼저 확인
         Track track = tracks.get(position);
         holder.title.setText(track.trackName);
-        favoritesViewModel.loadFavoriteItem(track.trackId, favorite -> {
-            if (favorite != null) {
-                holder.addButton.setVisibility(View.GONE);
-                if (favorite.metadata != null && favorite.metadata.title!= null && !favorite.metadata.title.isEmpty()) {
-                    holder.title.setText(favorite.metadata.title);
+
+        new Thread(()-> {
+            Favorite favorite = favoritesViewModel.repository.getFavoriteIncludeHidden(track.trackId);
+            new Handler(Looper.getMainLooper()).post(()->{
+                if (favorite != null) {
+                    holder.addButton.setVisibility(View.GONE);
+                    if (favorite.metadata != null && favorite.metadata.title!= null && !favorite.metadata.title.isEmpty()) {
+                        holder.title.setText(favorite.metadata.title);
+                    }
+                } else {
+                    Log.d("TrackAdapter", "no data in db for " + track.trackName + " id: " + track.trackId);
+                    holder.title.setText(track.trackName);
+                    holder.addButton.setVisibility(View.VISIBLE);
                 }
-            } else {
-                Log.d("TrackAdapter", "no data in db for " + track.trackName + " id: " + track.trackId);
-                holder.title.setText(track.trackName);
-                holder.addButton.setVisibility(View.VISIBLE);
-            }
 
-            String transitionName = "trasition_start_at_track_adapter_" + "위치: " + position + "_타이틀:" + track.trackName + "_" + track.artworkUrl + "_" + track.trackId + "_" + track.releaseDate + "_"  + track.durationMs;
-            //Log.d("TrackAdapter", "transitionName for position: " + holder.getAdapterPosition() + " is_" + transitionName);
-            ViewCompat.setTransitionName(holder.image, transitionName);
-            holder.artist.setText(track.artistName);
+                String trackId = track.trackId;
+                ViewCompat.setTransitionName(holder.image, MusicInfoFragment.TRANSITION_NAME_FORM_ARTWORK_IMAGE + trackId);
+                ViewCompat.setTransitionName(holder.title, MusicInfoFragment.TRANSITION_NAME_FORM_TITLE + trackId);
+                ViewCompat.setTransitionName(holder.artist, MusicInfoFragment.TRANSITION_NAME_FORM_ARTIST + trackId);
 
-            // 이미지 로딩 (Glide 필요)
-            if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
-                Glide.with(context)
-                        .load(track.artworkUrl)
-                        .override(120, 120)
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .skipMemoryCache(true)
-                        //.placeholder(R.drawable.ic_image_not_found_foreground) // 로딩 중 보여줄 이미지
-                        .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
-                        .into(holder.image);
-            } else {
-                holder.image.setImageResource(R.drawable.ic_image_not_found_foreground); // 기본 이미지로 대체
-            }
+                holder.artist.setText(track.artistName);
 
-            if (!showImage)
-                holder.image.setVisibility(TextView.GONE);
+                // 이미지 로딩 (Glide 필요)
+                if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
+                    Glide.with(holder.itemView)
+                            .load(track.artworkUrl)
+                            .override(120, 120)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            //.skipMemoryCache(true)
+                            //.placeholder(R.drawable.ic_image_not_found_foreground) // 로딩 중 보여줄 이미지
+                            .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
+                            .into(holder.image);
+                } else {
+                    holder.image.setImageResource(R.drawable.ic_image_not_found_foreground); // 기본 이미지로 대체
+                }
 
-            holder.itemView.setOnClickListener(v -> {
-                trackClickListener.onItemClick(track, holder.image, holder.getAdapterPosition());
+                if (!showImage)
+                    holder.image.setVisibility(TextView.GONE);
+
+                holder.itemView.setOnClickListener(v -> {
+                    trackClickListener.onItemClick(holder, track, holder.getAdapterPosition());
+                });
+
+                //detailButton 클릭 event
+                holder.detailButton.setOnClickListener(v -> detailClickListener.onItemClick(track));
+
+                //addButton 클릭 event
+                holder.addButton.setOnClickListener(v -> addClickListener.onItemClick(track, holder.getAdapterPosition()));
             });
+        }).start();
 
-            //detailButton 클릭 event
-            holder.detailButton.setOnClickListener(v -> detailClickListener.onItemClick(track));
-
-            //addButton 클릭 event
-            holder.addButton.setOnClickListener(v -> addClickListener.onItemClick(track, holder.getAdapterPosition()));
-
-        });
     }
 
     @Override

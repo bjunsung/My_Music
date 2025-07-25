@@ -2,12 +2,8 @@ package com.example.mymusic.ui.musicInfo;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.database.sqlite.SQLiteConstraintException;
@@ -16,9 +12,13 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.content.ContextCompat;
+import androidx.media3.common.util.UnstableApi;
 import androidx.navigation.NavDestination;
-import androidx.transition.Explode;
+import androidx.transition.ArcMotion;
+import androidx.transition.ChangeBounds;
+import androidx.transition.ChangeTransform;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -34,13 +34,11 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.webkit.WebView;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,17 +46,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.FragmentNavigator;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.transition.Fade;
 import androidx.transition.Slide;
+import androidx.transition.Transition;
+import androidx.transition.TransitionListenerAdapter;
+import androidx.transition.TransitionSet;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
+
+import com.example.mymusic.MainActivityViewModel;
 import com.example.mymusic.R;
 import com.example.mymusic.databinding.FragmentMusicInfoBinding;
 import com.example.mymusic.model.Artist;
@@ -79,22 +81,27 @@ import com.example.mymusic.util.ImageColorAnalyzer;
 import com.example.mymusic.util.ImageOverlayManager;
 import com.example.mymusic.util.MyColorUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.transition.MaterialArcMotion;
-import com.google.android.material.transition.MaterialContainerTransform;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@UnstableApi
 public class MusicInfoFragment extends Fragment {
     private final String TAG = "MusicInfoFragment";
+    public static final String REQUEST_BOTTOM_SHEET = "request_bottom_sheet";
     public static final String ARGUMENTS_KEY = "favorite";
     public static final String TRANSITION_NAME_KEY = "transitionName";
+    public static final String TRANSITION_NAME_FORM_TITLE = "title_name_";
+    public static final String TRANSITION_NAME_FORM_ARTIST = "artist_name_";
+    public static final String TRANSITION_NAME_FORM_ALBUM = "album_name_";
+    public static final String TRANSITION_NAME_FORM_DURATION = "duration_";
+    public static final String TRANSITION_NAME_FORM_RELEASE_DATE = "release_date_";
+    public static final String TRANSITION_NAME_FORM_ARTWORK_IMAGE = "artwork_image_";
     private Favorite favorite;
     private Track track;
     FavoritesViewModel favoritesViewModel;
@@ -106,38 +113,83 @@ public class MusicInfoFragment extends Fragment {
     private int artworkSize;
     private View bottomNavView;
     private TextView daysBetween;
-    private int primaryColor, selectedColor, unselectedColor;
-    // ✅ ViewBinding 사용을 권장합니다
     private FragmentMusicInfoBinding binding;
     private MusicInfoViewModel viewModel;
+    private MainActivityViewModel mainActivityViewModel;
     public static final String REQUEST_KEY = "music_info_fragment_request";
     public static final String BUNDLE_KEY_TRANSITION_END = "transition_track_artwork_ended";
     private LinkedHashMap<String, ArtistMetadata> artistMetadataMap;
     private  SimpleArtistDialogHelper dialogHelper;
-    private android.content.res.ColorStateList originalTextColorStateList;
-    private android.content.res.ColorStateList originalIconColorStateList;
     private com.google.android.material.bottomnavigation.BottomNavigationView bnv;
-    private Drawable originalBottomNavBackground;
+    private ImageButton containingPlaylistButton, playtimeButton, lyricsButton, playButton;
+    private final ArcMotion arc = new ArcMotion();
 
 
-    //ViewModel 연결
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState){
-        super.onCreate(savedInstanceState);
+    private TransitionSet buildTextTransition(String targetName) {
+        TransitionSet set = new TransitionSet();
+        set.setOrdering(TransitionSet.ORDERING_TOGETHER);
+        set.addTransition(new ChangeBounds());
+        set.addTransition(new ChangeTransform()); // scale/rotate
+        set.setPathMotion(arc);
+        set.setDuration(435L);
+        set.setInterpolator(new AccelerateDecelerateInterpolator());
+        set.addTarget(targetName); // transitionName
+        return set;
+    }
+
+    private TransitionSet buildImageTransition(String targetName) {
+        TransitionSet set = new TransitionSet();
+        set.setOrdering(TransitionSet.ORDERING_TOGETHER);
+        set.addTransition(new ChangeBounds());
+        set.addTransition(new ChangeTransform());
+        set.setPathMotion(new ArcMotion());
+        set.setDuration(350L);
+        set.setInterpolator(new AccelerateDecelerateInterpolator());
+        set.addTarget(targetName);
+        return set;
+    }
+
+    private void prepareTransition(String trackId) {
+        // arc 설정 (Kotlin의 apply 블록)
+        arc.setMinimumHorizontalAngle(60f); // 좌우 곡률 최소 각도
+        arc.setMinimumVerticalAngle(80f);   // 상하 곡률 최소 각도
+        arc.setMaximumAngle(90f);           // 전체 곡률 최대 각도
+        // playlistId 타입에 맞게 문자열로
+
+        TransitionSet nameTrans     = buildTextTransition(TRANSITION_NAME_FORM_TITLE + trackId);
+        TransitionSet artistTrans    = buildTextTransition(TRANSITION_NAME_FORM_ARTIST + trackId);
+        TransitionSet albumTrans = buildTextTransition(TRANSITION_NAME_FORM_ALBUM + trackId);
+        TransitionSet durationTrans = buildTextTransition(TRANSITION_NAME_FORM_DURATION + trackId);
+        TransitionSet releaseDateTrans = buildTextTransition(TRANSITION_NAME_FORM_RELEASE_DATE + trackId);
+        TransitionSet imageTrans    = buildImageTransition(TRANSITION_NAME_FORM_ARTWORK_IMAGE + trackId);
+
+        TransitionSet enter = new TransitionSet();
+        enter.setOrdering(TransitionSet.ORDERING_TOGETHER);
+        enter.addTransition(nameTrans);
+        enter.addTransition(artistTrans);
+        enter.addTransition(albumTrans);
+        enter.addTransition(durationTrans);
+        enter.addTransition(releaseDateTrans);
+        enter.addTransition(imageTrans);
+
+        setSharedElementEnterTransition(enter);
 
 
-        viewModel = new ViewModelProvider(this).get(MusicInfoViewModel.class);
 
-        // ✅ 1. 전환 애니메이션 종류를 여기서 설정합니다.
-        MaterialContainerTransform transform = new MaterialContainerTransform();
-        transform.setPathMotion(new MaterialArcMotion());
-        transform.setDuration(500);
-        transform.setInterpolator(new FastOutSlowInInterpolator());
-        setSharedElementEnterTransition(transform);
-        setSharedElementReturnTransition(transform);
+        // clone()의 반환형은 Transition
+        Transition returnTrans = enter.clone();
+        setSharedElementReturnTransition(returnTrans);
 
-        // ✅ 2. 나머지 뷰(텍스트 등)를 위한 전환 설정
-        setEnterTransition(new Slide(Gravity.BOTTOM));
+        // ✅ 2. 나머지 뷰를 위한 전환 설정
+        setEnterTransition(
+                new Slide(Gravity.BOTTOM).
+                        setDuration(450L)
+        );
+
+        setReturnTransition(
+                new Fade().setDuration(50L)
+        );
+
 
         // ✅ 3. transition end (Fragment) callback
         androidx.transition.Transition returnTransition = (androidx.transition.Transition) getSharedElementReturnTransition();
@@ -156,18 +208,36 @@ public class MusicInfoFragment extends Fragment {
                         transition.removeListener(this);
                     }
                 }
-
                 @Override
                 public void onTransitionCancel(@NonNull androidx.transition.Transition transition) {}
-
                 @Override
                 public void onTransitionPause(@NonNull androidx.transition.Transition transition) {}
-
                 @Override
                 public void onTransitionResume(@NonNull androidx.transition.Transition transition) {}
             });
-
         }
+    }
+    //ViewModel 연결
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+
+
+        viewModel = new ViewModelProvider(requireActivity()).get(MusicInfoViewModel.class);
+
+
+
+        // ✅ 1. 전환 애니메이션 종류를 여기서 설정합니다.
+        //MaterialContainerTransform transform = new MaterialContainerTransform();
+        //transform.setPathMotion(new MaterialArcMotion());
+        //transform.setDuration(500);
+        //transform.setInterpolator(new FastOutSlowInInterpolator());
+        //setSharedElementEnterTransition(transform);
+        //setSharedElementReturnTransition(transform);
+
+
+
+
 
 
 
@@ -255,17 +325,39 @@ public class MusicInfoFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentMusicInfoBinding.inflate(inflater, container, false);
-        View view = inflater.inflate(R.layout.fragment_music_info, container, false);
         savedInDb = false;
         return binding.getRoot();
     }
+
 
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        postponeEnterTransition();
 
+        OnBackPressedCallback backCallback = new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                NavController nav = NavHostFragment.findNavController(MusicInfoFragment.this);
+                boolean popped = nav.popBackStack();
+
+                if (viewModel.requestBottomSheet) {
+                    new Handler(Looper.getMainLooper()).post(
+                            () -> mainActivityViewModel.requestBottomSheet(true)
+                    );
+                }
+                if (!popped) requireActivity().finish(); // 더 이상 pop될 곳 없을 때
+
+                viewModel.setMetadataMap(null);
+                viewModel.setFavoriteArtistList(null);
+                binding.artistName.setText(null);
+            }
+        };
+        requireActivity().getOnBackPressedDispatcher()
+                .addCallback(getViewLifecycleOwner(), backCallback);
+
+        mainActivityViewModel = new ViewModelProvider(getActivity()).get(MainActivityViewModel.class);
 
         bottomNavView = requireActivity().findViewById(R.id.nav_view);
 
@@ -275,6 +367,9 @@ public class MusicInfoFragment extends Fragment {
 
 
         favorite = getArguments().getParcelable(ARGUMENTS_KEY);
+        viewModel.requestBottomSheet = getArguments().getBoolean(REQUEST_BOTTOM_SHEET);
+
+        viewModel.favorite = favorite;
 
 
         if (favorite == null)
@@ -282,22 +377,21 @@ public class MusicInfoFragment extends Fragment {
 
         if (favorite != null && favorite.track != null) {
             track = favorite.track;
-            TrackMetadata metadata = favorite.metadata;
+            prepareTransition(track.trackId);
+
 
             //ImageView artworkImage = view.findViewById(R.id.artworkImage);
             ImageView artworkImage = binding.artworkImage;
 
 
-            if (viewModel.getInitialTransitionName() == null){
-                String receivedTransitionName = getArguments().getString(TRANSITION_NAME_KEY);
-                viewModel.setInitialTransitionName(receivedTransitionName);
-                ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
-                Log.d(TAG, "onViewCreated 에서 '전달받은' 이름 설정, name=" + receivedTransitionName);
-            }else{
-                String savedName = viewModel.getCurrentTransitionName();
-                ViewCompat.setTransitionName(binding.artworkImage, savedName);
-                Log.d(TAG, "MusicInfoFragment: viewModel 에 '저장된' current 이름 복원, name=" + savedName);
-            }
+
+            String receivedTransitionName = getArguments().getString(TRANSITION_NAME_KEY);
+
+            viewModel.setInitialTransitionName(receivedTransitionName);
+            //ViewCompat.setTransitionName(binding.artworkImage, receivedTransitionName);
+            Log.d(TAG, "onViewCreated 에서 '전달받은' 이름 설정, name=" + receivedTransitionName);
+
+
 
 
             artworkImage.post(() -> {
@@ -310,158 +404,62 @@ public class MusicInfoFragment extends Fragment {
             trackTitle = view.findViewById(R.id.trackTitle);
             TextView artistName = view.findViewById(R.id.artistName);
             TextView albumName = view.findViewById(R.id.albumName);
-            TextView releaseDate = view.findViewById(R.id.releaseDate);
-            TextView durationMs = view.findViewById(R.id.durationMs);
 
             trackTitleKr = view.findViewById(R.id.trackTitleKr);
-            LinearLayout lyricistLayout = view.findViewById(R.id.lyricists_layout);
-            LinearLayout composersLayout = view.findViewById(R.id.composers_layout);
-            TextView lyricist = view.findViewById(R.id.lyricists);
-            TextView composers = view.findViewById(R.id.composers);
-            TextView lyrics = view.findViewById(R.id.metadata_lyrics);
-            LinearLayout vocalistsLayout = view.findViewById(R.id.vocalists_layout);
-            TextView vocalists = view.findViewById(R.id.vocalists);
+
             daysBetween = view.findViewById(R.id.days_between);
             addedDateLayout = view.findViewById(R.id.added_date_layout);
             addedDate = view.findViewById(R.id.added_date);
             ImageView enlargeButton = view.findViewById(R.id.enlarge_button);
+            containingPlaylistButton = view.findViewById(R.id.containing_playlist);
+            playtimeButton = view.findViewById(R.id.playtime);
+            lyricsButton = view.findViewById(R.id.lyrics);
+            playButton = view.findViewById(R.id.play_music);
 
 
-
-            trackTitle.setText(track.trackName);
-            if (metadata != null && metadata.title != null){
-                trackTitleKr.setText(metadata.title);
-                trackTitle.setVisibility(TextView.GONE);
-                trackTitleKr.setVisibility(TextView.VISIBLE);
-            }
-            else {
-                trackTitleKr.setVisibility(TextView.GONE);
-                trackTitle.setVisibility(TextView.VISIBLE);
-            }
-
-            if (metadata != null && metadata.lyricists != null){
-                lyricist.setText(String.join(", ", metadata.lyricists));
-                lyricistLayout.setVisibility(TextView.VISIBLE);
-            }
-
-            if (metadata != null && metadata.composers != null){
-                composers.setText(String.join(", ", metadata.composers));
-                composersLayout.setVisibility(TextView.VISIBLE);
-            }
+            String trackId = track.trackId;
+            artistName.setTransitionName(TRANSITION_NAME_FORM_ARTIST + trackId);
+            albumName.setTransitionName(TRANSITION_NAME_FORM_ALBUM + trackId);
+            binding.durationLayout.setTransitionName(TRANSITION_NAME_FORM_DURATION + trackId);
+            binding.releaseDateLayout.setTransitionName(TRANSITION_NAME_FORM_RELEASE_DATE + trackId);
+            if(viewModel.getCurrentTransitionName() == null || viewModel.getCurrentTransitionName().equals(viewModel.getInitialTransitionName()))
+                artworkImage.setTransitionName(TRANSITION_NAME_FORM_ARTWORK_IMAGE + trackId);
 
 
-            if (metadata != null && metadata.vocalists != null && !metadata.vocalists.isEmpty()){
-                vocalists.setText(metadata.vocalistsToString());
-                vocalistsLayout.setVisibility(TextView.VISIBLE);
-                dialogHelper = new SimpleArtistDialogHelper(getContext(), new ArrayList<>());
-
-                Log.d(TAG, "dialogHelper create with empty ArrayList");
-
-                dialogHelper.setPositionChangedListener(new SimpleArtistDialogHelper.OnPositionChangedListener() {
-                    @Override
-                    public void positionChanged(int position, int detail_visible_state, GradientDrawable currentGradient) {
-                        Log.d(TAG, "position changed callback received detail visible state is " + detail_visible_state);
-                        viewModel.setSimpleArtistDialogPosition(position);
-                        viewModel.setDetailVisibleStateOnDialog(detail_visible_state);
-                        viewModel.setLastGradient(currentGradient);
-                    }
-                });
-
-                dialogHelper.setDismissListener(new SimpleArtistDialogHelper.OnDialogDismissListener() {
-                    @Override
-                    public void dialogDismissed() {
-                        viewModel.setOnSimpleDialog(false);
-                    }
-                });
-
-
-
-
-                List<FavoriteArtist> favoriteArtistListSavedInViewModel = viewModel.getFavoriteArtistList();
-                if (favoriteArtistListSavedInViewModel != null && !favoriteArtistListSavedInViewModel.isEmpty()) {
-                    dialogHelper.updateList(favoriteArtistListSavedInViewModel);
-                    Log.d(TAG, "dialogHelper updateList, list size: " + favoriteArtistListSavedInViewModel.size());
-                    artistMetadataMap = viewModel.getMetadataMap();
-                    setClickableArtists(vocalists, vocalists.getText().toString(), artistMetadataMap);
-                }
-                else {
-
-                    artistMetadataMap = new LinkedHashMap<>();
-                    for (List<String> item : metadata.vocalists){
-                        if (item.get(1) != null) {
-                            artistMetadataMap.put(item.get(0), null);
-                        }
-                    }
-
-                    fetchArtistMetadata(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
-                            setClickableArtists(vocalists, vocalists.getText().toString(), artistMetadataMap);
-
-                            List<FavoriteArtist> faList = new ArrayList<>();
-
-
-                            for (String key : artistMetadataMap.keySet()) {
-                                ArtistMetadata value = artistMetadataMap.get(key);
-
-                                Artist artist = new Artist(key);
-                                FavoriteArtist fa = new FavoriteArtist(artist, null, value);
-                                faList.add(fa);
-                            }
-
-                            viewModel.setFavoriteArtistList(faList);
-                            viewModel.setMetadataMap(artistMetadataMap);
-
-                            dialogHelper.updateList(faList);
-                        }
-                    });
-                }
-            }
-
-            if (favorite.addedDate != null && !favorite.addedDate.isEmpty()){
-                addedDate.setText(favorite.addedDate);
-                addedDateLayout.setVisibility(View.VISIBLE);
-            }
-
-            try {
-                daysBetween.setText(String.valueOf(DateUtils.calculateDateDiffrence(track.releaseDate, DateUtils.today())));
-            }catch(DateFormatMismatchException e){
-                Log.d(TAG, e.getMessage());
-                LinearLayout daysBetweenLayout = binding.daysBetweenLayout;
-                daysBetweenLayout.setVisibility(View.GONE);
-            }
 
 
             trackTitle.setOnClickListener(v -> {
                 if (savedInDb)
                     switchTitleLanguage();
                 else{
-                    favoritesViewModel.loadFavoriteItem(track.trackId, loaded -> {
+                    new Thread(()->{
+                        Favorite loaded =  favoritesViewModel.repository.getFavoriteIncludeHidden(trackId);
                         if (loaded != null) {
-                            savedInDb = true;
-                            switchTitleLanguage();
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                               savedInDb = true;
+                               switchTitleLanguage();
+                            });
                         }
-                    }
-                    );
+                    }).start();
                 }
             });
             trackTitleKr.setOnClickListener(v -> switchTitleLanguage());
 
 
 
+
             if (track.artworkUrl != null && !track.artworkUrl.isEmpty()) {
-                postponeEnterTransition();
                 Context context = getContext();
                 if (context != null) {
                     Glide.with(context)
                             .load(track.artworkUrl)
+                            .dontAnimate()
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .error(R.drawable.ic_image_not_found_foreground) // 실패 시 이미지
                             .centerCrop()
                             .into(new CustomTarget<Drawable>() {
                                 @Override
-                                public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                                public void onResourceReady(@NonNull Drawable resource, @Nullable com.bumptech.glide.request.transition.Transition <? super Drawable> transition) {
                                     artworkImage.setImageDrawable(resource);
                                     startPostponedEnterTransition();
                                     artworkImage.post(() -> {
@@ -489,6 +487,7 @@ public class MusicInfoFragment extends Fragment {
 
             }else{
                 Log.d(TAG, "artworkUrl is empty");
+                startPostponedEnterTransition();
             }
 
             artworkImage.post(()->{
@@ -514,9 +513,9 @@ public class MusicInfoFragment extends Fragment {
                         }).start();
                     }
 
-                    MusicInfoFragment.this.primaryColor = primaryColor;
-                    MusicInfoFragment.this.selectedColor = selectedColor;
-                    MusicInfoFragment.this.unselectedColor = unselectedColor;
+                    //MusicInfoFragment.this.primaryColor = primaryColor;
+                    //MusicInfoFragment.this.selectedColor = selectedColor;
+                    //MusicInfoFragment.this.unselectedColor = unselectedColor;
 
                     Log.d(TAG, "Success to Analyze a Primary Color of Image");
                     Activity activity = getActivity();
@@ -551,8 +550,8 @@ public class MusicInfoFragment extends Fragment {
                     if (bottomNavView instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
                         bnv = (com.google.android.material.bottomnavigation.BottomNavigationView) bottomNavView;
 
-                        originalTextColorStateList = bnv.getItemTextColor();
-                        originalIconColorStateList = bnv.getItemIconTintList();
+                        //originalTextColorStateList = bnv.getItemTextColor();
+                        //originalIconColorStateList = bnv.getItemIconTintList();
 
                         bnv.setItemTextColor(textColorStateList);
                         bnv.setItemIconTintList(iconColorStateList);
@@ -615,7 +614,7 @@ public class MusicInfoFragment extends Fragment {
                 return true;
             });
 
-            artistName.setText(track.artistName);
+
             artistName.setOnClickListener(v -> {
                 Bundle bundle = new Bundle();
                 favoriteArtistViewModel.loadFavoriteArtistByArtistId(track.artistId, loaded -> {
@@ -651,7 +650,6 @@ public class MusicInfoFragment extends Fragment {
                 });
             });
 
-            albumName.setText(track.albumName);
 
             //music_info fragment to album_info fragment : shared element transition
             albumName.setOnClickListener(v -> {
@@ -681,11 +679,6 @@ public class MusicInfoFragment extends Fragment {
                     }
                 });
             });
-
-
-            releaseDate.setText(track.releaseDate);
-            int durationSec = (int) Double.parseDouble(track.durationMs)/1000;
-            durationMs.setText(durationSec/60 + "분 " + durationSec%60 + "초");
         }
         else {
             Log.e("MusicInfoFragment", "track(Track) is null!");
@@ -697,12 +690,18 @@ public class MusicInfoFragment extends Fragment {
             addButton.setVisibility(TextView.GONE);
         }
         else {
-            favoritesViewModel.loadFavoriteItem(track.trackId, loaded_ -> {
-                if (loaded_ != null) {
-                    savedInDb = true;
-                    addButton.setVisibility(TextView.GONE);
+            new Thread(()->{
+                Favorite loaded =  favoritesViewModel.repository.getFavoriteIncludeHidden(track.trackId);
+                if (loaded != null) {
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        viewModel.favorite = loaded;
+                        favorite = loaded;
+                        bind();
+                        savedInDb = true;
+                        addButton.setVisibility(TextView.GONE);
+                    });
                 }
-            });
+            }).start();
         }
 
         addButton.setOnClickListener(v -> {
@@ -738,37 +737,188 @@ public class MusicInfoFragment extends Fragment {
                     }
                 }).start();
             });
-
             dialog.show();
         });
 
 
+/*
+        trackTitle.setOnLongClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Title", trackTitle.getText().toString());
+            clipboard.setPrimaryClip(clip);
+            return true;
+        });
 
-        trackTitle.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("Title", trackTitle.getText().toString());
-                clipboard.setPrimaryClip(clip);
-                return true;
+        trackTitleKr.setOnLongClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Title", trackTitleKr.getText().toString());
+            clipboard.setPrimaryClip(clip);
+            return true;
+        });
+
+ */
+
+        containingPlaylistButton.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(R.id.containing_playlist_fragment_in_music_info);
+        });
+
+        lyricsButton.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(R.id.lyrics_fragment_in_music_info);
+        });
+
+        playtimeButton.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(R.id.playtime_calendar_fragment_in_music_info);
+        });
+
+
+        playButton.setOnClickListener(v -> {
+            if (favorite.audioUri != null) {
+                mainActivityViewModel.setPlaylist(List.of(favorite), 0);
             }
         });
 
-        trackTitleKr.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("Title", trackTitleKr.getText().toString());
-                clipboard.setPrimaryClip(clip);
-                return true;
-            }
-        });
 
-
-
-
+        bind();
+        /**
+         end of onViewCreated
+         * */
     }
 
+    private void bind() {
+        TrackMetadata metadata = favorite.metadata;
+        String trackId = favorite.track.trackId;
+
+        binding.trackTitle.setText(track.trackName);
+        if (metadata != null && metadata.title != null){
+            binding.trackTitleKr.setText(metadata.title);
+            binding.trackTitle.setVisibility(TextView.GONE);
+            binding.trackTitleKr.setVisibility(TextView.VISIBLE);
+            binding.trackTitleKr.setTransitionName("title_name_" + trackId);
+        }
+        else {
+            binding.trackTitleKr.setVisibility(TextView.GONE);
+            binding.trackTitle.setVisibility(TextView.VISIBLE);
+            binding.trackTitle.setTransitionName("title_name_" + trackId);
+        }
+
+        try {
+            binding.daysBetween.setText(String.valueOf(DateUtils.calculateDateDiffrence(track.releaseDate, DateUtils.today())));
+        }catch(DateFormatMismatchException e){
+            Log.d(TAG, e.getMessage());
+            LinearLayout daysBetweenLayout = binding.daysBetweenLayout;
+            daysBetweenLayout.setVisibility(View.GONE);
+        }
+        binding.releaseDate.setText(track.releaseDate);
+        int durationSec = (int) Double.parseDouble(track.durationMs)/1000;
+        binding.durationMs.setText(durationSec/60 + "분 " + durationSec%60 + "초");
+
+
+        if (metadata != null && metadata.lyricists != null){
+            binding.lyricists.setText(String.join(", ", metadata.lyricists));
+            binding.lyricistsLayout.setVisibility(TextView.VISIBLE);
+        }
+
+        if (metadata != null && metadata.composers != null){
+            binding.composers.setText(String.join(", ", metadata.composers));
+            binding.composersLayout.setVisibility(TextView.VISIBLE);
+        }
+
+        if (favorite.addedDate != null && !favorite.addedDate.isEmpty()){
+            binding.addedDate.setText(favorite.addedDate);
+            binding.addedDateLayout.setVisibility(View.VISIBLE);
+        }
+
+
+        if (metadata != null && metadata.vocalists != null && !metadata.vocalists.isEmpty()){
+            binding.vocalists.setText(metadata.vocalistsToString());
+            binding.vocalistsLayout.setVisibility(TextView.VISIBLE);
+            dialogHelper = new SimpleArtistDialogHelper(getContext(), new ArrayList<>());
+
+            Log.d(TAG, "dialogHelper create with empty ArrayList");
+
+            dialogHelper.setPositionChangedListener(new SimpleArtistDialogHelper.OnPositionChangedListener() {
+                @Override
+                public void positionChanged(int position, int detail_visible_state, GradientDrawable currentGradient) {
+                    Log.d(TAG, "position changed callback received detail visible state is " + detail_visible_state);
+                    viewModel.setSimpleArtistDialogPosition(position);
+                    viewModel.setDetailVisibleStateOnDialog(detail_visible_state);
+                    viewModel.setLastGradient(currentGradient);
+                }
+            });
+
+            dialogHelper.setDismissListener(new SimpleArtistDialogHelper.OnDialogDismissListener() {
+                @Override
+                public void dialogDismissed() {
+                    viewModel.setOnSimpleDialog(false);
+                }
+            });
+
+
+
+
+            List<FavoriteArtist> favoriteArtistListSavedInViewModel = viewModel.getFavoriteArtistList();
+            if (favoriteArtistListSavedInViewModel != null && !favoriteArtistListSavedInViewModel.isEmpty()) {
+                dialogHelper.updateList(favoriteArtistListSavedInViewModel);
+                Log.d(TAG, "dialogHelper updateList, list size: " + favoriteArtistListSavedInViewModel.size());
+                artistMetadataMap = viewModel.getMetadataMap();
+                setClickableArtists( binding.vocalists,  binding.vocalists.getText().toString(), artistMetadataMap);
+            }
+            else {
+
+                artistMetadataMap = new LinkedHashMap<>();
+                for (List<String> item : metadata.vocalists){
+                    if (item.get(1) != null) {
+                        artistMetadataMap.put(item.get(0), null);
+                    }
+                }
+
+                fetchArtistMetadata(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "runnable starts, setClickableArtists in string and set dialogHelper");
+                        setClickableArtists( binding.vocalists,  binding.vocalists.getText().toString(), artistMetadataMap);
+
+                        List<FavoriteArtist> faList = new ArrayList<>();
+
+
+                        for (String key : artistMetadataMap.keySet()) {
+                            ArtistMetadata value = artistMetadataMap.get(key);
+
+                            Artist artist = new Artist(key);
+                            FavoriteArtist fa = new FavoriteArtist(artist, null, value);
+                            faList.add(fa);
+                        }
+
+                        viewModel.setFavoriteArtistList(faList);
+                        viewModel.setMetadataMap(artistMetadataMap);
+
+                        dialogHelper.updateList(faList);
+                    }
+                });
+            }
+        }
+
+
+        binding.artistName.setText(track.artistName);
+        binding.albumName.setText(track.albumName);
+
+        if (favorite.audioUri == null) {
+            playtimeButton.setVisibility(View.GONE);
+            containingPlaylistButton.setVisibility(View.GONE);
+            playButton.setVisibility(View.GONE);
+        }
+        else {
+            playtimeButton.setVisibility(View.VISIBLE);
+            containingPlaylistButton.setVisibility(View.VISIBLE);
+            playButton.setVisibility(View.VISIBLE);
+        }
+        if (favorite.metadata == null || favorite.metadata.lyrics == null || favorite.metadata.lyrics.isEmpty()) {
+            lyricsButton.setVisibility(View.GONE);
+        }
+        else {
+            lyricsButton.setVisibility(View.VISIBLE);
+        }
+    }
     private void switchTitleLanguage(){
         if (trackTitle.getVisibility() == TextView.VISIBLE  && favorite.metadata != null && favorite.metadata.title != null && !favorite.metadata.title.isEmpty()){
             trackTitle.setVisibility(TextView.GONE);

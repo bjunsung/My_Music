@@ -165,7 +165,7 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
 
     private void loadImageWithGlide(int position, ImagePagerAdapter.ImageViewHolder holder) {
         String imageUrl = imageUrls.get(position);
-        Glide.with(viewGroupContext)
+        Glide.with(holder.itemView)
                 .load(imageUrl)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 //.skipMemoryCache(false)

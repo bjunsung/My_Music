@@ -370,7 +370,7 @@ public class  AlbumInfoFragment extends Fragment {
     }
 
 
-    public void onTrackClick(Track track, ImageView sharedImageView, int position){
+    public void onTrackClick(TrackAdapter.TrackViewHolder holder, Track track, int position){
         Bundle bundle = new Bundle();
         Favorite favorite = new Favorite(track);
         bundle.putParcelable("favorite", favorite);

@@ -42,8 +42,7 @@ class PlaylistRepository(
     }
 
     /** 전체 조회(모델 리스트) */
-    suspend fun getAll(): List<Playlist> =
-        dao.getAll().map { it.toModel() }
+    suspend fun getAll(): List<Playlist> = dao.getAll().map { it.toModel() }
 
     suspend fun getAllWithFavorites(): List<Playlist> {
         val withoutFavorites = getAll()
@@ -91,13 +90,13 @@ class PlaylistRepository(
         return combined.sumOf { it.duration } / 1000
     }
 
-    /** 중복이 있으면 앞으로 이동 */
-    suspend fun addTracksMoveDuplicatesToFront(playlistId: String, toAdd: List<String>): Playlist? {
-        val model = dao.getById(playlistId)?.toModel() ?: return null
-        model.addTracksMoveDuplicatesToFront(toAdd, maxQueueSize)
+    /** 최근 재생한 음악 */
+    suspend fun addTracksMoveDuplicatesToBack(playlistId: String, toAdd: List<String>): Playlist? {
+        val model = dao.getById(playlistId)?.toModelAlwaysInOrder() ?: return null
+        model.addTracksMoveDuplicatesToBack(toAdd, maxQueueSize)
         model.totalDurationSec = calculateUpdatedDuration(playlistId, toAdd.toSet(), TYPE_ADD_TRACKS)
         dao.updatePlaylist(model.toEntity())
-        return model
+        return model.toEntity().toModel()
     }
 
     /** 여러 개 삭제 */
@@ -110,28 +109,15 @@ class PlaylistRepository(
     }
 
     suspend fun updatePlaylist(playlist: Playlist): Boolean {
+        if (playlist.playlistId == PLAYLIST_ID_RECENTLY_PLAYED) {
+            playlist.lastPlayedTimeMs = 0
+            playlist.playCount = 0
+        }
         val entity = playlist.toEntity()
         val rowsUpdated = dao.updatePlaylist(entity)
         return rowsUpdated > 0
     }
 
-    /** 재생 관련 메타 업데이트(옵션) */
-    suspend fun updatePlaybackInfo(
-        playlistId: String,
-        addedDurationSec: Int = 0,
-        bumpPlayCount: Boolean = false
-    ): Playlist? {
-        val model = dao.getById(playlistId)?.toModel() ?: return null
-        if (addedDurationSec != 0) {
-            model.totalDurationSec = (model.totalDurationSec + addedDurationSec).coerceAtLeast(0)
-        }
-        if (bumpPlayCount) {
-            model.playCount += 1
-            model.lastPlayedTimeMs = System.currentTimeMillis()
-        }
-        dao.updatePlaylist(model.toEntity())
-        return model
-    }
 
 
     suspend fun getAllPlaylistNameSet(): Set<String> {
@@ -151,8 +137,8 @@ class PlaylistRepository(
             playCount = playCount
         )
 
-    private fun PlaylistEntity.toModel(): Playlist =
-        Playlist(
+    private fun PlaylistEntity.toModel(): Playlist {
+        val playlist = Playlist(
             playlistId = playlistId,
             playlistName = playlistName,
             trackIds = trackIds?.toMutableList() ?: mutableListOf(),   // 불변 → 가변
@@ -161,6 +147,24 @@ class PlaylistRepository(
             lastPlayedTimeMs = lastPlayedTimeMs,
             playCount = playCount
         )
+        if (playlist.playlistId == PLAYLIST_ID_RECENTLY_PLAYED){
+            return playlist.deepCopy().copyWithTrackIds(playlist.trackIds.reversed())
+        }
+        return playlist
+    }
+
+    private fun PlaylistEntity.toModelAlwaysInOrder(): Playlist {
+        val playlist = Playlist(
+            playlistId = playlistId,
+            playlistName = playlistName,
+            trackIds = trackIds?.toMutableList() ?: mutableListOf(),   // 불변 → 가변
+            totalDurationSec = totalDurationSec,
+            createdDate = createdDate,
+            lastPlayedTimeMs = lastPlayedTimeMs,
+            playCount = playCount
+        )
+        return playlist
+    }
 
 
     companion object {

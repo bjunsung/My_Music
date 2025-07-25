@@ -187,6 +187,7 @@ class ArtworkWithWaveFormFragment : Fragment() {
             val navController = findNavController()
             val args = Bundle().apply {
                 putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+                putBoolean(MusicInfoFragment.REQUEST_BOTTOM_SHEET, true)
             }
             musicPlayingViewModel.requestDismiss(true)
             navController.navigate(R.id.musicInfoFragment, args)

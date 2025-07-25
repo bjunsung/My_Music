@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="artwork_corner">@dimen/combined_artworks_corner_radius</dimen>
+
+    <!-- ShapeableImageView에 씌울 둥근 모서리 정의 -->
+    <style name="shape_rounded_artwork">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/artwork_corner</item>
+    </style>
+</resources>

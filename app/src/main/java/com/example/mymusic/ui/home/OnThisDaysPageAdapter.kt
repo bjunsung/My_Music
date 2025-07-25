@@ -6,10 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.mymusic.model.Favorite
 import com.example.mymusic.R
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 
 class OnThisDaysPageAdapter(
     private var items: List<Favorite>,
@@ -17,7 +20,8 @@ class OnThisDaysPageAdapter(
 ) : RecyclerView.Adapter<OnThisDaysPageAdapter.ViewHolder>(){
 
 
-    public interface OnClickListener {
+    interface OnClickListener {
+        fun onItemClick(holder: ViewHolder, favorite: Favorite)
         fun onPlayButtonClick(list: List<Favorite>, position: Int)
     }
 
@@ -34,15 +38,20 @@ class OnThisDaysPageAdapter(
         return items.size
     }
 
+    @OptIn(UnstableApi::class)
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items.get(position)
-        Glide.with(viewGroupContext)
+
+        holder.artworkImage.transitionName = MusicInfoFragment.TRANSITION_NAME_FORM_ARTWORK_IMAGE + item.track.trackId
+
+        Glide.with(holder.itemView)
             .load(item.track.artworkUrl)
             .error(R.drawable.ic_image_not_found_foreground)
             .into(holder.artworkImage)
 
         holder.playButton.visibility = if (item.audioUri.isNullOrEmpty()) View.GONE else View.VISIBLE
         holder.playButton.setOnClickListener { listener.onPlayButtonClick(items, holder.bindingAdapterPosition) }
+        holder.itemView.setOnClickListener { listener.onItemClick(holder, item) }
     }
 
     fun updateList(newList: List<Favorite>) {

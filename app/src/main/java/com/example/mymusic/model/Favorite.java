@@ -33,6 +33,7 @@ public class Favorite implements Parcelable {
     public Integer playingPosition = 0;
     public LocalDate firstCountedDate = null;
     public LocalDate lastPlayedDate = null;
+    public Boolean isHidden = false;
 
     public Favorite(Track track){
         this.track = track;

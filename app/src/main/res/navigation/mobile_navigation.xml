@@ -246,4 +246,31 @@
         android:label="Playlist Detail"
         tools:layout="@layout/fragment_playlist_detail" >
     </fragment>
+    <fragment
+        android:id="@+id/fragment_hidden_track"
+        android:name="com.example.mymusic.ui.setting.hiddenTracks.HiddenTrackFragment"
+        android:label="Playlist Detail"
+        tools:layout="@layout/fragment_hidden_track" >
+    </fragment>
+    <fragment
+        android:id="@+id/playtime_calendar_fragment_in_music_info"
+        android:name="com.example.mymusic.ui.musicInfo.subFragment.PlayTimeCalendar"
+        android:label="Music Information"
+        tools:layout="@layout/fragment_play_time_calendar" >
+    </fragment>
+    <fragment
+        android:id="@+id/lyrics_fragment_in_music_info"
+        android:name="com.example.mymusic.ui.musicInfo.subFragment.LyricsPageFragment"
+        android:label="Music Information"
+        tools:layout="@layout/fragment_lyrics_page" >
+    </fragment>
+    <fragment
+        android:id="@+id/containing_playlist_fragment_in_music_info"
+        android:name="com.example.mymusic.ui.musicInfo.subFragment.ContainingPlaylistFragment"
+        android:label="Music Information"
+        tools:layout="@layout/fragment_playlist_in_music_info" >
+    </fragment>
+
+
 </navigation>
+

@@ -141,7 +141,7 @@
 
                                 <!-- 아티스트 줄 -->
                                 <LinearLayout
-                                    android:id="@+id/artist_row"
+                                    android:id="@+id/artist_name_layout"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
@@ -165,7 +165,6 @@
 
                                 <!-- 앨범 줄 -->
                                 <LinearLayout
-                                    android:id="@+id/album_row"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
@@ -253,10 +252,28 @@
                                         android:text="이단옆차기, SEION, 박장근, 챈슬러"
                                         android:textSize="@dimen/text_size_basic"/>
                                 </LinearLayout>
-
+                                <!-- 재생시간 -->
+                                <LinearLayout
+                                    android:id="@+id/duration_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="재생시간: "
+                                        android:textSize="@dimen/text_size_basic" />
+                                    <TextView
+                                        android:id="@+id/durationMs"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="3분 28초"
+                                        android:textSize="@dimen/text_size_basic"/>
+                                </LinearLayout>
                                 <!-- 발매일 -->
                                 <LinearLayout
-                                    android:id="@+id/release_row"
+                                    android:id="@+id/release_date_layout"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
@@ -298,25 +315,7 @@
                                     </LinearLayout>
                                 </LinearLayout>
 
-                                <!-- 재생시간 -->
-                                <LinearLayout
-                                    android:id="@+id/duration_row"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="horizontal">
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="재생시간: "
-                                        android:textSize="@dimen/text_size_basic" />
-                                    <TextView
-                                        android:id="@+id/durationMs"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="3분 28초"
-                                        android:textSize="@dimen/text_size_basic"/>
-                                </LinearLayout>
+
 
                                 <!-- 추가 날짜 -->
                                 <LinearLayout
@@ -337,6 +336,48 @@
                                         android:layout_height="wrap_content"
                                         android:text="2025-06-29"
                                         android:textSize="@dimen/text_size_basic"/>
+                                </LinearLayout>
+
+                                <!-- 아이콘 -->
+                                <LinearLayout
+                                    android:id="@+id/icons_layout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:orientation="horizontal"
+                                    android:visibility="visible">
+                                    <ImageButton
+                                        android:id="@+id/containing_playlist"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:src="@drawable/ic_outline_format_list_bulleted"
+                                        android:padding="8dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless">
+                                    </ImageButton>
+                                    <ImageButton
+                                        android:id="@+id/playtime"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:src="@drawable/ic_calendar_month"
+                                        android:padding="8dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless">
+                                    </ImageButton>
+                                    <ImageButton
+                                        android:id="@+id/lyrics"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:src="@drawable/ic_lyrics"
+                                        android:padding="8dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless">
+                                    </ImageButton>
+                                    <ImageButton
+                                        android:id="@+id/play_music"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:src="@drawable/ic_play_arrow"
+                                        android:padding="8dp"
+                                        android:background="?attr/selectableItemBackgroundBorderless">
+                                    </ImageButton>
                                 </LinearLayout>
 
                             </LinearLayout>

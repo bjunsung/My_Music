@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="8dp">
+
+
+
+    <!-- 텍스트 정보 (제목, 아티스트) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/playlist_shuffle_button">
+
+        <TextView
+            android:id="@+id/playlist_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Apink 노래 모음"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:layout_marginEnd="4dp"
+            android:ellipsize="end"
+            android:visibility="visible"/>
+        <TextView
+            android:id="@+id/track_count_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="16곡"
+            android:textStyle="bold"
+            android:textSize="10sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end" />
+        <TextView
+            android:id="@+id/playlist_play_time_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="52분 27초"
+            android:textStyle="bold"
+            android:textSize="10sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+    <ImageButton
+        android:id="@+id/playlist_shuffle_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_round_shuffle"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/playlist_play_button"
+        android:layout_marginBottom="4dp"
+        android:padding="8dp"
+        android:scaleX="0.8"
+        android:scaleY="0.8"/>
+    <ImageButton
+        android:id="@+id/playlist_play_button"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:layout_marginBottom="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_play_arrow"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:scaleX="0.8"
+        android:scaleY="0.8"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

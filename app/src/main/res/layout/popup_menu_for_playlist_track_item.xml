@@ -1,0 +1,105 @@
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
+    android:padding="2dp"
+    app:cardCornerRadius="10dp"
+    app:cardBackgroundColor="#2B2B2B">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <LinearLayout
+            android:id="@+id/see_music_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:text="음악 정보 보기"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_xsmall" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#555555" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/shuffle_when_music_end_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:text="이 곡을 첫 곡으로 고정하고 셔플하기"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_xsmall" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#555555" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/show_playlists_for_track_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:text="이 곡이 포함된 Playlist 보기"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_xsmall" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#555555" />
+        </LinearLayout>
+
+
+
+
+        <LinearLayout
+            android:id="@+id/remove_from_playlist_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:text="재생목록에서 삭제"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_xsmall" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#555555" />
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+
+
+</com.google.android.material.card.MaterialCardView>
+
+

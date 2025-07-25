@@ -56,7 +56,7 @@ class PlaylistLibraryFragment : Fragment() {
                     putParcelable(PlaylistDetailFragment.ARGUMENT_KEY, playlist)
                 }
                 val extras = FragmentNavigatorExtras(
-                    holder.artworkImageCardHolder to "artworks_${playlist.playlistId}",
+                    holder.combinedArtworks to "combined_artworks_${playlist.playlistId}",
                     holder.playlistNameTextView to "name_${playlist.playlistId}",
                     holder.playlistCountTextVIew to "count_${playlist.playlistId}",
                     holder.playlistPlayTimeTextView to "duration_${playlist.playlistId}"

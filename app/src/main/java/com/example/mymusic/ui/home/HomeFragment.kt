@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.media3.common.util.UnstableApi
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
@@ -19,6 +20,7 @@ import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.databinding.FragmentHomeBinding
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment
 import com.example.mymusic.ui.search.SearchFragment
 import com.example.mymusic.util.ViewPagerAutoScroller
 import java.time.LocalDate
@@ -33,6 +35,17 @@ class HomeFragment : Fragment() {
     val homeViewModel: HomeViewModel by viewModels()
     var onThisDaysPageAdapter: OnThisDaysPageAdapter  = OnThisDaysPageAdapter(emptyList(),
         object : OnThisDaysPageAdapter.OnClickListener {
+            override fun onItemClick(holder: OnThisDaysPageAdapter.ViewHolder, favorite: Favorite) {
+                val args = Bundle().apply {
+                    putString(MusicInfoFragment.TRANSITION_NAME_KEY, holder.artworkImage.transitionName)
+                    putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+                }
+                val extras = FragmentNavigatorExtras(
+                    holder.artworkImage to holder.artworkImage.transitionName
+                )
+                findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
+            }
+
             override fun onPlayButtonClick(list: List<Favorite>, position: Int) {
                 val ordered =  list.subList(position, list.size) + list.subList(0, position)
                 val filtered = ordered.filter { !it.audioUri.isNullOrEmpty() }
@@ -41,6 +54,20 @@ class HomeFragment : Fragment() {
         })
     var onThisMonthPageAdapter: OnThisMonthPageAdapter  = OnThisMonthPageAdapter(emptyList(),
         object : OnThisMonthPageAdapter.OnClickListener {
+            override fun onItemClick(holder: OnThisMonthPageAdapter.ViewHolder, favorite: Favorite) {
+                val args = Bundle().apply {
+                    putString(MusicInfoFragment.TRANSITION_NAME_KEY, holder.artworkImage.transitionName)
+                    putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+                }
+                val extras = FragmentNavigatorExtras(
+                    holder.artworkImage to holder.artworkImage.transitionName,
+                    holder.titleTextView to holder.titleTextView.transitionName,
+                    holder.artistNameTextView to holder.artistNameTextView.transitionName,
+                    holder.releaseDateTextView to holder.releaseDateTextView.transitionName
+                )
+                findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
+            }
+
             override fun onPlayButtonClick(list: List<Favorite>, position: Int) {
                 val ordered =  list.subList(position, list.size) + list.subList(0, position)
                 val filtered = ordered.filter { !it.audioUri.isNullOrEmpty() }
@@ -232,6 +259,7 @@ class HomeFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         binding.onThisDaysReleasesViewPager.adapter = null
+        binding.onThisMonthReleasesViewPager.adapter = null
         onThisDayReleasesScroller?.detach()
         onThisMonthReleasesScroller?.detach()
         _binding = null

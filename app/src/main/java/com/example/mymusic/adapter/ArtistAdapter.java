@@ -97,11 +97,11 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
         ViewCompat.setTransitionName(holder.artworkImage, transitionName);
 
         if (artist.artworkUrl != null && !artist.artworkUrl.isEmpty()) {
-            Glide.with(context)
+            Glide.with(holder.itemView)
                     .load(artist.artworkUrl)
                     .override(120, 120)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
+                    //.skipMemoryCache(true)
                     //.placeholder(R.drawable.default_artist_image) // 로딩 중 보여줄 이미지
                     .error(R.drawable.ic_image_not_found_foreground)       // 실패 시 보여줄 이미지
                     .into(holder.artworkImage);

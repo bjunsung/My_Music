@@ -177,7 +177,7 @@ public class FavoriteArtistAdapter extends RecyclerView.Adapter<FavoriteArtistAd
 
 
 
-        Glide.with(context)
+        Glide.with(holder.itemView)
                 .load(artist.artworkUrl)
                 .override(160, 160)
                 .centerCrop()

@@ -8,6 +8,19 @@
         android:layout_width="match_parent"
         android:background="@android:color/transparent"
         android:layout_height="match_parent">
+        <ImageView
+            android:id="@+id/background_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </ImageView>
+        <FrameLayout
+            android:id="@+id/dim_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.88"
+            android:background="@android:color/transparent">
+        </FrameLayout>
+
         <androidx.core.widget.NestedScrollView
             android:id="@+id/scroll_area"
             android:layout_width="match_parent"

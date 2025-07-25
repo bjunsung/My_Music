@@ -6,17 +6,31 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
+import com.example.mymusic.data.repository.FavoriteSongRepository;
+import com.example.mymusic.data.repository.PlaylistRepository;
+import com.example.mymusic.main.playtime.ContributionDay;
 import com.example.mymusic.model.ArtistMetadata;
+import com.example.mymusic.model.Favorite;
 import com.example.mymusic.model.FavoriteArtist;
+import com.example.mymusic.model.Playlist;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 public class MusicInfoViewModel extends AndroidViewModel {
-    private static final String TAG = "MusicInfoViewModel";
 
+    public boolean requestBottomSheet = false;
+    public Favorite favorite;
+    public PlaylistRepository playlistRepository = new PlaylistRepository(getApplication());
+    public FavoriteSongRepository favoriteSongRepository = new FavoriteSongRepository(getApplication());
+    public MutableLiveData<List<ContributionDay>> lastContributionData = new MutableLiveData<>();
+    public List<Playlist> allPlaylists;
+    public MutableLiveData<List<Playlist>> containingPlaylists = new MutableLiveData<>();
+    private static final String TAG = "MusicInfoViewModel";
     private String initialTransitionName = null;
     private String currentTransitionName = null;
     private boolean onSimpleDialog = false;
@@ -95,4 +109,6 @@ public class MusicInfoViewModel extends AndroidViewModel {
     public void setMetadataMap(LinkedHashMap<String, ArtistMetadata> metadataMap) {
         this.metadataMap = metadataMap;
     }
+
+
 }

@@ -131,32 +131,58 @@
                         android:layout_width="300dp"
                         android:layout_height="300dp"
                         android:layout_gravity="center"
-                        app:cardCornerRadius="24dp"
+                        app:cardCornerRadius="@dimen/combined_artworks_corner_radius"
                         android:elevation="0dp"
                         app:strokeWidth="0.5dp"
                         app:strokeColor="#8F8F8F"
                         android:background="@android:color/transparent"
+                        app:cardPreventCornerOverlap="true"
                         android:clipToOutline="false"
                         android:clipChildren="false">
-                        <ImageView
+                        <com.google.android.material.imageview.ShapeableImageView
                             android:id="@+id/combined_artworks"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent">
-                        </ImageView>
-
+                            android:layout_height="match_parent"
+                            app:shapeAppearanceOverlay="@style/shape_rounded_artwork" />
                     </com.google.android.material.card.MaterialCardView>
 
-                    <TextView
-                        android:id="@+id/playlist_name"
-                        android:layout_gravity="center"
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="playlist name"
                         android:layout_marginTop="8dp"
-                        android:textSize="@dimen/text_size_large"
-                        android:textStyle="bold">
-                    </TextView>
+                        android:layout_gravity="center"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/playlist_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="playlist name"
+                            android:textSize="@dimen/text_size_large"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent">
+                        </TextView>
+
+                        <ImageButton
+                            android:id="@+id/rename"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:src="@drawable/ic_round_edit"
+                            android:background="@android:color/transparent"
+                            app:tint= "@color/text_secondary"
+                            android:layout_marginStart="4dp"
+                            android:scaleX="0.8"
+                            android:scaleY="0.9"
+                            app:layout_constraintStart_toEndOf="@id/playlist_name"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintBottom_toBottomOf="parent">
+                        </ImageButton>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -216,13 +242,15 @@
                             android:scaleX="1.2">
                         </ImageButton>
                         <ImageButton
-                            android:id="@+id/rename"
+                            android:id="@+id/add_tracks"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:src="@drawable/ic_round_edit"
+                            android:src="@drawable/ic_round_playlist_add"
                             android:background="@android:color/transparent"
                             android:layout_marginStart="24dp"
-                            android:layout_marginEnd="24dp">
+                            android:layout_marginEnd="24dp"
+                            android:scaleY="1.15"
+                            android:scaleX="1.15">
                         </ImageButton>
                     </LinearLayout>
                     <androidx.recyclerview.widget.RecyclerView

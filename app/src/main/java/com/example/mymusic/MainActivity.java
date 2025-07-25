@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton audioPauseButton;
 
     private ImageButton repeatOffButton, repeatOnButton, repeatOneButton, shuffleButton, shuffleOnStateButton;
-
+    private MusicPlayingBottomSheet musicPlayingBottomSheet;
 
 
     @Override

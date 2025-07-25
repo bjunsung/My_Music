@@ -98,11 +98,13 @@ class ReleaseDateChart: Fragment() {
                 viewModel.itemClickRepeated = 1
             }
             viewModel.currentPosition = position
+            viewModel.currentTrackId = item.track.trackId
             showPopupWindow(view, item, position)
         }
 
-        override fun onImageReady() {
-            startPostponedEnterTransition()
+        override fun onImageReady(trackId: String) {
+            if (viewModel.currentTrackId == null || viewModel.currentTrackId == trackId)
+                startPostponedEnterTransition()
         }
 
         override fun onImageLoadFailed() {}
@@ -261,10 +263,11 @@ class ReleaseDateChart: Fragment() {
     fun onTitleClick(item: Favorite) {
         preventUnfocus = true
         popupWindow.dismiss()
-        val args = Bundle()
+        val args = Bundle().apply {
+            putParcelable(MusicInfoFragment.ARGUMENTS_KEY, item)
+            putString(MusicInfoFragment.TRANSITION_NAME_KEY, anchorView.transitionName)
+        }
 
-        args.putString(MusicInfoFragment.TRANSITION_NAME_KEY, anchorView.transitionName)
-        args.putParcelable(MusicInfoFragment.ARGUMENTS_KEY, item)
         val extras = FragmentNavigatorExtras(
             anchorView to anchorView.transitionName
         )
@@ -272,7 +275,7 @@ class ReleaseDateChart: Fragment() {
         val currentDestination = navController.currentDestination
         if (currentDestination?.id == R.id.fragment_release_date_chart) {
             viewModel.reenterStateFromMusicInfoFragment = true
-            findNavController().navigate(R.id.action_releaseDateChart_to_musicInfoFragment, args, null, extras)
+            findNavController().navigate(R.id.musicInfoFragment, args, null, extras)
         } else {
             Log.w(TAG, "현재 위치가 musicInfoFragment가 아님. Navigation 취소됨")
         }
@@ -353,9 +356,11 @@ class ReleaseDateChart: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?){
         super.onViewCreated(view, savedInstanceState)
         postponeEnterTransition()
+        Handler(Looper.getMainLooper()).postDelayed(Runnable{ startPostponedEnterTransition() }, 50)
         setGradientColor()
         bind()
         prepareChart()
+
 
         //reenter from MusicInfoFragment
         parentFragmentManager.setFragmentResultListener(
@@ -366,7 +371,7 @@ class ReleaseDateChart: Fragment() {
             if (transitionEnded) {
                 Log.d(TAG, "transition end callback, show popupwindow")
                 viewModel.reenterStateFromMusicInfoFragment = false
-                showPopupWindowAgain()
+                //showPopupWindowAgain()
             }
         }
 
@@ -377,9 +382,11 @@ class ReleaseDateChart: Fragment() {
             val transitionEnd = bundle.getBoolean(AlbumInfoFragment.BUNDLE_KEY_TRANSITION_END, false)
             if (transitionEnd){
                 viewModel.reenterStateFromAlbumInfoFragment = false
-                showPopupWindowAgain()
+                //showPopupWindowAgain()
             }
         }
+
+
     }
 
     private fun bind(){
@@ -661,12 +668,14 @@ class ReleaseDateChart: Fragment() {
                     viewModel.reenterStateFromMusicInfoFragment
                     || viewModel.reenterStateFromAlbumInfoFragment
                     || viewModel.reenterStateFromArtistInfoFragment)) {
-            recyclerView?.post { showPopupWindowAgain() }
+            recyclerView?.post { //showPopupWindowAgain()
+             }
         }
         else if (viewModel.reenterStateFromArtistInfoFragment) {
             recyclerView?.postDelayed({
                 viewModel.reenterStateFromArtistInfoFragment = false
-                showPopupWindowAgain()}, 280)
+                //showPopupWindowAgain()
+                                      }, 280)
         }
         else{
             startPostponedEnterTransition()

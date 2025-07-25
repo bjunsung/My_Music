@@ -73,7 +73,7 @@ public class SimpleImagePagerAdapter extends RecyclerView.Adapter<SimpleImagePag
                 imageLoadListener.onLoadSuccess(realPosition, bitmapCache);
             }
         } else {
-            Glide.with(viewGroupContext)
+            Glide.with(holder.itemView)
                     .asBitmap()
                     .load(url)
                     .centerCrop()

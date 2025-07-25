@@ -99,6 +99,34 @@ class PlaylistDetailViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
+    fun synchronizePlaylist() {
+        playlist.value?.playlistId?.let { id ->
+            viewModelScope.launch(Dispatchers.IO) {
+                playlistRepository.getByIdWithFavorites(id)?.let { playlistSync ->
+                    if (playlist.value != playlistSync)
+                        _playlist.postValue(playlistSync)
+                }
+            }
+        }
+    }
+
+    private var allPlaylists: List<Playlist>? = null
+
+    suspend fun findContainingPlaylist(trackId: String): List<Playlist> {
+        val cached = allPlaylists
+        val playlists = if (cached != null) {
+            cached
+        } else {
+            withContext(Dispatchers.IO) {
+                playlistRepository.getAllWithFavorites().also { allPlaylists = it }
+            }
+        }
+        return playlists.filter { it.trackIds.contains(trackId) }
+    }
+
+
+    var focusedTrackId: String? = null
+
 
 
     companion object {

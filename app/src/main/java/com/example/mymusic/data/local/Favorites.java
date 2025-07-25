@@ -40,12 +40,16 @@ public class Favorites
     public String audioUri;
     public Integer playCount;
 
-    // 변경된 부분
 
-    // **변경: Map<LocalDate, Integer> 로 교체**
+
     public Map<LocalDate, Integer> playCountByDay;
     public LocalDate firstCountedDate; // 최솟값 날짜 캐싱
     public LocalDate lastPlayedDate;  //마지막 플레이 날짜
+
+    // 변경된 부분
+
+    @ColumnInfo(name = "isHidden", defaultValue = "0")
+    public boolean isHidden;
 
     public Favorites(){}
     public Favorites(Track track,
@@ -60,7 +64,8 @@ public class Favorites
                      int playCount,
                      Map<LocalDate, Integer> playCountByDay,
                      LocalDate firstCountedDate,
-                     LocalDate lastPlayedDate){
+                     LocalDate lastPlayedDate,
+                     Boolean isHidden){
         this.trackId = track.trackId;
         this.albumId = track.albumId;
         this.artistId = track.artistId;
@@ -83,6 +88,7 @@ public class Favorites
         this.playCountByDay = playCountByDay;
         this.firstCountedDate = firstCountedDate;
         this.lastPlayedDate = lastPlayedDate;
+        this.isHidden = isHidden;
     }
 
     public Favorites(Track track, String addedDate){

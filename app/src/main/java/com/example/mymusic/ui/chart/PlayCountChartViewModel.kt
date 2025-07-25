@@ -3,10 +3,12 @@ package com.example.mymusic.ui.chart
 import android.util.Log
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavController
 import com.example.mymusic.model.Favorite
 import java.time.LocalDate
 
 class PlayCountChartViewModel : ViewModel() {
+    var navController: NavController? = null
     var rawList: List<Favorite>? = null
     var top10LastMonth: List<Favorite>? = null
     var top10Last3Month: List<Favorite>? = null
@@ -72,7 +74,7 @@ class PlayCountChartViewModel : ViewModel() {
             }
             ?.sortedByDescending { it.second }
             ?.map{ it.first }
-            ?.take(30)
+            ?.take(100)
             ?.toList()
         if (specificList == null)
             specificList = emptyList()

@@ -3,13 +3,20 @@ package com.example.mymusic.ui.playlist
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.support.annotation.DrawableRes
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.ColorInt
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -21,10 +28,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.recyclerview.widget.AdapterListUpdateCallback
 import androidx.recyclerview.widget.ListUpdateCallback
 import com.example.mymusic.util.ImageCollageUtil
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.color.MaterialColors
+import kotlin.math.roundToInt
+
 
 class PlaylistLibraryAdapter (
     private var playlists: List<Playlist>,
@@ -72,25 +81,31 @@ class PlaylistLibraryAdapter (
         holder.playlistCountTextVIew.visibility = View.GONE
         holder.playlistPlayTimeTextView.visibility = View.GONE
         holder.playlistNameTextView.text = "플레이리스트 추가하기"
-        val dummyBitmap = rasterizeDrawableNoTint(viewGroupContext, R.drawable.ic_round_playlist_add, 150, 150)
-        holder.artwork_images.setImageBitmap(dummyBitmap)
+        val dummyBitmap = rasterizeDrawableCentered(viewGroupContext, R.drawable.ic_round_playlist_add, 150, 150)
+        holder.combinedArtworks.setImageBitmap(dummyBitmap)
         holder.itemView.setOnClickListener { listener.onAddNewPlaylist() }
     }
     private fun bindNormal(holder: ViewHolder, position: Int) {
         val playlist = playlists.get(holder.bindingAdapterPosition - 1)
+        if (playlist.trackIds.isEmpty()) {
+            holder.shuffleButton.alpha = 0.3f
+            holder.playButton.alpha = 0.3f
+        }
+
         holder.playlistNameTextView.text = playlist.playlistName
         holder.playlistCountTextVIew.text = "${playlist.trackIds.size} 곡"
         holder.playlistPlayTimeTextView.text = playlist.getDurationStr()
 
-        val id = playlist.playlistId
-        holder.artworkImageCardHolder.transitionName = "artworks_${id}"
-        holder.playlistNameTextView.transitionName = "name_${id}"
-        holder.playlistCountTextVIew.transitionName = "count_${id}"
-        holder.playlistPlayTimeTextView.transitionName = "duration_${id}"
+        val playlistId = playlist.playlistId
+        holder.combinedArtworks.transitionName = "combined_artworks_${playlistId}"
+        holder.playlistNameTextView.transitionName = "name_${playlistId}"
+        holder.playlistCountTextVIew.transitionName = "count_${playlistId}"
+        holder.playlistPlayTimeTextView.transitionName = "duration_${playlistId}"
 
         jobs[holder]?.cancel()
-        holder.artwork_images.setImageResource(R.drawable.ic_round_playlist_play)
+        holder.combinedArtworks.setImageResource(R.drawable.ic_round_playlist_play)
         val urls: List<String> = playlist.getUrls().take(4)
+        if (urls.isEmpty()) listener.onImageReady(playlistId = playlist.playlistId)
 
         val job = viewModelScope.launch {
             if (urls.isEmpty()) return@launch
@@ -104,9 +119,9 @@ class PlaylistLibraryAdapter (
                 // 뷰가 재활용되지 않았는지 방어
                 if (holder.bindingAdapterPosition == position) {
                     // 한 번 더 방어
-                    holder.artwork_images.imageTintList = null
-                    holder.artwork_images.colorFilter = null
-                    holder.artwork_images.setImageBitmap(bmp)
+                    holder.combinedArtworks.imageTintList = null
+                    holder.combinedArtworks.colorFilter = null
+                    holder.combinedArtworks.setImageBitmap(bmp)
                     listener.onImageReady(playlistId = playlist.playlistId)
                 }
             }
@@ -173,14 +188,13 @@ class PlaylistLibraryAdapter (
 
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val artwork_images = view.findViewById<ImageView>(R.id.artwork_images)
+        val combinedArtworks = view.findViewById<ImageView>(R.id.combined_artworks)
         val playlistNameTextView = view.findViewById<TextView>(R.id.playlist_name)
         val playlistCountTextVIew = view.findViewById<TextView>(R.id.track_count_text)
         val playButton = view.findViewById<ImageButton>(R.id.playlist_play_button)
         val shuffleButton = view.findViewById<ImageButton>(R.id.playlist_shuffle_button)
         val hamburgerButton = view.findViewById<ImageButton>(R.id.hamburger_button)
         val playlistPlayTimeTextView = view.findViewById<TextView>(R.id.playlist_play_time_text)
-        val artworkImageCardHolder = view.findViewById<MaterialCardView>(R.id.combined_artworks_card)
     }
 
 
@@ -192,7 +206,7 @@ class PlaylistLibraryAdapter (
 }
 
 
-
+/*
 suspend fun combineFourImagesFromUrls(
     context: Context,
     urls: List<String?>,
@@ -210,12 +224,12 @@ suspend fun combineFourImagesFromUrls(
                 .submit() // 원본 비트맵
                 .get()
         } catch (e: Exception) {
-            rasterizeDrawableNoTint(context, placeholderResId, size, size)
+            rasterizeDrawable(context, placeholderResId, size, size)
         }
 
     val bitmaps = slots.map { url ->
         val bmp = if (url.isNullOrBlank()) {
-            rasterizeDrawableNoTint(context, placeholderResId, size, size)
+            rasterizeDrawable(context, placeholderResId, size, size)
         } else {
             loadBitmap(url)
         }
@@ -234,32 +248,68 @@ suspend fun combineFourImagesFromUrls(
     result
 }
 
+ */
 
-private fun rasterizeDrawableNoTint(
+
+fun rasterizeDrawableCentered(
     context: Context,
-    @androidx.annotation.DrawableRes resId: Int,
+    @DrawableRes resId: Int,
     width: Int,
-    height: Int
+    height: Int,
+    scale: Float = 0.8f,
+    @ColorInt tint: Int? = null,              // null이면 기본 어두운 회색을 자동 적용
+    @ColorInt background: Int = 0xFF121212.toInt()
 ): Bitmap {
-    // 테마 tint 영향 제거를 위해 theme=null 로 로드
-    val raw = androidx.core.content.res.ResourcesCompat.getDrawable(
-        context.resources, resId, /* theme = */ null
-    ) ?: return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
-    // wrap + mutate 로 안전하게 조작
-    val drawable = androidx.core.graphics.drawable.DrawableCompat.wrap(raw).mutate()
-
-    // 🔴 모든 tint/필터 제거
-    androidx.core.graphics.drawable.DrawableCompat.setTintList(drawable, null)
-    androidx.core.graphics.drawable.DrawableCompat.setTintMode(drawable, null)
-    drawable.colorFilter = null
+    val d = AppCompatResources.getDrawable(context, R.drawable.ic_round_playlist_add)?.mutate()
+        ?: return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    // ❗ 호출자가 tint를 안 주면(=null) 기본 어두운 회색을 적용
+    val effectiveTint = tint ?: defaultDarkIconColor(context)
+    DrawableCompat.setTint(d, effectiveTint)
 
     val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
-    drawable.setBounds(0, 0, width, height)
-    drawable.draw(canvas)
+    canvas.drawColor(background)
+
+    val iw = if (d.intrinsicWidth > 0) d.intrinsicWidth else width
+    val ih = if (d.intrinsicHeight > 0) d.intrinsicHeight else height
+    val availW = (width * scale).roundToInt()
+    val availH = (height * scale).roundToInt()
+    val factor = Math.min(availW.toFloat() / iw, availH.toFloat() / ih)
+
+    val w = (iw * factor).roundToInt()
+    val h = (ih * factor).roundToInt()
+    val left = (width - w) / 2
+    val top = (height - h) / 2
+
+    d.setBounds(left, top, left + w, top + h)
+    d.draw(canvas)
+
+
+// ❗ 아이콘을 흰색으로 강제
+    DrawableCompat.setTintMode(d, PorterDuff.Mode.SRC_IN)
+    DrawableCompat.setTint(d, Color.WHITE)
+
+// 배경은 원하시는 대로 (예: 더 어두운 회색)
+
+// canvas.drawColor(Color.parseColor("#121212")) // 선택
+// 크기/중앙 정렬 계산했다면 setBounds(...) 후 draw
+    d.setBounds(left, top, left + w, top + h)
+    d.draw(canvas)
     return bmp
 }
+
+
+
+private fun defaultDarkIconColor(context: Context): Int {
+    // 머티리얼 테마의 표준 "어두운 아이콘" 계열
+    return MaterialColors.getColor(
+        context,
+        com.google.android.material.R.attr.colorOnSurfaceVariant,
+        0xFF616161.toInt() // 테마에 없을 때 fallback: #616161
+    )
+}
+
 private fun centerCropBitmap(src: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
     val scale: Float = maxOf(
         targetWidth.toFloat() / src.width,

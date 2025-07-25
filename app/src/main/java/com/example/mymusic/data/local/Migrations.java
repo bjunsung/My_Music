@@ -20,6 +20,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Migrations {
+    public static final Migration MIGRATION_16_17 = new Migration(16, 17) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE favorites_table ADD COLUMN isHidden INTEGER NOT NULL DEFAULT 0");
+        }
+    };
     public static final Migration MIGRATION_15_16 = new Migration(15, 16) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase db) {
