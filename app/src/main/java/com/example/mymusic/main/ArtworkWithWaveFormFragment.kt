@@ -21,15 +21,25 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.mymusic.MainActivityViewModel
+import com.example.mymusic.R
 import com.example.mymusic.customView.WaveformView
 import com.example.mymusic.databinding.FragmentArtworkWithWaveFormBinding
-import com.example.mymusic.main.MusicPlayingBottomSheet.Companion.TAG
 import com.example.mymusic.model.Favorite
+import com.example.mymusic.model.FavoriteArtist
+import com.example.mymusic.network.ArtistApiHelper
+import com.example.mymusic.ui.artistInfo.ArtistInfoFragment
+import com.example.mymusic.ui.musicInfo.MusicInfoFragment
+import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Player
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ArtworkWithWaveFormFragment : Fragment() {
 
@@ -38,24 +48,20 @@ class ArtworkWithWaveFormFragment : Fragment() {
 
     private val artworkImage: ImageView by lazy { binding.focusedImage }
     private val titleTextView: TextView by lazy { binding.focusedTitle }
-    private val albumTitleTextView: TextView by lazy { binding.focusedAlbumTitle }
     private val artistNameTextView: TextView by lazy { binding.focusedArtist }
     private val durationTextView: TextView by lazy { binding.focusedDuration }
     private val releaseDateTextView: TextView by lazy { binding.focusedReleaseDate }
     private val waveformView : WaveformView by lazy {binding.waveformView}
     private val mainActivityViewModel : MainActivityViewModel by activityViewModels()
     private val musicPlayingViewModel: MusicPlayingViewModel by activityViewModels()
-
     private var favorite: Favorite? = null
 
     private var animator: ValueAnimator? = null
-
     private var visualizer: Visualizer? = null
     private var visualizerRetryAttempt = 0
     private val VISUALIZER_MAX_RETRIES = 3
     private val VISUALIZER_RETRY_DELAY_MS = 300L
     private var playerListener: Player.Listener? = null
-
     private var handler = Handler(Looper.getMainLooper())
 
     override fun onCreateView(
@@ -72,7 +78,17 @@ class ArtworkWithWaveFormFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        waveformView.startAnimation()
+        // 화면 다시 켜질 때 Visualizer 재연결
+        val sessionId = mainActivityViewModel.exoPlayer?.audioSessionId ?: 0
+        if (sessionId != 0) {
+            setupVisualizerWithRetry(sessionId)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // 화면 나갈 때 Visualizer 중단
+        releaseVisualizer()
     }
 
     private fun bind() {
@@ -87,15 +103,14 @@ class ArtworkWithWaveFormFragment : Fragment() {
 
         mainActivityViewModel.isPlaying.observe(viewLifecycleOwner) { playing ->
             if (playing){
-                waveformView.startAnimation()
                 startArtworkImageRotation()
             }
             else {
-                waveformView.stopAnimation()
                 stopArtworkImageRotation()
             }
         }
-        // 1. 리스너 생성 및 등록
+
+        // 오디오 세션 변경 리스너
         playerListener = object : Player.Listener {
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
                 if (audioSessionId != 0) {
@@ -106,29 +121,35 @@ class ArtworkWithWaveFormFragment : Fragment() {
         }
         mainActivityViewModel.exoPlayer?.addListener(playerListener!!)
 
-
         checkAndRequestAudioPermission()
+
+
+        titleTextView.setOnClickListener {
+            val navController = findNavController()
+            val args = Bundle().apply {
+                putParcelable(MusicInfoFragment.ARGUMENTS_KEY, favorite)
+            }
+            musicPlayingViewModel.requestDismiss(true)
+            navController.navigate(R.id.musicInfoFragment, args)
+
+        }
     }
 
     private fun updateData(currentFavorite: Favorite) {
-        //compose transition 대비
         Glide.with(requireContext())
             .asBitmap()
             .load(currentFavorite.track.artworkUrl)
             .override(720, 720)
             .into(object : CustomTarget<Bitmap>() {
-                override fun onResourceReady(
-                    resource: Bitmap,
-                    transition: Transition<in Bitmap>?
-                ) {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     artworkImage.setImageBitmap(resource)
                 }
-
                 override fun onLoadCleared(placeholder: Drawable?) {}
             })
 
-        titleTextView.text = currentFavorite.title
-        albumTitleTextView.text = currentFavorite.track.albumName
+        val titleAndAlbum = currentFavorite.title + " - " + currentFavorite.track.albumName
+        titleTextView.text = titleAndAlbum
+        titleTextView.isSelected = true
         artistNameTextView.text = currentFavorite.artistName
         durationTextView.text = currentFavorite.durationStr
         releaseDateTextView.text = currentFavorite.releaseDate
@@ -137,37 +158,37 @@ class ArtworkWithWaveFormFragment : Fragment() {
     private fun startArtworkImageRotation() {
         val clockwise = if (mainActivityViewModel.currentIndex % 2 == 0) 1.0f else -1.0f
         animator?.cancel()
-        val currentRotation = musicPlayingViewModel.rotationAngle.value ?: 0f
+        var currentRotation = musicPlayingViewModel.rotationAngle.value ?: 180f
         animator = ValueAnimator.ofFloat(currentRotation, currentRotation + clockwise * 360f).apply {
             duration = musicPlayingViewModel.rotationDuration
             repeatCount = ValueAnimator.INFINITE
             interpolator = LinearInterpolator()
             addUpdateListener {
-                artworkImage.rotation = (it.animatedValue as Float) % 360
+                val value = (it.animatedValue as Float) % 360
+                currentRotation = value
+                musicPlayingViewModel.setRotationAngle(currentRotation)
+                artworkImage.rotation = currentRotation
             }
             start()
         }
-
     }
 
     private fun stopArtworkImageRotation() {
         animator?.cancel()
     }
+
+    // === 권한 ===
     private val requesetPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
-                // 사용자가 권한을 '허용'했을 때의 동작
                 Log.d(TAG, "RECORD_AUDIO 권한이 허용되었습니다.")
-                // 권한을 받았으니, Visualizer 설정을 다시 시도합니다.
                 val sessionId = mainActivityViewModel.exoPlayer?.audioSessionId ?: 0
                 if (sessionId != 0) {
                     setupVisualizerWithRetry(sessionId)
                 }
             } else {
-                // 사용자가 권한을 '거부'했을 때의 동작
                 Log.w(TAG, "RECORD_AUDIO 권한이 거부되었습니다.")
-                // 필요하다면, 사용자에게 왜 권한이 필요한지 설명하는 UI를 보여줄 수 있습니다.
-                waveformView.visibility = View.GONE // 파형 뷰 숨기기
+                waveformView.visibility = View.GONE
             }
         }
 
@@ -177,33 +198,32 @@ class ArtworkWithWaveFormFragment : Fragment() {
                 requireContext(),
                 Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED -> {
-                Log.d(TAG, "RECORD_AUDIO 권한이 이미 있습니다.")
-                // Visualizer를 바로 설정합니다.
                 val sessionId = mainActivityViewModel.exoPlayer?.audioSessionId ?: 0
                 if (sessionId != 0) {
                     setupVisualizerWithRetry(sessionId)
                 }
             }
             else -> {
-                Log.d(TAG, "RECORD_AUDIO 권한 요청을 시작합니다.")
-                requesetPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+                requesetPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
         }
     }
+
+    // === Visualizer ===
     private fun setupVisualizerWithRetry(sessionId: Int) {
-        visualizerRetryAttempt = 0 // 재시도 카운트 초기화
+        visualizerRetryAttempt = 0
         initVisualizer(sessionId)
     }
+
     private fun initVisualizer(sessionId: Int) {
-        // 최대 재시도 횟수를 초과하면 UI를 숨기고 종료 (Fallback)
         if (visualizerRetryAttempt >= VISUALIZER_MAX_RETRIES) {
-            Log.e(TAG, "Visualizer failed to initialize after $VISUALIZER_MAX_RETRIES attempts.")
-            waveformView.visibility = View.GONE // WaveformView 숨기기
+            Log.e(TAG, "Visualizer failed after $VISUALIZER_MAX_RETRIES attempts.")
+            waveformView.visibility = View.GONE
             return
         }
 
         try {
-            visualizer?.release() // 기존 인스턴스가 있다면 해제
+            releaseVisualizer()
 
             visualizer = Visualizer(sessionId).apply {
                 captureSize = Visualizer.getCaptureSizeRange()[1]
@@ -211,44 +231,34 @@ class ArtworkWithWaveFormFragment : Fragment() {
                     override fun onWaveFormDataCapture(
                         visualizer: Visualizer?, waveform: ByteArray?, samplingRate: Int
                     ) {
-                        // <<< [디버깅 로그 추가]
-                        if (waveform != null) {
-                            waveformView.updateWaveform(waveform)
-                        } else {
-                            Log.d(TAG, "Waveform data is null.")
-                        }
+                        waveform?.let { binding.waveformView.updateWaveform(it) }
                     }
                     override fun onFftDataCapture(p0: Visualizer?, p1: ByteArray?, p2: Int) {}
                 }, Visualizer.getMaxCaptureRate() / 2, true, false)
                 enabled = true
             }
-
-            // 성공 시 UI를 다시 보이게 처리
             waveformView.visibility = View.VISIBLE
-            Log.d(
-                TAG,
-                "Visualizer initialized successfully on attempt ${visualizerRetryAttempt + 1}."
-            )
-
+            Log.d(TAG, "Visualizer initialized.")
         } catch (e: Exception) {
             visualizerRetryAttempt++
-            Log.w(TAG, "Visualizer init failed on attempt $visualizerRetryAttempt: ${e.message}")
-
-            // 딜레이 후 재시도
+            Log.w(TAG, "Visualizer init failed: ${e.message}")
             handler.postDelayed({ initVisualizer(sessionId) }, VISUALIZER_RETRY_DELAY_MS)
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        // Visualizer 리소스 해제
+    private fun releaseVisualizer() {
+        visualizer?.enabled = false
         visualizer?.release()
         visualizer = null
-
-        // ExoPlayer 리스너 제거
-        playerListener?.let {
-            mainActivityViewModel.exoPlayer?.removeListener(it)
-        }
     }
 
+    override fun onStop() {
+        super.onStop()
+        releaseVisualizer()
+        playerListener?.let { mainActivityViewModel.exoPlayer?.removeListener(it) }
+    }
+
+    companion object {
+        const val TAG = "ArtworkWithWaveForm"
+    }
 }

@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.mymusic.data.repository.FavoriteSongRepository
 import com.example.mymusic.model.Favorite
+import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -52,6 +53,17 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     val totalPlayCountInARow : LiveData<Int> get() = _totalPlayCountInARow!!
 
     val favoriteSongRepository: FavoriteSongRepository by lazy { FavoriteSongRepository(application)}
+
+    private val _audioSessionId = MutableLiveData<Int>()
+    val audioSessionId get() = _audioSessionId!!
+
+
+    private val _showBottomSheet = MutableLiveData(false)
+    val showBottomSheet get() = _showBottomSheet
+    fun requestBottomSheet(isVisible: Boolean) {
+        _showBottomSheet.value = isVisible
+    }
+
 
 
     init {
@@ -125,6 +137,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     _trackDuration.postValue(newDuration) // ViewModel에서 새로운 LiveData로 전달
                     // <<< [추가] 새 트랙의 전체 길이를 변수에 저장
                     currentTrackDurationMs = newDuration.toLong()
+                }
+            }
+
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                if (audioSessionId != C.AUDIO_SESSION_ID_UNSET) {
+                    _audioSessionId.postValue(audioSessionId)
                 }
             }
         })

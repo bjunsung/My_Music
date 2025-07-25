@@ -370,27 +370,7 @@ class ReleaseDateChart: Fragment() {
     override fun onResume() {
         super.onResume()
         setGradientColor()
-        // 시스템 바 숨기기
-        val insetsController = WindowCompat.getInsetsController(
-            requireActivity().window,
-            requireActivity().window.decorView
-        )
-        insetsController.let {
-            it.hide(WindowInsetsCompat.Type.systemBars())
-            it.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
 
-    }
-
-    override fun onPause() {
-        super.onPause()
-        // 프래그먼트를 떠날 때 전체 화면 모드 해제
-        val insetsController = WindowCompat.getInsetsController(
-            requireActivity().window,
-            requireActivity().window.decorView
-        )
-        insetsController.show(WindowInsetsCompat.Type.systemBars())
 
     }
 

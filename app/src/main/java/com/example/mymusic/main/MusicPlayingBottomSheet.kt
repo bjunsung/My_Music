@@ -1,7 +1,7 @@
 package com.example.mymusic.main
 
 import android.animation.ValueAnimator
-import android.graphics.Bitmap
+import android.content.res.Configuration
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,9 +26,6 @@ import android.widget.TextView
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.viewModelScope
 import androidx.viewpager2.widget.ViewPager2
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
 import com.example.mymusic.MainActivityViewModel
 import com.example.mymusic.R
 import com.example.mymusic.data.repository.FavoriteSongRepository
@@ -90,6 +88,10 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
     private var pagerAdapter: MusicPlayingPagerAdapter? = null
     private val musicInfoViewPager: ViewPager2 by lazy { binding.musicInfoViewPager }
 
+
+    private val lyricsPage : TextView by lazy { binding.lyricsPage }
+    private val separatorLineForLyrics : View by lazy { binding.lyricsSeparatorLine }
+
     override fun getTheme(): Int = R.style.FullScreenBottomSheet
 
     override fun onStart() {
@@ -112,6 +114,24 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         )
     }
 
+
+    private fun setLyricsPageVisibilityByScapeMode(){
+        val orientation = resources.configuration.orientation
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (musicPlayingViewModel.currentPage.value == 3) {
+                musicPlayingViewModel.saveCurrentPageValue(2)
+            }
+            lyricsPage.visibility = View.GONE
+            separatorLineForLyrics.visibility = View.GONE
+            binding.lyricsCard.visibility = View.VISIBLE
+        }
+        else {
+            lyricsPage.visibility = View.VISIBLE
+            separatorLineForLyrics.visibility = View.VISIBLE
+            binding.lyricsCard.visibility = View.GONE
+        }
+    }
+
     private lateinit var favorite: Favorite
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,6 +148,7 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         return binding.root
     }
 
+
     fun newInstance(favorite: Favorite): MusicPlayingBottomSheet {
         return MusicPlayingBottomSheet().apply {
             arguments = Bundle().apply {
@@ -136,8 +157,11 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setLyricsPageVisibilityByScapeMode()
         bind()
     }
 
@@ -146,7 +170,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
         val tabs = listOf(
             0 to binding.playlistPage,
             1 to binding.musicInfoPage,
-            2 to binding.playtimeCalendarPage
+            2 to binding.playtimeCalendarPage,
+            3 to binding.lyricsPage
         )
 
         fun updateAlpha(selectedIndex: Int) {
@@ -157,22 +182,39 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
 
         tabs.forEach { (index, textView) ->
             textView.setOnClickListener {
-                musicInfoViewPager.setCurrentItem(index, true)
-                updateAlpha(index)
                 musicPlayingViewModel.saveCurrentPageValue(index)
             }
         }
 
+        musicPlayingViewModel.currentPage.observe(viewLifecycleOwner) { page ->
+            updateAlpha(page)
+            if (mainActivityViewModel.showBottomSheet.value == true){
+                musicInfoViewPager.setCurrentItem(page, false)
+                mainActivityViewModel.requestBottomSheet(false)
+            }
+            else {
+                musicInfoViewPager.setCurrentItem(page, true)
+            }
+        }
 
+        if (mainActivityViewModel.showBottomSheet.value == true) {
+            musicPlayingViewModel.saveCurrentPageValue(1)
+            musicInfoViewPager.offscreenPageLimit = 1
+        }
+        musicPlayingViewModel.requestDismiss(false)
+
+        musicPlayingViewModel.requestDismiss.observe(viewLifecycleOwner) { dismiss ->
+            Log.d(TAG, "dismiss observe called, dismiss " + dismiss)
+            if (dismiss) {
+                dismiss()
+            }
+        }
 
 
         pagerAdapter = MusicPlayingPagerAdapter(this)
         musicInfoViewPager.adapter = pagerAdapter
 
         musicInfoViewPager.isUserInputEnabled = false
-
-        musicInfoViewPager.setCurrentItem(1, false)
-        updateAlpha(1)
 
         binding.scrollArea.setOnTouchListener { v, _ ->
             v.parent.requestDisallowInterceptTouchEvent(true)
@@ -239,6 +281,8 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                 @Deprecated("Deprecated in Java")
                 override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
             }
+
+
         }
 
 
@@ -262,8 +306,6 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
             shuffleButton.visibility = View.VISIBLE
             shuffleOnStateButton.visibility = View.INVISIBLE
         }
-
-
 
 
         /**
@@ -338,26 +380,6 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
                 })
         }
 
-        Glide.with(requireContext())
-            .asBitmap()
-            .load(track.artworkUrl)
-            .override(480, 480)
-            .into(object : CustomTarget<Bitmap>() {
-                override fun onResourceReady(
-                    resource: Bitmap,
-                    transition: Transition<in Bitmap>?
-                ) {
-                    //artworkImage.setImageBitmap(resource)
-                }
-
-                override fun onLoadCleared(placeholder: Drawable?) {}
-            })
-
-        //titleTextView.text = favorite.title
-        //albumTitleTextView.text = track.albumName
-        //artistNameTextView.text = favorite.artistName
-        //durationTextView.text = favorite.durationStr
-        //releaseDateTextView.text = favorite.releaseDate
         lyricsTextView.text = "\n\n\n\n\n\n\n" + metadata.lyrics + "\n\n\n\n\n\n\n"
 
         pauseButton.setOnClickListener {
@@ -490,10 +512,10 @@ class MusicPlayingBottomSheet : BottomSheetDialogFragment() {
             interpolator = LinearInterpolator()
             addUpdateListener {
                 val value = it.animatedValue as Float
-                gradientBackground.rotation = value % 360
-                //artworkImage.rotation = value % 360
-                currentRotation = value % 360  // 현재 각도 계속 저장
+                currentRotation = value % 360
                 musicPlayingViewModel.setRotationAngle(currentRotation)
+                gradientBackground.rotation = currentRotation
+                //artworkImage.rotation = value % 360
             }
             start()
         }

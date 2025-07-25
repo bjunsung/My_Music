@@ -189,4 +189,20 @@
             app:destination="@id/album_info" />
     </fragment>
 
+    <fragment
+        android:id="@+id/fragment_artwork_with_wave_form"
+        android:name="com.example.mymusic.main.ArtworkWithWaveFormFragment"
+        android:label="Artwork with Wave Form"
+        tools:layout="@layout/fragment_release_date_chart" >
+        <action
+            android:id="@+id/action_artworkWaveFormFragment_to_musicInfoFragment"
+            app:destination="@id/musicInfoFragment" />
+        <action
+            android:id="@+id/action_artworkWaveFormFragment_to_artistInfoFragment"
+            app:destination="@id/artist_info" />
+        <action
+            android:id="@+id/action_artworkWaveFormFragment_to_albumInfoFragment"
+            app:destination="@id/album_info" />
+    </fragment>
+
 </navigation>

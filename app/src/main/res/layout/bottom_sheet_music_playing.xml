@@ -113,7 +113,23 @@
                                             android:textColor="@color/white"
                                             android:textSize="@dimen/text_size_small">
                                         </TextView>
-
+                                        <!-- 구분선 -->
+                                        <View
+                                            android:id="@+id/lyrics_separator_line"
+                                            android:layout_width="1dp"
+                                            android:layout_height="match_parent"
+                                            android:background="@color/white"
+                                            android:alpha="0.3"/> <!-- 투명도 설정 가능 -->
+                                        <TextView
+                                            android:id="@+id/lyrics_page"
+                                            android:layout_width="0dp"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="1"
+                                            android:text="lyrics"
+                                            android:gravity="center"
+                                            android:textColor="@color/white"
+                                            android:textSize="@dimen/text_size_small">
+                                        </TextView>
 
                                     </LinearLayout>
                                 </com.google.android.material.card.MaterialCardView>
@@ -136,6 +152,7 @@
 
 
                     <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/lyrics_card"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_marginTop="10dp"

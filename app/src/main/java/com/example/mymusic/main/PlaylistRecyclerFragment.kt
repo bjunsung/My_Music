@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
@@ -29,7 +30,6 @@ class PlaylistRecyclerFragment : Fragment() {
 
     private val mainActivityViewModel: MainActivityViewModel by activityViewModels()
     private val musicPlayingViewModel: MusicPlayingViewModel by activityViewModels()
-
     private val playlistRecyclerView: RecyclerView by lazy { binding.playlistRecyclerView }
     private var playlist: List<Favorite>? = null
 

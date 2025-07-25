@@ -7,7 +7,8 @@ class MusicPlayingPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragme
     private val fragments : List<Fragment> = listOf(
         PlaylistRecyclerFragment(),
         ArtworkWithWaveFormFragment(),
-        PlayTimeCalendar()
+        PlayTimeCalendar(),
+        LyricsPageFragment()
     )
 
     override fun getItemCount(): Int = fragments.size

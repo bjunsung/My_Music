@@ -6,6 +6,7 @@ import com.example.mymusic.data.local.AppDatabase;
 import com.example.mymusic.data.local.FavoriteArtist;
 import com.example.mymusic.data.local.FavoriteArtistDao;
 import com.example.mymusic.model.Artist;
+import com.example.mymusic.model.ArtistMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +65,16 @@ public class FavoriteArtistRepository {
 
     public FavoriteArtist getFavoriteArtist(String artistId){
         return favoriteArtistDao.getFavoriteArtist(artistId);
+    }
+
+    public com.example.mymusic.model.FavoriteArtist getFavoriteArtistInModelForm(Context context, String artistId) {
+        FavoriteArtist loaded = favoriteArtistDao.getFavoriteArtist(artistId);
+        if (loaded == null) return null;
+        Artist artist = new Artist(loaded.artistId, loaded.artistName, loaded.artworkUrl, loaded.genres, loaded.followers, loaded.popularity);
+        String addedDate = this.getAddedDate(artistId);
+        ArtistMetadata metadata = new ArtistMetadataRepository(context).getArtistMetadataBySpotifyId(artistId);
+        com.example.mymusic.model.FavoriteArtist result = new com.example.mymusic.model.FavoriteArtist(artist, addedDate, metadata);
+        return result;
     }
 
     public int updateFavoriteArtist(com.example.mymusic.model.FavoriteArtist favoriteArtist){

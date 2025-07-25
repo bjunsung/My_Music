@@ -39,6 +39,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -92,9 +93,21 @@ public class MainActivity extends AppCompatActivity {
 
         FrameLayout musicPlayingBar = binding.musicPlayingBar;
         musicPlayingBar.setOnClickListener(v-> {
-            MusicPlayingBottomSheet musicPlayingBottomSheet = new MusicPlayingBottomSheet().newInstance(viewModel.getCurrentTrack().getValue());
-            musicPlayingBottomSheet.show(getSupportFragmentManager(), MusicPlayingBottomSheet.TAG);
+            viewModel.requestBottomSheet(true);
         });
+
+        viewModel.getShowBottomSheet().observe(this,
+                new Observer<Boolean>() {
+                    @Override
+                    public void onChanged(Boolean visible) {
+                        if (visible) {
+                            MusicPlayingBottomSheet musicPlayingBottomSheet = new MusicPlayingBottomSheet().newInstance(viewModel.getCurrentTrack().getValue());
+                            musicPlayingBottomSheet.show(getSupportFragmentManager(), MusicPlayingBottomSheet.TAG);
+                        }
+                    }
+                });
+
+
 
         TextView titleTextView = binding.title;
         TextView artistNameTextView = binding.artistName;
@@ -287,11 +300,34 @@ public class MainActivity extends AppCompatActivity {
             if (destination.getId() == R.id.fragment_image_detail
                     || destination.getId() == R.id.fragment_release_date_chart) {
                 navView.setVisibility(View.GONE);
+                musicPlayingBar.setVisibility(View.GONE);
             }
             // 다른 주요 프래그먼트들로 돌아올 때는 다시 보이게 함
             else {
                 navView.setVisibility(View.VISIBLE);
+                if (viewModel.getCurrentTrack().getValue() != null) {
+                    musicPlayingBar.setVisibility(View.VISIBLE);
+                }
             }
+
+            if (destination.getId() == R.id.fragment_image_detail) {
+                navView.setVisibility(View.GONE);
+                musicPlayingBar.setVisibility(View.GONE);
+            }
+            // 다른 주요 프래그먼트들로 돌아올 때는 다시 보이게 함
+            else if (destination.getId() == R.id.fragment_release_date_chart) {
+                navView.setVisibility(View.GONE);
+                if (viewModel.getCurrentTrack().getValue() != null) {
+                    musicPlayingBar.setVisibility(View.VISIBLE);
+                }
+            }
+            else {
+                navView.setVisibility(View.VISIBLE);
+                if (viewModel.getCurrentTrack().getValue() != null) {
+                    musicPlayingBar.setVisibility(View.VISIBLE);
+                }
+            }
+
 
             if (destination.getId() == R.id.navigation_favorites || destination.getId()  == R.id.navigation_settings || destination.getId() == R.id.fragment_my_calendar  || destination.getId() == R.id.navigation_home){
                 setColor();

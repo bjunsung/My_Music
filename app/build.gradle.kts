@@ -113,6 +113,8 @@ dependencies {    // Room core
 
 // Coil (이미지 로드 시)
     implementation("io.coil-kt:coil-compose:2.3.0")
+
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
     implementation(libs.palette)  //Glide
     implementation(libs.appcompat)
     implementation(libs.material)

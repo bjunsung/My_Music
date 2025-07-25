@@ -1,13 +1,17 @@
 package com.example.mymusic.main
 
 import android.graphics.Color
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import coil.request.Tags
 import com.example.mymusic.R
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.channels.ticker
+import java.time.LocalDate
 
 class CalendarAdapter(private var days: List<ContributionDay>) :
     RecyclerView.Adapter<CalendarAdapter.DayViewHolder>() {
@@ -19,6 +23,16 @@ class CalendarAdapter(private var days: List<ContributionDay>) :
         Color.parseColor("#239A3B"), // 3
         Color.parseColor("#196127")  // 4+
     )
+
+    private var itemClickListener: OnItemClickListener? = null
+
+    interface OnItemClickListener {
+        fun onItemClick(date: LocalDate, playCount: Int, position: Int)
+    }
+
+    fun setOnItemClickListener(itemClickListener: OnItemClickListener) {
+        this.itemClickListener = itemClickListener
+    }
 
     inner class DayViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val background: MaterialCardView = view.findViewById(R.id.dayBackground)
@@ -34,14 +48,20 @@ class CalendarAdapter(private var days: List<ContributionDay>) :
         val day = days[position]
         val colorIndex = day.count.coerceIn(0, 4)
         holder.background.setCardBackgroundColor(colors[colorIndex])
-
-
         holder.background.alpha = if (colorIndex == 0) 0.35f else 1f
+
+        holder.itemView.setOnClickListener {
+            itemClickListener?.onItemClick(day.date, day.count, holder.bindingAdapterPosition)
+        }
     }
+
 
     override fun getItemCount() = days.size
 
+
+
     fun updateData(newDays: List<ContributionDay>) {
+        Log.d(TAG, "play time calendar adapter updated")
         val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun getOldListSize() = days.size
             override fun getNewListSize() = newDays.size
@@ -63,5 +83,10 @@ class CalendarAdapter(private var days: List<ContributionDay>) :
     }
 
      */
+
+
+    companion object {
+        const val TAG = "CalendarAdapter"
+    }
 
 }
