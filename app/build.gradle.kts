@@ -1,3 +1,12 @@
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     //alias(libs.plugins.android.application)
     alias(libs.plugins.android.application)
@@ -39,6 +48,18 @@ android {
         manifestPlaceholders.put("redirectSchemeName", "com.example.mymusic")
         manifestPlaceholders.put("redirectHostName", "callback")
 
+        buildConfigField(
+            "String",
+            "SPOTIFY_CLIENT_ID",
+            "\"${localProperties.getProperty("SPOTIFY_CLIENT_ID", "")}\""
+        )
+
+        buildConfigField(
+            "String",
+            "SPOTIFY_CLIENT_SECRET",
+            "\"${localProperties.getProperty("SPOTIFY_CLIENT_SECRET", "")}\""
+        )
+
     }
 
     buildTypes {
@@ -68,6 +89,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
+        buildConfig = true
     }
     kotlinOptions {
         jvmTarget = "11"

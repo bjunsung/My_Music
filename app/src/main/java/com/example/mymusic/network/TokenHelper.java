@@ -17,15 +17,20 @@ import com.example.mymusic.data.local.Token;
 import com.example.mymusic.data.local.TokenDao;
 import com.example.mymusic.data.repository.TokenRepository;
 
+import com.example.mymusic.BuildConfig;
+
 import org.json.JSONObject;
 
 import java.io.IOException;
 
+
 import okhttp3.*;
 
 public class TokenHelper {
-    private static final String CLIENT_ID = "your_client_id_here";
-    private static final String CLIENT_SECRET = "your_client_secret_id_here";
+    //private static final String CLIENT_ID = "your_client_id_here";
+    private static final String CLIENT_ID = BuildConfig.SPOTIFY_CLIENT_ID;
+    //private static final String CLIENT_SECRET = "your_client_secret_id_here";
+    private static final String CLIENT_SECRET = BuildConfig.SPOTIFY_CLIENT_SECRET;
     private static final String TOKEN_URL = "https://accounts.spotify.com/api/token";
 
     public interface TokenCallback {
