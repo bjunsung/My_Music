@@ -24,8 +24,8 @@ import java.io.IOException;
 import okhttp3.*;
 
 public class TokenHelper {
-    private static final String CLIENT_ID = "a4a54268175942f1b1d8d8389428145d";
-    private static final String CLIENT_SECRET = "822bbcc3bc154517962e027b1a39260b";
+    private static final String CLIENT_ID = "your_client_id_here";
+    private static final String CLIENT_SECRET = "your_client_secret_id_here";
     private static final String TOKEN_URL = "https://accounts.spotify.com/api/token";
 
     public interface TokenCallback {
